@@ -1584,6 +1584,12 @@
   .border-rose-700 {
     border-color: var(--color-rose-700);
   }
+  .border-sky-200 {
+    border-color: var(--color-sky-200);
+  }
+  .border-sky-500 {
+    border-color: var(--color-sky-500);
+  }
   .border-slate-50 {
     border-color: var(--color-slate-50);
   }
@@ -1916,6 +1922,12 @@
   }
   .bg-sky-50 {
     background-color: var(--color-sky-50);
+  }
+  .bg-sky-50\/30 {
+    background-color: color-mix(in srgb, oklch(97.7% 0.013 236.62) 30%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-sky-50) 30%, transparent);
+    }
   }
   .bg-sky-600 {
     background-color: var(--color-sky-600);
@@ -2423,6 +2435,9 @@
   }
   .p-8 {
     padding: calc(var(--spacing) * 8);
+  }
+  .p-10 {
+    padding: calc(var(--spacing) * 10);
   }
   .p-12 {
     padding: calc(var(--spacing) * 12);
