@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% block title %}Bulk Create Teachers — {{ school.name }} | Evalora{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+  <div class="bg-slate-900 text-white py-8 px-6">
+    <div class="max-w-3xl mx-auto">
+      <a href="{% url 'school_admin_manage_teachers' %}" class="text-indigo-400 hover:text-indigo-300 text-sm font-medium inline-flex items-center gap-1 mb-2">← Back to Teachers</a>
+      <h1 class="text-2xl font-extrabold">Bulk Create Teachers</h1>
+      <p class="text-slate-400 text-sm mt-1">Upload a CSV or Excel file to create multiple teacher accounts at once for {{ school.name }}.</p>
+    </div>
+  </div>
+
+  <div class="max-w-3xl mx-auto px-6 py-8 space-y-6">
+
+    <!-- File Format Card -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <h2 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Required File Format
+      </h2>
+      <p class="text-sm text-gray-600 mb-4">Your CSV or Excel file must have the following columns. The first row must be a header row.</p>
+      <div class="overflow-x-auto rounded-xl border border-gray-100">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase">Column</th>
+              <th class="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase">Required</th>
+              <th class="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase">Notes</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            <tr>
+              <td class="px-4 py-3 font-mono text-xs text-sky-700 bg-sky-50">first_name</td>
+              <td class="px-4 py-3"><span class="text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded-full">Required</span></td>
+              <td class="px-4 py-3 text-xs text-gray-500">Teacher's first name</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-mono text-xs text-sky-700 bg-sky-50">last_name</td>
+              <td class="px-4 py-3"><span class="text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded-full">Required</span></td>
+              <td class="px-4 py-3 text-xs text-gray-500">Teacher's last name</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-mono text-xs text-gray-500 bg-gray-50">email</td>
+              <td class="px-4 py-3"><span class="text-xs bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-full">Optional</span></td>
+              <td class="px-4 py-3 text-xs text-gray-500">Teacher email address</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-mono text-xs text-gray-500 bg-gray-50">phone_number</td>
+              <td class="px-4 py-3"><span class="text-xs bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-full">Optional</span></td>
+              <td class="px-4 py-3 text-xs text-gray-500">Teacher contact number</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-mono text-xs text-gray-500 bg-gray-50">password</td>
+              <td class="px-4 py-3"><span class="text-xs bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-full">Optional</span></td>
+              <td class="px-4 py-3 text-xs text-gray-500">Default: <code class="bg-gray-100 px-1 rounded">changeme123</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-xs text-gray-400 mt-3">
+        ⚡ Usernames are auto-generated as: <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded">{{ school.code|lower }}_tch_###</span>
+      </p>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-50">
+        <h2 class="font-bold text-gray-900">Upload File</h2>
+      </div>
+      <form method="post" enctype="multipart/form-data" class="p-6 space-y-5">
+        {% csrf_token %}
+
+        <div class="relative border-2 border-dashed border-slate-300 bg-slate-50 rounded-2xl p-10 text-center hover:bg-slate-100 hover:border-sky-500 transition-all cursor-pointer group">
+          <input type="file" name="{{ form.file.html_name }}" id="{{ form.file.id_for_label }}" accept=".csv,.xlsx,.xls" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" required>
+          <div class="pointer-events-none">
+            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-100 group-hover:scale-110 transition-transform duration-300">
+              <svg class="w-8 h-8 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+              </svg>
+            </div>
+            <p class="text-lg font-semibold text-slate-700 mb-1">Drop your CSV or Excel file here</p>
+            <p class="text-sm text-slate-500 mb-2">or <span class="text-sky-600 font-medium">click to browse</span></p>
+            <p class="text-xs text-slate-400 font-mono bg-white inline-block px-2 py-1 rounded-md border border-slate-100" id="file-name-display">Supports .csv, .xls, .xlsx</p>
+          </div>
+          {% if form.file.errors %}
+            <p class="text-red-500 text-sm font-medium mt-4">{{ form.file.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        {% if form.non_field_errors %}
+          <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+            <p class="text-red-600 text-sm">{{ form.non_field_errors.0 }}</p>
+          </div>
+        {% endif %}
+
+        <div class="flex items-center gap-3">
+          <button type="submit" class="px-6 py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-sky-200 text-sm">
+            Upload &amp; Create Teachers
+          </button>
+          <a href="{% url 'school_admin_manage_teachers' %}" class="px-6 py-3 text-sm font-semibold text-gray-600 hover:text-gray-900 border border-gray-200 rounded-xl hover:border-gray-300 transition-all">
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('{{ form.file.id_for_label }}');
+    const fileNameDisplay = document.getElementById('file-name-display');
+    const container = fileInput.closest('.relative');
+
+    fileInput.addEventListener('change', function() {
+      if (this.files && this.files.length > 0) {
+        fileNameDisplay.textContent = "Selected: " + this.files[0].name;
+        fileNameDisplay.className = "text-sm font-semibold text-sky-700 bg-sky-50 inline-block px-3 py-1.5 rounded-lg border border-sky-200 mt-2";
+        container.classList.add('border-sky-500', 'bg-sky-50/30');
+      } else {
+        fileNameDisplay.textContent = "Supports .csv, .xls, .xlsx";
+        fileNameDisplay.className = "text-xs text-slate-400 font-mono bg-white inline-block px-2 py-1 rounded-md border border-slate-100 mt-2";
+        container.classList.remove('border-sky-500', 'bg-sky-50/30');
+      }
+    });
+    
+    // Add drag effects
+    container.addEventListener('dragover', (e) => {
+        container.classList.add('border-sky-500', 'bg-sky-50');
+    });
+    container.addEventListener('dragleave', (e) => {
+        container.classList.remove('border-sky-500', 'bg-sky-50');
+    });
+    container.addEventListener('drop', (e) => {
+        container.classList.remove('border-sky-500', 'bg-sky-50');
+    });
+  });
+</script>
+{% endblock %}

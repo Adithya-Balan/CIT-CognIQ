@@ -23,14 +23,24 @@
           <p class="text-slate-400 mt-1">Code: <span class="font-mono font-bold text-indigo-300">{{ school.code }}</span></p>
         </div>
         <div class="flex flex-wrap gap-3">
-          <a href="{% url 'school_admin_create_teacher' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-all duration-200 shadow-lg shadow-indigo-900/40">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Add Teacher
-          </a>
-          <a href="{% url 'school_admin_create_student' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-lg transition-all duration-200">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Add Student
-          </a>
+          <div class="flex bg-indigo-900/30 rounded-lg p-1">
+            <a href="{% url 'school_admin_create_teacher' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-lg transition-all duration-200 shadow-lg shadow-indigo-900/40">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Add Teacher
+            </a>
+            <a href="{% url 'school_admin_bulk_create_teachers' %}" class="inline-flex items-center px-3 py-2 text-indigo-300 hover:text-white hover:bg-indigo-800 text-sm font-semibold rounded-r-lg transition-all duration-200" title="Bulk Upload Teachers">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            </a>
+          </div>
+          <div class="flex bg-emerald-900/30 rounded-lg p-1">
+            <a href="{% url 'school_admin_create_student' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-lg transition-all duration-200">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Add Student
+            </a>
+            <a href="{% url 'school_admin_bulk_create_students' %}" class="inline-flex items-center px-3 py-2 text-emerald-300 hover:text-white hover:bg-emerald-800 text-sm font-semibold rounded-r-lg transition-all duration-200" title="Bulk Upload Students">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            </a>
+          </div>
         </div>
       </div>
     </div>

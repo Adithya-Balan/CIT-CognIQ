@@ -3792,6 +3792,107 @@ def school_admin_toggle_teacher(request, teacher_id):
 
 
 @login_required
+def school_admin_bulk_create_teachers(request):
+    """
+    School admin bulk-creates teachers from a CSV/Excel file.
+    CSV columns: first_name, last_name, email (optional), phone_number (optional), password (optional)
+    """
+    if not request.user.is_school_admin:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+
+    school = request.user.school
+
+    if request.method == 'POST':
+        from .forms import BulkTeacherUploadForm
+        form = BulkTeacherUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            uploaded_file = request.FILES['file']
+            filename = uploaded_file.name.lower()
+
+            created_count = 0
+            error_rows = []
+
+            try:
+                if filename.endswith('.csv'):
+                    import csv
+                    import io
+                    content = uploaded_file.read().decode('utf-8-sig')
+                    reader = csv.DictReader(io.StringIO(content))
+                    rows = list(reader)
+                elif filename.endswith(('.xlsx', '.xls')):
+                    from openpyxl import load_workbook
+                    wb = load_workbook(uploaded_file, read_only=True, data_only=True)
+                    ws = wb.active
+                    headers = [str(c.value).strip().lower() if c.value else '' for c in next(ws.iter_rows())]
+                    rows = []
+                    for row in ws.iter_rows(min_row=2, values_only=True):
+                        rows.append(dict(zip(headers, [str(v).strip() if v is not None else '' for v in row])))
+                    wb.close()
+                else:
+                    messages.error(request, 'Unsupported file format. Use .csv, .xlsx, or .xls')
+                    return redirect('school_admin_bulk_create_teachers')
+
+                with transaction.atomic():
+                    from .models import generate_username
+                    for i, row in enumerate(rows, start=2):
+                        first_name = row.get('first_name', '').strip()
+                        last_name = row.get('last_name', '').strip()
+                        email = row.get('email', '').strip() or None
+                        phone_number = row.get('phone_number', '').strip() or None
+                        password = row.get('password', '').strip() or 'changeme123'
+
+                        if not first_name or not last_name:
+                            error_rows.append(f'Row {i}: missing first_name or last_name')
+                            continue
+
+                        # Generate username
+                        seq = school.get_next_teacher_number()
+                        candidate = generate_username(school.code, 'tch', seq)
+                        base = candidate
+                        counter = 1
+                        while User.objects.filter(username=candidate).exists():
+                            candidate = f"{base}_{counter}"
+                            counter += 1
+
+                        user = User(
+                            username=candidate,
+                            first_name=first_name,
+                            last_name=last_name,
+                            email=email,
+                            phone_number=phone_number,
+                            role='teacher',
+                            school=school,
+                        )
+                        user.set_password(password)
+                        user.save()
+                        created_count += 1
+
+                if error_rows:
+                    for err in error_rows:
+                        messages.warning(request, err)
+                
+                messages.success(
+                    request,
+                    f'Bulk upload complete: {created_count} teacher(s) created.'
+                )
+                return redirect('school_admin_manage_teachers')
+
+            except Exception as e:
+                messages.error(request, f'Error processing file: {str(e)}')
+    else:
+        from .forms import BulkTeacherUploadForm
+        form = BulkTeacherUploadForm()
+
+    context = {
+        'school': school,
+        'form': form,
+        'page_title': 'Bulk Create Teachers',
+    }
+    return render(request, 'school_admin/bulk_create_teachers.html', context)
+
+
+@login_required
 def school_admin_manage_students(request):
     """
     List all students in the school with search and filter.

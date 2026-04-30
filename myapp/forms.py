@@ -246,6 +246,19 @@ class BulkStudentUploadForm(forms.Form):
     )
 
 
+class BulkTeacherUploadForm(forms.Form):
+    """
+    Used by school admins to bulk-upload teachers via CSV/Excel.
+    """
+    file = forms.FileField(
+        label='Teacher Data File',
+        widget=forms.ClearableFileInput(attrs={
+            'class': 'hidden',
+            'accept': '.csv,.xlsx,.xls',
+        }),
+        help_text='CSV or Excel file. Columns: first_name, last_name, email (optional), phone_number (optional), password (optional)'
+    )
+
 # ============================================================================
 # EXAM CREATION FORMS
 # ============================================================================

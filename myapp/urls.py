@@ -20,6 +20,7 @@ urlpatterns = [
     path('school-admin/', views.school_admin_dashboard, name='school_admin_dashboard'),
     path('school-admin/teachers/', views.school_admin_manage_teachers, name='school_admin_manage_teachers'),
     path('school-admin/teachers/create/', views.school_admin_create_teacher, name='school_admin_create_teacher'),
+    path('school-admin/teachers/bulk-create/', views.school_admin_bulk_create_teachers, name='school_admin_bulk_create_teachers'),
     path('school-admin/teachers/<int:teacher_id>/toggle/', views.school_admin_toggle_teacher, name='school_admin_toggle_teacher'),
     path('school-admin/students/', views.school_admin_manage_students, name='school_admin_manage_students'),
     path('school-admin/students/create/', views.school_admin_create_student, name='school_admin_create_student'),
