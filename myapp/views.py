@@ -2392,11 +2392,60 @@ def class_detail(request, class_pk):
         'student_class': student_class,
         'students': students,
         'assigned_exams': assigned_exams,
-        'available_students': available_students,
+        # We no longer pass all available_students to avoid large payloads.
+        # They will be fetched via AJAX search instead.
         'available_exams': available_exams,
         'page_title': f'{student_class.name}'
     }
     return render(request, 'classes/class_detail.html', context)
+
+
+from django.http import JsonResponse
+
+@login_required
+def search_students_for_class(request, class_pk):
+    """
+    AJAX endpoint to search for students within the teacher's school 
+    who are not already in the specified class.
+    """
+    if not request.user.is_teacher:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+        
+    student_class = get_object_or_404(
+        StudentClass, 
+        pk=class_pk, 
+        created_by=request.user
+    )
+    
+    query = request.GET.get('q', '').strip()
+    if not query or len(query) < 2:
+        return JsonResponse({'results': []})
+        
+    # Strictly scoped to school, and exclude already enrolled students
+    enrolled_ids = student_class.students.values_list('id', flat=True)
+    
+    # Filter by name or username
+    available = User.objects.filter(
+        role='student',
+        school=student_class.school
+    ).exclude(
+        id__in=enrolled_ids
+    ).filter(
+        Q(first_name__icontains=query) | 
+        Q(last_name__icontains=query) | 
+        Q(username__icontains=query)
+    ).order_by('first_name', 'last_name')[:20]  # Limit to 20 results for speed
+    
+    results = []
+    for student in available:
+        results.append({
+            'id': student.id,
+            'name': student.get_full_name() or student.username,
+            'username': student.username,
+            'initials': (student.first_name[:1] if student.first_name else student.username[:1]).upper()
+        })
+        
+    return JsonResponse({'results': results})
 
 
 @login_required

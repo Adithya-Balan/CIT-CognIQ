@@ -234,39 +234,26 @@
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             </div>
-            <form action="{% url 'class_add_students' student_class.pk %}" method="post">
+            
+            <div class="p-4 border-b border-gray-100 bg-white">
+                <input type="text" id="studentSearchInput" placeholder="Search students by name or username..." 
+                       class="w-full text-sm bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                <p class="text-xs text-gray-500 mt-2">Start typing to search your school's directory.</p>
+            </div>
+
+            <form id="addStudentsForm" action="{% url 'class_add_students' student_class.pk %}" method="post">
                 {% csrf_token %}
-                <div class="px-4 py-5 max-h-[60vh] overflow-y-auto custom-scrollbar">
-                    {% if available_students %}
-                        <div class="space-y-2">
-                            {% for student in available_students %}
-                            <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-200 cursor-pointer transition-colors group">
-                                <input type="checkbox" name="students" value="{{ student.id }}" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                                <div class="ml-3 flex items-center">
-                                    <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 mr-3">
-                                        {{ student.first_name|first|default:student.username|first|upper }}
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-bold text-gray-900 group-hover:text-blue-700">{{ student.get_full_name|default:student.username }}</p>
-                                        <p class="text-xs text-gray-500">@{{ student.username }}</p>
-                                    </div>
-                                </div>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="text-center py-8">
-                            <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                            <p class="mt-2 text-sm text-gray-500">All available students are already enrolled.</p>
-                        </div>
-                    {% endif %}
+                <div class="px-4 py-5 max-h-[50vh] overflow-y-auto custom-scrollbar bg-gray-50/30" id="studentSearchResults">
+                    <div class="text-center py-8 text-gray-400">
+                        <svg class="mx-auto h-10 w-10 opacity-50 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <p class="text-sm">Search to find students</p>
+                    </div>
                 </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    {% if available_students %}
-                    <button type="submit" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200">
+                    <button type="submit" id="addStudentsSubmitBtn" disabled class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none sm:ml-3 sm:w-auto sm:text-sm transition-all">
                         Add Selected
                     </button>
-                    {% endif %}
                     <button type="button" onclick="document.getElementById('addStudentsModal').classList.add('hidden')" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                         Cancel
                     </button>
@@ -327,4 +314,125 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('studentSearchInput');
+    const resultsContainer = document.getElementById('studentSearchResults');
+    const submitBtn = document.getElementById('addStudentsSubmitBtn');
+    let debounceTimer;
+
+    // Track selected students to keep them checked across searches
+    const selectedStudents = new Set();
+
+    function updateSubmitButton() {
+        submitBtn.disabled = selectedStudents.size === 0;
+        submitBtn.textContent = selectedStudents.size > 0 ? `Add Selected (${selectedStudents.size})` : 'Add Selected';
+    }
+
+    function renderResults(results) {
+        if (!results || results.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="text-center py-8 text-gray-400">
+                    <svg class="mx-auto h-10 w-10 opacity-50 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <p class="text-sm">No available students found.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '<div class="space-y-2">';
+        results.forEach(student => {
+            const isChecked = selectedStudents.has(student.id.toString());
+            html += `
+                <label class="flex items-center p-3 rounded-lg border ${isChecked ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-200'} cursor-pointer transition-colors group">
+                    <input type="checkbox" name="students" value="${student.id}" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 student-checkbox" ${isChecked ? 'checked' : ''}>
+                    <div class="ml-3 flex items-center">
+                        <div class="h-8 w-8 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-xs font-bold text-gray-700 shadow-sm mr-3">
+                            ${student.initials}
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-900 group-hover:text-blue-700">${student.name}</p>
+                            <p class="text-xs text-gray-500">@${student.username}</p>
+                        </div>
+                    </div>
+                </label>
+            `;
+        });
+        html += '</div>';
+        resultsContainer.innerHTML = html;
+
+        // Re-attach event listeners to new checkboxes
+        document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const label = this.closest('label');
+                if (this.checked) {
+                    selectedStudents.add(this.value);
+                    label.classList.add('bg-blue-50', 'border-blue-300');
+                    label.classList.remove('bg-white', 'border-gray-200');
+                } else {
+                    selectedStudents.delete(this.value);
+                    label.classList.remove('bg-blue-50', 'border-blue-300');
+                    label.classList.add('bg-white', 'border-gray-200');
+                }
+                updateSubmitButton();
+            });
+        });
+    }
+
+    searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        
+        clearTimeout(debounceTimer);
+        
+        if (query.length < 2) {
+            resultsContainer.innerHTML = `
+                <div class="text-center py-8 text-gray-400">
+                    <svg class="mx-auto h-10 w-10 opacity-50 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <p class="text-sm">Type at least 2 characters to search</p>
+                </div>
+            `;
+            return;
+        }
+
+        resultsContainer.innerHTML = `
+            <div class="flex justify-center items-center py-12">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+        `;
+
+        debounceTimer = setTimeout(() => {
+            fetch(`{% url 'search_students_for_class' student_class.pk %}?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderResults(data.results);
+                })
+                .catch(error => {
+                    console.error('Error fetching students:', error);
+                    resultsContainer.innerHTML = `
+                        <div class="text-center py-8 text-red-400">
+                            <p class="text-sm font-medium">Error loading results. Please try again.</p>
+                        </div>
+                    `;
+                });
+        }, 300);
+    });
+
+    // Make sure hidden inputs exist for all selected students upon form submit
+    const form = document.getElementById('addStudentsForm');
+    form.addEventListener('submit', function(e) {
+        // Remove existing checkboxes to avoid duplicates from DOM and Set
+        document.querySelectorAll('.student-checkbox').forEach(cb => cb.remove());
+        
+        // Append hidden inputs for all selected IDs
+        selectedStudents.forEach(id => {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'students';
+            hiddenInput.value = id;
+            form.appendChild(hiddenInput);
+        });
+    });
+});
+</script>
 {% endblock %}

@@ -78,6 +78,7 @@ urlpatterns = [
     path('classes/<int:class_pk>/', views.class_detail, name='class_detail'),
     path('classes/<int:class_pk>/edit/', views.class_update, name='class_update'),
     path('classes/<int:class_pk>/delete/', views.class_delete, name='class_delete'),
+    path('classes/<int:class_pk>/search-students/', views.search_students_for_class, name='search_students_for_class'),
     path('classes/<int:class_pk>/add-students/', views.class_add_students, name='class_add_students'),
     path('classes/<int:class_pk>/remove-student/<int:student_id>/', views.class_remove_student, name='class_remove_student'),
     path('classes/<int:class_pk>/assign-exam/', views.class_assign_exam, name='class_assign_exam'),
