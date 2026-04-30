@@ -135,7 +135,7 @@
             </div>
 
             <!-- Exam Hierarchy Display -->
-            {% if page_obj %}
+            {% if page_obj and page_obj.paginator.count > 0 %}
             <div class="space-y-8">
                 {% for exam_data in page_obj %}
                 <!-- Exam Card -->
@@ -179,7 +179,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100 self-start md:self-auto">
+                        <div class="flex items-center justify-between sm:justify-start gap-3 bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100 w-full sm:w-auto self-stretch sm:self-start md:self-auto">
                              <div class="text-right">
                                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Avg Score</p>
                                 <p class="text-xl font-black text-slate-900">{{ exam_data.exam_avg }}%</p>
@@ -219,9 +219,9 @@
                             <div class="divide-y divide-slate-50">
                                 {% for student_response in class_data.student_responses %}
                                 <details class="group bg-white open:bg-slate-50/50 transition-colors duration-200">
-                                    <summary class="list-none w-full px-4 sm:px-6 py-4 cursor-pointer hover:bg-slate-50 transition-colors flex items-center justify-between outline-none">
+                                    <summary class="list-none w-full px-4 sm:px-6 py-4 cursor-pointer hover:bg-slate-50 transition-colors flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 outline-none">
                                         <!-- Student Info -->
-                                        <div class="flex items-center gap-3 sm:gap-4 overflow-hidden">
+                                        <div class="flex items-center gap-3 sm:gap-4 overflow-hidden w-full sm:w-auto">
                                             <div class="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center text-indigo-700 text-xs sm:text-sm font-bold border border-indigo-200/50 shadow-sm">
                                                 {{ student_response.student.first_name|first|default:student_response.student.username|first|upper }}
                                             </div>
@@ -239,7 +239,7 @@
                                         </div>
 
                                         <!-- Summary Stats -->
-                                        <div class="flex items-center gap-4 sm:gap-10 flex-shrink-0">
+                                        <div class="flex items-center justify-between sm:justify-end gap-4 sm:gap-10 w-full sm:w-auto border-t border-slate-100 pt-3 sm:border-0 sm:pt-0">
                                             <div class="block text-right">
                                                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Best</p>
                                                 <p class="text-sm font-bold text-emerald-600">{{ student_response.best_percentage }}%</p>
@@ -427,27 +427,46 @@
                 </div>
             </div>
             {% endif %}
+            {% else %}
+                <!-- Empty State (No responses) -->
+                <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-12 text-center">
+                    <div class="w-20 h-20 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-6 transform rotate-3">
+                        <svg class="w-10 h-10 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">No Responses yet</h3>
+                    <p class="text-slate-500 mb-8 max-w-md mx-auto">It looks like no students have submitted exams yet, or your current filters match no records.</p>
+                    <div class="flex justify-center gap-3">
+                         <a href="{% url 'teacher_exam_responses' %}" class="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors">
+                            Clear Filters
+                        </a>
+                        <a href="{% url 'exam_list' %}" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all">
+                            View Exams
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
 
         {% else %}
-            <!-- Empty State -->
+            <!-- Empty State (No classes) -->
             <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-12 text-center">
                 <div class="w-20 h-20 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-6 transform rotate-3">
                     <svg class="w-10 h-10 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6" />
                     </svg>
                 </div>
-                <h3 class="text-xl font-bold text-slate-900 mb-2">No Responses yet</h3>
-                <p class="text-slate-500 mb-8 max-w-md mx-auto">It looks like no students have submitted exams yet, or your current filters match no records.</p>
+                <h3 class="text-xl font-bold text-slate-900 mb-2">No Classes yet</h3>
+                <p class="text-slate-500 mb-8 max-w-md mx-auto">Create your first class to start collecting exam responses and insights.</p>
                 <div class="flex justify-center gap-3">
-                     <a href="{% url 'teacher_exam_responses' %}" class="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors">
-                        Clear Filters
+                    <a href="{% url 'class_create' %}" class="text-xs px-4 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all">
+                        Create Class
                     </a>
-                    <a href="{% url 'exam_list' %}" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all">
+                    <a href="{% url 'exam_list' %}" class="text-xs px-4 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors">
                         View Exams
                     </a>
                 </div>
             </div>
-        {% endif %}
         {% endif %}
         
     </div>

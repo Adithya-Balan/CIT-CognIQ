@@ -1307,6 +1307,9 @@
   .self-start {
     align-self: flex-start;
   }
+  .self-stretch {
+    align-self: stretch;
+  }
   .truncate {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -5383,6 +5386,11 @@
       justify-content: flex-end;
     }
   }
+  .sm\:justify-start {
+    @media (width >= 40rem) {
+      justify-content: flex-start;
+    }
+  }
   .sm\:gap-0 {
     @media (width >= 40rem) {
       gap: calc(var(--spacing) * 0);
@@ -5458,6 +5466,11 @@
       }
     }
   }
+  .sm\:self-start {
+    @media (width >= 40rem) {
+      align-self: flex-start;
+    }
+  }
   .sm\:truncate {
     @media (width >= 40rem) {
       overflow: hidden;
@@ -5497,6 +5510,12 @@
     @media (width >= 40rem) {
       border-top-right-radius: 0;
       border-bottom-right-radius: 0;
+    }
+  }
+  .sm\:border-0 {
+    @media (width >= 40rem) {
+      border-style: var(--tw-border-style);
+      border-width: 0px;
     }
   }
   .sm\:p-0 {
@@ -5612,6 +5631,11 @@
   .sm\:py-12 {
     @media (width >= 40rem) {
       padding-block: calc(var(--spacing) * 12);
+    }
+  }
+  .sm\:pt-0 {
+    @media (width >= 40rem) {
+      padding-top: calc(var(--spacing) * 0);
     }
   }
   .sm\:pt-4 {
