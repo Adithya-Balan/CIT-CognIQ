@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Manage Teachers — {{ school.name }} | Evalora{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+
+  <!-- Header -->
+  <div class="bg-slate-900 text-white py-8 px-6">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <a href="{% url 'school_admin_dashboard' %}" class="text-indigo-400 hover:text-indigo-300 text-sm font-medium inline-flex items-center gap-1 mb-2">
+          ← Back to Dashboard
+        </a>
+        <h1 class="text-2xl font-extrabold">Manage Teachers</h1>
+        <p class="text-slate-400 text-sm mt-1">{{ school.name }} &mdash; <span class="font-mono text-indigo-300">{{ school.code }}</span></p>
+      </div>
+      <a href="{% url 'school_admin_create_teacher' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-indigo-900/40">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Create Teacher
+      </a>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- Search -->
+    <form method="get" class="mb-6">
+      <div class="flex gap-3">
+        <input type="text" name="q" value="{{ search }}" placeholder="Search by name or username…"
+          class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm">
+        <button type="submit" class="px-5 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-500 transition-all">Search</button>
+        {% if search %}<a href="{% url 'school_admin_manage_teachers' %}" class="px-5 py-3 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition-all">Clear</a>{% endif %}
+      </div>
+    </form>
+
+    <!-- Table -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+        <h2 class="font-bold text-gray-900">All Teachers <span class="ml-2 text-sm font-normal text-gray-400">({{ teachers.count }})</span></h2>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider">
+            <tr>
+              <th class="text-left px-6 py-3 font-semibold">Teacher</th>
+              <th class="text-left px-6 py-3 font-semibold">Username</th>
+              <th class="text-left px-6 py-3 font-semibold">Email</th>
+              <th class="text-left px-6 py-3 font-semibold">Joined</th>
+              <th class="text-left px-6 py-3 font-semibold">Status</th>
+              <th class="text-left px-6 py-3 font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            {% for teacher in teachers %}
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="h-9 w-9 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+                    <span class="font-bold text-indigo-700 text-xs">{{ teacher.first_name|first|upper }}{{ teacher.last_name|first|upper }}</span>
+                  </div>
+                  <span class="font-semibold text-gray-900">{{ teacher.get_full_name }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 font-mono text-gray-600 text-xs">@{{ teacher.username }}</td>
+              <td class="px-6 py-4 text-gray-500">{{ teacher.email|default:"—" }}</td>
+              <td class="px-6 py-4 text-gray-400 text-xs">{{ teacher.date_joined|date:"M d, Y" }}</td>
+              <td class="px-6 py-4">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
+                  {% if teacher.is_active %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                  {% if teacher.is_active %}● Active{% else %}● Inactive{% endif %}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-2">
+                  <a href="{% url 'school_admin_reset_user_password' teacher.id %}"
+                     class="text-xs px-3 py-1.5 border border-gray-200 text-gray-600 rounded-lg hover:border-indigo-400 hover:text-indigo-600 transition-all font-medium">
+                    Reset Password
+                  </a>
+                  <form method="post" action="{% url 'school_admin_toggle_teacher' teacher.id %}">
+                    {% csrf_token %}
+                    <button type="submit"
+                      class="text-xs px-3 py-1.5 rounded-lg font-medium transition-all
+                        {% if teacher.is_active %}border border-red-200 text-red-600 hover:bg-red-50{% else %}border border-green-200 text-green-600 hover:bg-green-50{% endif %}">
+                      {% if teacher.is_active %}Deactivate{% else %}Activate{% endif %}
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="px-6 py-16 text-center">
+                <svg class="w-12 h-12 text-gray-200 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <p class="text-gray-500 font-medium">No teachers found.</p>
+                <a href="{% url 'school_admin_create_teacher' %}" class="mt-3 inline-block text-sm text-indigo-600 font-semibold hover:underline">Create the first teacher →</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

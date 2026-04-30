@@ -3,7 +3,134 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.urls import reverse
+from django.utils.text import slugify
 import math
+import re
+
+
+# ============================================================================
+# USERNAME GENERATION UTILITY
+# ============================================================================
+
+def generate_username(school_code, role_prefix, identifier):
+    """
+    Generate a structured, globally-unique username.
+    Format: <school_code>_<role_prefix>_<identifier>
+    Example: SPHS_TCH_001  or  SPHS_STU_10A_042
+    All lowercase, no spaces.
+    """
+    raw = f"{school_code}_{role_prefix}_{identifier}"
+    # Remove special characters except underscore, lowercase
+    username = re.sub(r'[^a-z0-9_]', '', raw.lower())
+    return username
+
+
+# ============================================================================
+# SCHOOL MODEL (Tenant Root)
+# ============================================================================
+
+class School(models.Model):
+    """
+    School Model — Multi-Tenant Root
+    
+    Every piece of data in the system (users, exams, classes, attempts)
+    is scoped to exactly one school. Schools are created by platform
+    superadmins only — there is no public school self-registration.
+    """
+    
+    name = models.CharField(
+        max_length=200,
+        verbose_name='School Name',
+        help_text='Full official name of the school'
+    )
+    
+    code = models.CharField(
+        max_length=20,
+        unique=True,
+        verbose_name='School Code',
+        help_text='Short unique code used in username generation (e.g., SPHS, STMH). Uppercase letters only.'
+    )
+    
+    slug = models.SlugField(
+        max_length=220,
+        unique=True,
+        blank=True,
+        verbose_name='URL Slug'
+    )
+    
+    address = models.TextField(
+        blank=True,
+        verbose_name='Address'
+    )
+    
+    phone = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name='Phone Number'
+    )
+    
+    email = models.EmailField(
+        blank=True,
+        null=True,
+        verbose_name='School Email'
+    )
+    
+    logo = models.ImageField(
+        upload_to='school_logos/',
+        blank=True,
+        null=True,
+        verbose_name='School Logo'
+    )
+    
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='Active',
+        help_text='Inactive schools are locked — no logins allowed'
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'School'
+        verbose_name_plural = 'Schools'
+        ordering = ['name']
+    
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        self.code = self.code.upper().strip()
+        super().save(*args, **kwargs)
+    
+    @property
+    def teacher_count(self):
+        return self.users.filter(role='teacher', is_active=True).count()
+    
+    @property
+    def student_count(self):
+        return self.users.filter(role='student', is_active=True).count()
+    
+    @property
+    def class_count(self):
+        return self.classes.filter(is_active=True).count()
+    
+    @property
+    def exam_count(self):
+        return self.exams.count()
+    
+    def get_next_teacher_number(self):
+        """Returns next sequential teacher number within this school"""
+        count = self.users.filter(role='teacher').count()
+        return str(count + 1).zfill(3)
+    
+    def get_next_student_number_for_class(self, class_name_prefix):
+        """Returns next sequential student number for a given class prefix"""
+        prefix_clean = re.sub(r'[^a-z0-9]', '', class_name_prefix.lower())[:4]
+        existing = self.users.filter(role='student', username__contains=f'_{prefix_clean}_').count()
+        return str(existing + 1).zfill(3)
 
 # Custom User Manager for Username-Based Authentication
 class UserManager(BaseUserManager):
@@ -12,10 +139,10 @@ class UserManager(BaseUserManager):
     for authentication.
     """
     
-    def create_user(self, username, first_name, last_name, role, email=None, password=None, **extra_fields):
+    def create_user(self, username, first_name, last_name, role, email=None, password=None, school=None, **extra_fields):
         """
         Create and save a regular user with the given username, name, and role.
-        Email is optional.
+        Email is optional. School is optional (can be assigned later for migration compat).
         """
         if not username:
             raise ValueError('The Username field must be set')
@@ -36,6 +163,7 @@ class UserManager(BaseUserManager):
             first_name=first_name,
             last_name=last_name,
             role=role,
+            school=school,
             **extra_fields
         )
         user.set_password(password)
@@ -84,6 +212,16 @@ class User(AbstractUser):
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, verbose_name='User Role')
     phone_number = models.CharField(max_length=15, blank=True, null=True, verbose_name='Phone Number')
     
+    # School FK — every non-superuser must belong to exactly one school
+    school = models.ForeignKey(
+        'School',
+        on_delete=models.CASCADE,
+        related_name='users',
+        null=True,       # nullable for migration: existing records + Django superusers
+        blank=True,
+        verbose_name='School'
+    )
+    
     # Username is primary identifier for authentication
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['first_name', 'last_name', 'role']
@@ -118,6 +256,15 @@ class User(AbstractUser):
     def is_admin_user(self):
         """Check if user is an admin (not Django superuser)"""
         return self.role == 'admin'
+    
+    @property
+    def is_school_admin(self):
+        """Check if user is a school-level admin (role='admin' and has a school)"""
+        return self.role == 'admin' and self.school_id is not None
+    
+    def get_school(self):
+        """Safe accessor for school — returns None for superusers"""
+        return self.school
 
 
 # ============================================================================
@@ -150,6 +297,14 @@ class StudentClass(models.Model):
     year = models.IntegerField(
         verbose_name='Academic Year',
         help_text='Year this class is active (e.g., 2025)'
+    )
+    
+    # School FK — classes are strictly scoped to one school
+    school = models.ForeignKey(
+        'School',
+        on_delete=models.CASCADE,
+        related_name='classes',
+        verbose_name='School'
     )
     
     created_by = models.ForeignKey(
@@ -197,7 +352,7 @@ class StudentClass(models.Model):
         verbose_name = 'Student Class'
         verbose_name_plural = 'Student Classes'
         ordering = ['-year', '-created_at']
-        unique_together = ['name', 'year', 'created_by']
+        unique_together = ['name', 'year', 'created_by', 'school']
     
     def __str__(self):
         return f"{self.name} ({self.year})"
@@ -283,6 +438,14 @@ class Exam(models.Model):
         default='practice_test',
         verbose_name='Exam Type',
         help_text='Practice & Test: Unlimited practice + One test attempt | Test: Single attempt only'
+    )
+    
+    # School FK — exams are strictly scoped to one school
+    school = models.ForeignKey(
+        'School',
+        on_delete=models.CASCADE,
+        related_name='exams',
+        verbose_name='School'
     )
     
     # Teacher Ownership

@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Register Your School - Evalora{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl mx-auto">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Register Your School</h1>
+            <p class="mt-4 text-lg text-slate-600">
+                Join Evalora and empower your teachers and students with a unified assessment platform.
+            </p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+            <div class="px-6 py-8 sm:p-10">
+                <form method="post" action="{% url 'register_school' %}">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
+                            <div class="flex">
+                                <div class="shrink-0">
+                                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-red-800">Please correct the errors below.</h3>
+                                    <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                                        {% for error in form.non_field_errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="space-y-8">
+                        <!-- School Details -->
+                        <div>
+                            <h3 class="text-lg leading-6 font-medium text-slate-900 mb-4 border-b pb-2">School Details</h3>
+                            <div>
+                                <label for="{{ form.school_name.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ form.school_name.label }}</label>
+                                {{ form.school_name }}
+                                {% if form.school_name.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.school_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Admin Details -->
+                        <div>
+                            <h3 class="text-lg leading-6 font-medium text-slate-900 mb-4 border-b pb-2">Administrator Account</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label for="{{ form.admin_first_name.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ form.admin_first_name.label }}</label>
+                                    {{ form.admin_first_name }}
+                                    {% if form.admin_first_name.errors %}
+                                        <p class="mt-1 text-sm text-red-600">{{ form.admin_first_name.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ form.admin_last_name.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ form.admin_last_name.label }}</label>
+                                    {{ form.admin_last_name }}
+                                    {% if form.admin_last_name.errors %}
+                                        <p class="mt-1 text-sm text-red-600">{{ form.admin_last_name.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label for="{{ form.admin_email.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ form.admin_email.label }}</label>
+                                    {{ form.admin_email }}
+                                    {% if form.admin_email.errors %}
+                                        <p class="mt-1 text-sm text-red-600">{{ form.admin_email.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ form.admin_phone.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ form.admin_phone.label }}</label>
+                                    {{ form.admin_phone }}
+                                    {% if form.admin_phone.errors %}
+                                        <p class="mt-1 text-sm text-red-600">{{ form.admin_phone.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ form.password.label }}</label>
+                                    {{ form.password }}
+                                    {% if form.password.help_text %}
+                                        <p class="mt-1 text-xs text-slate-500">{{ form.password.help_text }}</p>
+                                    {% endif %}
+                                    {% if form.password.errors %}
+                                        <p class="mt-1 text-sm text-red-600">{{ form.password.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ form.password_confirm.id_for_label }}" class="block text-sm font-medium text-slate-700 mb-1">{{ form.password_confirm.label }}</label>
+                                    {{ form.password_confirm }}
+                                    {% if form.password_confirm.errors %}
+                                        <p class="mt-1 text-sm text-red-600">{{ form.password_confirm.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-10">
+                        <button type="submit" class="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-sm text-lg font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                            Register School
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 text-center">
+                <p class="text-sm text-slate-600">
+                    Already have an account? <a href="{% url 'account_login' %}" class="font-medium text-indigo-600 hover:text-indigo-500">Log in</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

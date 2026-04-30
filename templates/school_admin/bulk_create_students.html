@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Bulk Create Students — {{ school.name }} | Evalora{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+  <div class="bg-slate-900 text-white py-8 px-6">
+    <div class="max-w-3xl mx-auto">
+      <a href="{% url 'school_admin_manage_students' %}" class="text-indigo-400 hover:text-indigo-300 text-sm font-medium inline-flex items-center gap-1 mb-2">← Back to Students</a>
+      <h1 class="text-2xl font-extrabold">Bulk Create Students</h1>
+      <p class="text-slate-400 text-sm mt-1">Upload a CSV or Excel file to create multiple student accounts at once for {{ school.name }}.</p>
+    </div>
+  </div>
+
+  <div class="max-w-3xl mx-auto px-6 py-8 space-y-6">
+
+    <!-- File Format Card -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <h2 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Required File Format
+      </h2>
+      <p class="text-sm text-gray-600 mb-4">Your CSV or Excel file must have the following columns. The first row must be a header row.</p>
+      <div class="overflow-x-auto rounded-xl border border-gray-100">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase">Column</th>
+              <th class="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase">Required</th>
+              <th class="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs uppercase">Notes</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            <tr>
+              <td class="px-4 py-3 font-mono text-xs text-sky-700 bg-sky-50">first_name</td>
+              <td class="px-4 py-3"><span class="text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded-full">Required</span></td>
+              <td class="px-4 py-3 text-xs text-gray-500">Student's first name</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-mono text-xs text-sky-700 bg-sky-50">last_name</td>
+              <td class="px-4 py-3"><span class="text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded-full">Required</span></td>
+              <td class="px-4 py-3 text-xs text-gray-500">Student's last name</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-mono text-xs text-sky-700 bg-sky-50">identifier</td>
+              <td class="px-4 py-3"><span class="text-xs bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded-full">Required</span></td>
+              <td class="px-4 py-3 text-xs text-gray-500">Roll number / class+number (e.g. <code class="bg-gray-100 px-1 rounded">10A-042</code>). Becomes part of username.</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-mono text-xs text-gray-500 bg-gray-50">password</td>
+              <td class="px-4 py-3"><span class="text-xs bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-full">Optional</span></td>
+              <td class="px-4 py-3 text-xs text-gray-500">Default: <code class="bg-gray-100 px-1 rounded">changeme123</code></td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 font-mono text-xs text-gray-500 bg-gray-50">email</td>
+              <td class="px-4 py-3"><span class="text-xs bg-gray-100 text-gray-500 font-semibold px-2 py-0.5 rounded-full">Optional</span></td>
+              <td class="px-4 py-3 text-xs text-gray-500">Student email address</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-xs text-gray-400 mt-3">
+        ⚡ Usernames are auto-generated as: <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded">{{ school.code|lower }}_stu_&lt;identifier&gt;</span>
+      </p>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-50">
+        <h2 class="font-bold text-gray-900">Upload File</h2>
+      </div>
+      <form method="post" enctype="multipart/form-data" class="p-6 space-y-5">
+        {% csrf_token %}
+
+        <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-sky-400 transition-colors">
+          <svg class="w-10 h-10 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+          <p class="text-sm text-gray-500 mb-3">Drop your CSV or Excel file here, or click to browse</p>
+          {{ form.file }}
+          {% if form.file.errors %}
+            <p class="text-red-500 text-xs mt-2">{{ form.file.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+        {% if form.non_field_errors %}
+          <div class="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+            <p class="text-red-600 text-sm">{{ form.non_field_errors.0 }}</p>
+          </div>
+        {% endif %}
+
+        <div class="flex items-center gap-3">
+          <button type="submit" class="px-6 py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-sky-200 text-sm">
+            Upload &amp; Create Students
+          </button>
+          <a href="{% url 'school_admin_manage_students' %}" class="px-6 py-3 text-sm font-semibold text-gray-600 hover:text-gray-900 border border-gray-200 rounded-xl hover:border-gray-300 transition-all">
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

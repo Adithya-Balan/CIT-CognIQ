@@ -7,9 +7,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
 from django.db.models import Q, Avg, Count, Sum, Max, Min
 from django.utils import timezone
-from allauth.account.views import SignupView
-from .forms import CustomSignupForm, ExamForm, QuestionForm, ChoiceForm, QuestionFormSet, ChoiceFormSet, ProfileUpdateForm
-from .models import User, Exam, Question, Choice, ExamAttempt, StudentAnswer, StudentClass
+from .forms import ExamForm, QuestionForm, ChoiceForm, QuestionFormSet, ChoiceFormSet, ProfileUpdateForm, TeacherCreationForm, StudentCreationForm, BulkStudentUploadForm
+from .models import User, Exam, Question, Choice, ExamAttempt, StudentAnswer, StudentClass, School
 
 
 # Home/Landing Page
@@ -24,15 +23,18 @@ def home(request):
 @login_required
 def dashboard(request):
     """
-    Role-based dashboard redirect aligned with Learning-Centric philosophy:
+    Role-based dashboard redirect:
     - Teachers: Content creators and performance analysts
     - Students: Active learners and self-evaluators
+    - School Admins: User/class management within their school
     """
     if request.user.is_teacher:
         return redirect('teacher_dashboard')
     elif request.user.is_student:
         return redirect('student_dashboard')
-    elif request.user.is_admin_user or request.user.is_superuser:
+    elif request.user.is_school_admin:
+        return redirect('school_admin_dashboard')
+    elif request.user.is_superuser:
         return redirect('/admin/')
     else:
         messages.error(request, 'Your account role is not configured properly. Please contact admin.')
@@ -202,32 +204,72 @@ def student_dashboard(request):
     return render(request, 'dashboard/student_dashboard.html', context)
 
 
-# Custom Signup View with role selection
-class CustomSignupView(SignupView):
-    """Custom signup view using our CustomSignupForm"""
-    form_class = CustomSignupForm
-    template_name = 'account/signup.html'
-    
-    def form_valid(self, form):
-        """Store user for later use in get_success_url"""
-        response = super().form_valid(form)
-        # Store the newly created user for get_success_url
-        self.user = self.request.user
-        return response
-    
-    def get_success_url(self):
-        """Role-based redirect after signup"""
-        # Use the stored user or fallback to request.user
-        user = getattr(self, 'user', self.request.user)
+# Signup disabled — public registration is not allowed
+def signup_disabled(request):
+    """Public self-registration is disabled. Accounts are created by school admins."""
+    messages.info(
+        request,
+        'Self-registration is disabled. '
+        'Teacher and student accounts are created by your school administrator. '
+        'Please contact your school admin to get access.'
+    )
+    return redirect('account_login')
+
+from django.contrib.auth import login
+from .forms import SchoolRegistrationForm
+
+def register_school(request):
+    """Public view to register a new school and its first admin"""
+    if request.user.is_authenticated:
+        return redirect('dashboard')
         
-        # Check if user is authenticated and has role
-        if user.is_authenticated and hasattr(user, 'role'):
-            if user.is_teacher:
-                return reverse('teacher_dashboard')
-            elif user.is_student:
-                return reverse('student_dashboard')
+    if request.method == 'POST':
+        form = SchoolRegistrationForm(request.POST)
+        if form.is_valid():
+            school_name = form.cleaned_data['school_name']
+            
+            # Generate a unique school code based on name
+            import re
+            base_code = re.sub(r'[^A-Z0-9]', '', school_name.upper())[:5]
+            if len(base_code) < 3:
+                base_code = 'SCHL'
+                
+            code = base_code
+            counter = 1
+            while School.objects.filter(code=code).exists():
+                code = f"{base_code}{counter}"
+                counter += 1
+                
+            # Create School
+            school = School.objects.create(
+                name=school_name,
+                code=code
+            )
+            
+            # Create Admin User
+            # username format: <school_code>_ADMIN
+            username = f"{code}_ADMIN"
+            admin_user = User.objects.create_user(
+                username=username,
+                email=form.cleaned_data['admin_email'],
+                password=form.cleaned_data['password'],
+                first_name=form.cleaned_data['admin_first_name'],
+                last_name=form.cleaned_data['admin_last_name'],
+                phone_number=form.cleaned_data['admin_phone'],
+                role='admin',
+                school=school,
+                is_staff=False,
+                is_superuser=False
+            )
+            
+            messages.success(request, f'School registered successfully! Welcome {admin_user.first_name}.')
+            login(request, admin_user)
+            return redirect('dashboard')
+    else:
+        form = SchoolRegistrationForm()
         
-        return reverse('dashboard')
+    return render(request, 'account/register_school.html', {'form': form, 'page_title': 'Register Your School'})
+
 
 
 # ============================================================================
@@ -247,52 +289,46 @@ class TeacherRequiredMixin(UserPassesTestMixin):
 
 class ExamListView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
     """
-    List all exams created by the logged-in teacher
-    
-    Philosophy: Teachers manage their own content
+    List all exams created by the logged-in teacher (school-scoped)
     """
     model = Exam
     template_name = 'exams/exam_list.html'
     context_object_name = 'exams'
-    paginate_by = None  # Disable pagination for subject grouping
-    
+    paginate_by = None
+
     def get_queryset(self):
-        return Exam.objects.filter(created_by=self.request.user).order_by('-created_at')
-    
+        # School-scoped: only exams belonging to the teacher's school
+        return Exam.objects.filter(
+            created_by=self.request.user,
+            school=self.request.user.school
+        ).order_by('-created_at')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'My Exams'
-        
-        # Get all exams for grouping
         all_exams = self.get_queryset()
         context['total_exams'] = all_exams.count()
         context['assigned_exams'] = all_exams.filter(assigned_classes__isnull=False).distinct().count()
-        
-        # Group exams by subject (same as student view)
         from collections import defaultdict
         exams_by_subject = defaultdict(list)
         for exam in all_exams:
             exams_by_subject[exam.subject].append(exam)
-        
-        # Sort subjects alphabetically and convert to list of tuples
         context['exams_by_subject'] = sorted(exams_by_subject.items(), key=lambda x: x[0])
-        
         return context
 
 
 class ExamDetailView(LoginRequiredMixin, TeacherRequiredMixin, DetailView):
-    """
-    View exam details with all questions and choices
-    
-    Philosophy: Transparent content review
-    """
+    """View exam details — school-scoped"""
     model = Exam
     template_name = 'exams/exam_detail.html'
     context_object_name = 'exam'
-    
+
     def get_queryset(self):
-        return Exam.objects.filter(created_by=self.request.user)
-    
+        return Exam.objects.filter(
+            created_by=self.request.user,
+            school=self.request.user.school
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['questions'] = self.object.questions.prefetch_related('choices').all()
@@ -301,23 +337,20 @@ class ExamDetailView(LoginRequiredMixin, TeacherRequiredMixin, DetailView):
 
 
 class ExamCreateView(LoginRequiredMixin, TeacherRequiredMixin, CreateView):
-    """
-    Create a new exam
-    
-    Philosophy: Teachers design time-bound, structured assessments
-    """
+    """Create a new exam — auto-assigns school from teacher."""
     model = Exam
     form_class = ExamForm
     template_name = 'exams/exam_form.html'
-    
+
     def form_valid(self, form):
         form.instance.created_by = self.request.user
+        form.instance.school = self.request.user.school  # school-scoped
         messages.success(self.request, f'Exam "{form.instance.title}" created successfully!')
         return super().form_valid(form)
-    
+
     def get_success_url(self):
         return reverse('exam_detail', kwargs={'pk': self.object.pk})
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Create New Exam'
@@ -326,25 +359,24 @@ class ExamCreateView(LoginRequiredMixin, TeacherRequiredMixin, CreateView):
 
 
 class ExamUpdateView(LoginRequiredMixin, TeacherRequiredMixin, UpdateView):
-    """
-    Update an existing exam
-    
-    Philosophy: Iterative content improvement
-    """
+    """Update an existing exam — school-scoped"""
     model = Exam
     form_class = ExamForm
     template_name = 'exams/exam_form.html'
-    
+
     def get_queryset(self):
-        return Exam.objects.filter(created_by=self.request.user)
-    
+        return Exam.objects.filter(
+            created_by=self.request.user,
+            school=self.request.user.school
+        )
+
     def form_valid(self, form):
         messages.success(self.request, f'Exam "{form.instance.title}" updated successfully!')
         return super().form_valid(form)
-    
+
     def get_success_url(self):
         return reverse('exam_detail', kwargs={'pk': self.object.pk})
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = f'Edit: {self.object.title}'
@@ -353,18 +385,17 @@ class ExamUpdateView(LoginRequiredMixin, TeacherRequiredMixin, UpdateView):
 
 
 class ExamDeleteView(LoginRequiredMixin, TeacherRequiredMixin, DeleteView):
-    """
-    Delete an exam
-    
-    Philosophy: Content control and management
-    """
+    """Delete an exam — school-scoped"""
     model = Exam
     template_name = 'exams/exam_confirm_delete.html'
     success_url = reverse_lazy('exam_list')
-    
+
     def get_queryset(self):
-        return Exam.objects.filter(created_by=self.request.user)
-    
+        return Exam.objects.filter(
+            created_by=self.request.user,
+            school=self.request.user.school
+        )
+
     def delete(self, request, *args, **kwargs):
         exam = self.get_object()
         messages.success(request, f'Exam "{exam.title}" deleted successfully!')
@@ -2045,6 +2076,11 @@ def student_analytics(request, student_id):
     
     student = get_object_or_404(User, pk=student_id, role='student')
     
+    # SCHOOL-SCOPED: teacher can only view students from their own school
+    if student.school != request.user.school:
+        messages.error(request, 'Access denied. You can only view students from your school.')
+        return redirect('analytics_dashboard')
+    
     # Filtering parameters
     selected_class_id = request.GET.get('class_id')
     selected_exam_id = request.GET.get('exam_id')
@@ -2294,7 +2330,8 @@ def class_create(request):
                 name=name,
                 description=description,
                 year=int(year),
-                created_by=request.user
+                created_by=request.user,
+                school=request.user.school   # SCHOOL-SCOPED
             )
             messages.success(request, f'Class "{student_class.name}" created successfully!')
             return redirect('class_detail', class_pk=student_class.pk)
@@ -2331,16 +2368,18 @@ def class_detail(request, class_pk):
     # Get assigned exams
     assigned_exams = student_class.assigned_exams.all()
     
-    # Get available students (not in this class yet)
+    # Get available students (not in this class yet) — SCHOOL-SCOPED
     available_students = User.objects.filter(
-        role='student'
+        role='student',
+        school=student_class.school   # Only students from same school
     ).exclude(
         id__in=students.values_list('id', flat=True)
     )
-    
-    # Get available exams (created by this teacher, not assigned to this class yet)
+
+    # Get available exams (created by this teacher, not assigned yet) — SCHOOL-SCOPED
     available_exams = Exam.objects.filter(
-        created_by=request.user
+        created_by=request.user,
+        school=student_class.school   # Only exams from same school
     ).exclude(
         id__in=assigned_exams.values_list('id', flat=True)
     )
@@ -2428,38 +2467,33 @@ def class_add_students(request, class_pk):
     if request.method == 'POST':
         student_ids = request.POST.getlist('students')
         if student_ids:
-            students = User.objects.filter(id__in=student_ids, role='student')
-            
-            # Check each student for existing class enrollment
+            # SCHOOL-SCOPED: only students from the same school can be added
+            students = User.objects.filter(
+                id__in=student_ids,
+                role='student',
+                school=student_class.school
+            )
             added_count = 0
             already_enrolled_students = []
-            
+
             for student in students:
-                # Check if student is already enrolled in any class
                 existing_class = student.student_classes.filter(is_active=True).first()
-                
                 if existing_class:
-                    # Student is already enrolled in another class
                     already_enrolled_students.append(
-                        f'{student.get_full_name() or student.email} (enrolled in {existing_class.name})'
+                        f'{student.get_full_name() or student.username} (enrolled in {existing_class.name})'
                     )
                 else:
-                    # Student can be added
                     student_class.students.add(student)
                     added_count += 1
-            
-            # Display appropriate messages
+
             if added_count > 0:
                 messages.success(request, f'{added_count} student(s) added to {student_class.name}')
-            
             if already_enrolled_students:
                 for student_info in already_enrolled_students:
                     messages.warning(request, f'{student_info} - Student is already enrolled in a class and cannot join multiple classes.')
         else:
             messages.warning(request, 'No students selected.')
-        
         return redirect('class_detail', class_pk=class_pk)
-    
     return redirect('class_detail', class_pk=class_pk)
 
 
@@ -2500,15 +2534,18 @@ def class_assign_exam(request, class_pk):
     if request.method == 'POST':
         exam_ids = request.POST.getlist('exams')
         if exam_ids:
-            exams = Exam.objects.filter(id__in=exam_ids, created_by=request.user)
+            # SCHOOL-SCOPED: only exams from same school can be assigned
+            exams = Exam.objects.filter(
+                id__in=exam_ids,
+                created_by=request.user,
+                school=student_class.school
+            )
             for exam in exams:
                 exam.assigned_classes.add(student_class)
-            messages.success(request, f'{len(exam_ids)} exam(s) assigned to {student_class.name}')
+            messages.success(request, f'{exams.count()} exam(s) assigned to {student_class.name}')
         else:
             messages.warning(request, 'No exams selected.')
-        
         return redirect('class_detail', class_pk=class_pk)
-    
     return redirect('class_detail', class_pk=class_pk)
 
 
@@ -2549,10 +2586,11 @@ def student_enrollment(request):
     # Get student's current classes
     enrolled_classes = request.user.student_classes.filter(is_active=True)
     
-    # Get available classes for enrollment (with self-enrollment enabled)
+    # Get available classes for enrollment (school-scoped + self-enrollment enabled)
     available_classes = StudentClass.objects.filter(
         is_active=True,
-        allow_self_enrollment=True
+        allow_self_enrollment=True,
+        school=request.user.school   # SCHOOL-SCOPED: only same-school classes
     ).exclude(
         students=request.user
     ).select_related('created_by')
@@ -2953,7 +2991,13 @@ def class_leaderboard(request, class_id):
     """
     student_class = get_object_or_404(StudentClass, pk=class_id)
     
-    # Verify access: Teachers can view any class, students only their own class
+    # SCHOOL-SCOPED: block cross-school leaderboard access
+    if request.user.is_authenticated and not request.user.is_superuser:
+        if student_class.school != request.user.school:
+            messages.error(request, 'Access denied. You cannot view leaderboards from another school.')
+            return redirect('dashboard')
+    
+    # Verify access: Teachers can view any class in their school, students only their own class
     if request.user.is_student:
         if not student_class.students.filter(id=request.user.id).exists():
             messages.error(request, 'You can only view the leaderboard for your own class.')
@@ -3596,3 +3640,399 @@ def teacher_retest_exam(request, attempt_pk):
     }
     
     return render(request, 'teacher/retest_confirmation.html', context)
+
+
+# ============================================================================
+# SCHOOL ADMIN VIEWS
+# All views below require role='admin' and a school FK.
+# These provide user management scoped strictly to one school.
+# ============================================================================
+
+def school_admin_required(view_func):
+    """Decorator: requires school admin role (role='admin' with a school)"""
+    @login_required
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_school_admin:
+            messages.error(request, 'Access denied. School administrators only.')
+            return redirect('dashboard')
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+@login_required
+def school_admin_dashboard(request):
+    """
+    School Admin Dashboard — overview of the school's data.
+    Strictly scoped to request.user.school.
+    """
+    if not request.user.is_school_admin:
+        messages.error(request, 'Access denied. School administrators only.')
+        return redirect('dashboard')
+
+    school = request.user.school
+
+    # Counts
+    teacher_count = User.objects.filter(school=school, role='teacher', is_active=True).count()
+    student_count = User.objects.filter(school=school, role='student', is_active=True).count()
+    class_count = StudentClass.objects.filter(school=school, is_active=True).count()
+    exam_count = Exam.objects.filter(school=school).count()
+    attempt_count = ExamAttempt.objects.filter(
+        student__school=school, is_completed=True
+    ).count()
+
+    # Recent teachers
+    recent_teachers = User.objects.filter(
+        school=school, role='teacher'
+    ).order_by('-date_joined')[:5]
+
+    # Recent students
+    recent_students = User.objects.filter(
+        school=school, role='student'
+    ).order_by('-date_joined')[:5]
+
+    context = {
+        'school': school,
+        'teacher_count': teacher_count,
+        'student_count': student_count,
+        'class_count': class_count,
+        'exam_count': exam_count,
+        'attempt_count': attempt_count,
+        'recent_teachers': recent_teachers,
+        'recent_students': recent_students,
+        'page_title': f'{school.name} — Admin Dashboard',
+    }
+    return render(request, 'school_admin/dashboard.html', context)
+
+
+@login_required
+def school_admin_manage_teachers(request):
+    """
+    List all teachers in the school. School admin can deactivate/reactivate teachers.
+    """
+    if not request.user.is_school_admin:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+
+    school = request.user.school
+    teachers = User.objects.filter(
+        school=school, role='teacher'
+    ).order_by('-date_joined')
+
+    search = request.GET.get('q', '').strip()
+    if search:
+        teachers = teachers.filter(
+            Q(first_name__icontains=search) |
+            Q(last_name__icontains=search) |
+            Q(username__icontains=search)
+        )
+
+    context = {
+        'school': school,
+        'teachers': teachers,
+        'search': search,
+        'page_title': 'Manage Teachers',
+    }
+    return render(request, 'school_admin/manage_teachers.html', context)
+
+
+@login_required
+def school_admin_create_teacher(request):
+    """
+    School admin creates a teacher account for their school.
+    Username is system-generated. No public registration.
+    """
+    if not request.user.is_school_admin:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+
+    school = request.user.school
+
+    if request.method == 'POST':
+        form = TeacherCreationForm(request.POST)
+        if form.is_valid():
+            teacher = form.save(school=school)
+            messages.success(
+                request,
+                f'Teacher account created: {teacher.get_full_name()} '
+                f'(Username: {teacher.username})'
+            )
+            return redirect('school_admin_manage_teachers')
+    else:
+        form = TeacherCreationForm()
+
+    context = {
+        'school': school,
+        'form': form,
+        'page_title': 'Create Teacher Account',
+    }
+    return render(request, 'school_admin/create_teacher.html', context)
+
+
+@login_required
+def school_admin_toggle_teacher(request, teacher_id):
+    """Activate or deactivate a teacher account within the school."""
+    if not request.user.is_school_admin:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+
+    school = request.user.school
+    teacher = get_object_or_404(User, pk=teacher_id, school=school, role='teacher')
+
+    if request.method == 'POST':
+        teacher.is_active = not teacher.is_active
+        teacher.save(update_fields=['is_active'])
+        status = 'activated' if teacher.is_active else 'deactivated'
+        messages.success(request, f'Teacher {teacher.get_full_name()} has been {status}.')
+
+    return redirect('school_admin_manage_teachers')
+
+
+@login_required
+def school_admin_manage_students(request):
+    """
+    List all students in the school with search and filter.
+    """
+    if not request.user.is_school_admin:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+
+    school = request.user.school
+    students = User.objects.filter(
+        school=school, role='student'
+    ).select_related('school').prefetch_related('student_classes').order_by('-date_joined')
+
+    search = request.GET.get('q', '').strip()
+    if search:
+        students = students.filter(
+            Q(first_name__icontains=search) |
+            Q(last_name__icontains=search) |
+            Q(username__icontains=search)
+        )
+
+    # Pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(students, 30)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'school': school,
+        'page_obj': page_obj,
+        'total_students': students.count(),
+        'search': search,
+        'page_title': 'Manage Students',
+    }
+    return render(request, 'school_admin/manage_students.html', context)
+
+
+@login_required
+def school_admin_create_student(request):
+    """
+    School admin creates a single student account.
+    """
+    if not request.user.is_school_admin:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+
+    school = request.user.school
+
+    if request.method == 'POST':
+        form = StudentCreationForm(request.POST)
+        if form.is_valid():
+            student = form.save(school=school)
+            messages.success(
+                request,
+                f'Student account created: {student.get_full_name()} '
+                f'(Username: {student.username})'
+            )
+            return redirect('school_admin_manage_students')
+    else:
+        form = StudentCreationForm()
+
+    context = {
+        'school': school,
+        'form': form,
+        'page_title': 'Create Student Account',
+    }
+    return render(request, 'school_admin/create_student.html', context)
+
+
+@login_required
+def school_admin_toggle_student(request, student_id):
+    """Activate or deactivate a student account within the school."""
+    if not request.user.is_school_admin:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+
+    school = request.user.school
+    student = get_object_or_404(User, pk=student_id, school=school, role='student')
+
+    if request.method == 'POST':
+        student.is_active = not student.is_active
+        student.save(update_fields=['is_active'])
+        status = 'activated' if student.is_active else 'deactivated'
+        messages.success(request, f'Student {student.get_full_name()} has been {status}.')
+
+    return redirect('school_admin_manage_students')
+
+
+@login_required
+def school_admin_bulk_create_students(request):
+    """
+    School admin bulk-creates students from a CSV/Excel file.
+    CSV columns: first_name, last_name, identifier, password (optional), email (optional)
+    """
+    if not request.user.is_school_admin:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+
+    school = request.user.school
+
+    if request.method == 'POST':
+        form = BulkStudentUploadForm(request.POST, request.FILES)
+        if form.is_valid():
+            uploaded_file = request.FILES['file']
+            filename = uploaded_file.name.lower()
+
+            created_count = 0
+            error_rows = []
+
+            try:
+                if filename.endswith('.csv'):
+                    import csv
+                    import io
+                    content = uploaded_file.read().decode('utf-8-sig')
+                    reader = csv.DictReader(io.StringIO(content))
+                    rows = list(reader)
+                elif filename.endswith(('.xlsx', '.xls')):
+                    from openpyxl import load_workbook
+                    wb = load_workbook(uploaded_file, read_only=True, data_only=True)
+                    ws = wb.active
+                    headers = [str(c.value).strip().lower() if c.value else '' for c in next(ws.iter_rows())]
+                    rows = []
+                    for row in ws.iter_rows(min_row=2, values_only=True):
+                        rows.append(dict(zip(headers, [str(v).strip() if v is not None else '' for v in row])))
+                    wb.close()
+                else:
+                    messages.error(request, 'Unsupported file format. Use .csv, .xlsx, or .xls')
+                    return redirect('school_admin_bulk_create_students')
+
+                with transaction.atomic():
+                    from .models import generate_username
+                    import re
+                    for i, row in enumerate(rows, start=2):
+                        first_name = row.get('first_name', '').strip()
+                        last_name = row.get('last_name', '').strip()
+                        identifier = row.get('identifier', '').strip()
+                        password = row.get('password', '').strip() or 'changeme123'
+                        email = row.get('email', '').strip() or None
+
+                        if not first_name or not last_name or not identifier:
+                            error_rows.append(f'Row {i}: missing first_name, last_name or identifier')
+                            continue
+
+                        # Generate username
+                        clean_id = re.sub(r'[^a-zA-Z0-9\-]', '', identifier)
+                        candidate = generate_username(school.code, 'stu', clean_id)
+                        base = candidate
+                        counter = 1
+                        while User.objects.filter(username=candidate).exists():
+                            candidate = f"{base}_{counter}"
+                            counter += 1
+
+                        user = User(
+                            username=candidate,
+                            first_name=first_name,
+                            last_name=last_name,
+                            email=email,
+                            role='student',
+                            school=school,
+                        )
+                        user.set_password(password)
+                        user.save()
+                        created_count += 1
+
+                if error_rows:
+                    for err in error_rows:
+                        messages.warning(request, err)
+
+                messages.success(
+                    request,
+                    f'Bulk upload complete: {created_count} student(s) created.'
+                )
+                return redirect('school_admin_manage_students')
+
+            except Exception as e:
+                messages.error(request, f'Error processing file: {str(e)}')
+    else:
+        form = BulkStudentUploadForm()
+
+    context = {
+        'school': school,
+        'form': form,
+        'page_title': 'Bulk Create Students',
+    }
+    return render(request, 'school_admin/bulk_create_students.html', context)
+
+
+@login_required
+def school_admin_classes_overview(request):
+    """
+    School admin view: overview of all classes in the school across all teachers.
+    """
+    if not request.user.is_school_admin:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+
+    school = request.user.school
+    classes = StudentClass.objects.filter(
+        school=school
+    ).select_related('created_by').prefetch_related('students', 'assigned_exams').order_by('-year', '-created_at')
+
+    context = {
+        'school': school,
+        'classes': classes,
+        'total_classes': classes.count(),
+        'active_classes': classes.filter(is_active=True).count(),
+        'page_title': 'All Classes',
+    }
+    return render(request, 'school_admin/classes_overview.html', context)
+
+
+@login_required
+def school_admin_reset_user_password(request, user_id):
+    """
+    School admin resets any user's password within their school.
+    """
+    if not request.user.is_school_admin:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+
+    school = request.user.school
+    target_user = get_object_or_404(User, pk=user_id, school=school)
+
+    if request.method == 'POST':
+        new_password = request.POST.get('new_password', '').strip()
+        confirm_password = request.POST.get('confirm_password', '').strip()
+
+        if len(new_password) < 6:
+            messages.error(request, 'Password must be at least 6 characters.')
+        elif new_password != confirm_password:
+            messages.error(request, 'Passwords do not match.')
+        else:
+            target_user.set_password(new_password)
+            target_user.save()
+            messages.success(
+                request,
+                f'Password reset for {target_user.get_full_name()} (@{target_user.username}).'
+            )
+            if target_user.role == 'teacher':
+                return redirect('school_admin_manage_teachers')
+            return redirect('school_admin_manage_students')
+
+    context = {
+        'school': school,
+        'target_user': target_user,
+        'page_title': f'Reset Password — {target_user.get_full_name()}',
+    }
+    return render(request, 'school_admin/reset_user_password.html', context)

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Classes Overview — {{ school.name }} | Evalora{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+  <div class="bg-slate-900 text-white py-8 px-6">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <a href="{% url 'school_admin_dashboard' %}" class="text-indigo-400 hover:text-indigo-300 text-sm font-medium inline-flex items-center gap-1 mb-2">← Dashboard</a>
+        <h1 class="text-2xl font-extrabold">All Classes</h1>
+        <p class="text-slate-400 text-sm mt-1">
+          {{ school.name }} &mdash;
+          <span class="text-purple-300 font-bold">{{ active_classes }}</span> active /
+          <span class="text-slate-400 font-bold">{{ total_classes }}</span> total
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-6 py-8">
+    {% if classes %}
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+      {% for class in classes %}
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden">
+        <!-- Card Header -->
+        <div class="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-gray-900">{{ class.name }}</h3>
+            <p class="text-xs text-gray-400 mt-0.5">Year {{ class.year }}</p>
+          </div>
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-full
+            {% if class.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
+            {% if class.is_active %}Active{% else %}Archived{% endif %}
+          </span>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="grid grid-cols-3 divide-x divide-gray-50">
+          <div class="px-4 py-3 text-center">
+            <p class="text-xl font-extrabold text-gray-900">{{ class.students.count }}</p>
+            <p class="text-xs text-gray-400">Students</p>
+          </div>
+          <div class="px-4 py-3 text-center">
+            <p class="text-xl font-extrabold text-gray-900">{{ class.assigned_exams.count }}</p>
+            <p class="text-xs text-gray-400">Exams</p>
+          </div>
+          <div class="px-4 py-3 text-center">
+            <p class="text-xl font-extrabold text-indigo-600">{{ class.year }}</p>
+            <p class="text-xs text-gray-400">Year</p>
+          </div>
+        </div>
+
+        <!-- Teacher -->
+        <div class="px-5 py-3 bg-gray-50 border-t border-gray-50 flex items-center gap-2">
+          <div class="h-7 w-7 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
+            <span class="text-xs font-bold text-indigo-700">{{ class.created_by.first_name|first|upper }}{{ class.created_by.last_name|first|upper }}</span>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500">Teacher</p>
+            <p class="text-xs font-semibold text-gray-800">{{ class.created_by.get_full_name }}</p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm py-20 text-center">
+      <svg class="w-14 h-14 text-gray-200 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+      </svg>
+      <p class="text-gray-500 font-medium">No classes yet.</p>
+      <p class="text-gray-400 text-sm mt-1">Teachers create classes from their dashboard.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

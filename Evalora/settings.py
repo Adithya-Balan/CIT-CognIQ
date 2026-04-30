@@ -165,7 +165,8 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'  # No email verification
 ACCOUNT_EMAIL_SUBJECT_PREFIX = ''  # No email features
 ACCOUNT_LOGOUT_ON_GET = False  # Require POST for logout (security)
 ACCOUNT_SESSION_REMEMBER = True  # Remember me by default
-ACCOUNT_FORMS = {'signup': 'myapp.forms.CustomSignupForm'}
+# Public signup is DISABLED — teachers and students are created by school admins only.
+# allauth signup URL is overridden in urls.py to redirect to login.
 LOGIN_REDIRECT_URL = '/dashboard/'  # Redirect after login
 ACCOUNT_LOGOUT_REDIRECT_URL = '/accounts/login/'
 LOGIN_URL = '/accounts/login/'

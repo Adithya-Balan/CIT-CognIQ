@@ -40,12 +40,23 @@
                             Dashboard
                         </a>
                         
+                        {% if user.is_school_admin %}
+                        <a href="{% url 'school_admin_dashboard' %}" class="text-sm font-medium text-amber-400 hover:text-amber-300 transition-colors duration-200 flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            Admin Panel
+                        </a>
+                        {% endif %}
+
                         <!-- User Dropdown -->
                         <div class="relative ml-4">
                             <button id="user-menu-btn" class="flex items-center gap-3 focus:outline-none group">
                                 <div class="text-right hidden lg:block">
                                     <p class="text-sm font-semibold text-white group-hover:text-indigo-300 transition-colors">{{ user.first_name|default:user.username }}</p>
+                                    {% if user.school %}
+                                    <p class="text-xs text-indigo-400 group-hover:text-indigo-200 transition-colors truncate max-w-[140px]">{{ user.school.name }}</p>
+                                    {% else %}
                                     <p class="text-xs text-gray-400 group-hover:text-indigo-200 transition-colors">View Profile</p>
+                                    {% endif %}
                                 </div>
                                 <div class="h-10 w-10 rounded-full bg-linear-to-r from-indigo-500 to-purple-500 p-0.5 shadow-sm">
                                     <div class="h-full w-full rounded-full bg-slate-800 flex items-center justify-center">
@@ -58,16 +69,24 @@
                             </button>
 
                             <!-- Dropdown Menu -->
-                            <div id="user-menu" class="hidden absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-2xl py-2 border border-gray-100 transform origin-top-right transition-all duration-200 z-50">
+                            <div id="user-menu" class="hidden absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-2xl py-2 border border-gray-100 transform origin-top-right transition-all duration-200 z-50">
                                 <div class="px-4 py-3 border-b border-gray-100">
                                     <p class="text-xs text-gray-500 uppercase tracking-wider font-bold">Signed in as</p>
-                                    <p class="text-sm font-medium text-gray-900 truncate">{{ user.username }}</p>
+                                    <p class="text-sm font-semibold text-gray-900 truncate">{{ user.username }}</p>
+                                    {% if user.school %}
+                                    <p class="text-xs text-indigo-600 font-medium mt-0.5 truncate">🏫 {{ user.school.name }}</p>
+                                    {% endif %}
                                 </div>
                                 <a href="{% url 'dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-colors">
                                     Dashboard
                                 </a>
+                                {% if user.is_school_admin %}
+                                <a href="{% url 'school_admin_dashboard' %}" class="block px-4 py-2 text-sm text-amber-700 font-medium hover:bg-amber-50 hover:text-amber-800 transition-colors">
+                                    ⚙️ Admin Panel
+                                </a>
+                                {% endif %}
                                 <a href="{% url 'profile_settings' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-colors">
-                                    Settings & Profile
+                                    Settings &amp; Profile
                                 </a>
                                 <div class="my-1 border-t border-gray-100"></div>
                                 <form method="post" action="{% url 'account_logout' %}" class="block">
@@ -80,11 +99,8 @@
                         </div>
                     {% else %}
                         <div class="flex items-center gap-4">
-                            <a href="{% url 'account_login' %}" class="text-sm font-medium text-gray-300 hover:text-white transition-colors duration-200">
+                            <a href="{% url 'account_login' %}" class="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-full hover:bg-indigo-500 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-200">
                                 Login
-                            </a>
-                            <a href="{% url 'account_signup' %}" class="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-full hover:bg-indigo-500 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-200">
-                                Get Started
                             </a>
                         </div>
                     {% endif %}
@@ -109,10 +125,17 @@
                         </div>
                         <div>
                             <p class="text-sm font-bold text-white">{{ user.username }}</p>
+                            {% if user.school %}
+                            <p class="text-xs text-indigo-400 font-medium">{{ user.school.name }}</p>
+                            {% else %}
                             <a href="{% url 'profile_settings' %}" class="text-xs text-slate-400">View Profile</a>
+                            {% endif %}
                         </div>
                     </div>
                     <a href="{% url 'dashboard' %}" class="block px-4 py-3 text-base font-medium text-gray-300 rounded-xl hover:bg-slate-800 hover:text-white transition-colors">Dashboard</a>
+                    {% if user.is_school_admin %}
+                    <a href="{% url 'school_admin_dashboard' %}" class="block px-4 py-3 text-base font-medium text-amber-400 rounded-xl hover:bg-slate-800 transition-colors">⚙️ Admin Panel</a>
+                    {% endif %}
                     <a href="{% url 'profile_settings' %}" class="block px-4 py-3 text-base font-medium text-gray-300 rounded-xl hover:bg-slate-800 hover:text-white transition-colors">Settings</a>
                     <div class="px-4 py-3">
                         <form method="post" action="{% url 'account_logout' %}" class="block">
@@ -123,8 +146,7 @@
                         </form>
                     </div>
                 {% else %}
-                    <a href="{% url 'account_login' %}" class="block px-4 py-3 text-base font-medium text-gray-300 rounded-xl hover:bg-slate-800 hover:text-white transition-colors">Login</a>
-                    <a href="{% url 'account_signup' %}" class="block px-4 py-3 text-base font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors mx-4 text-center">Get Started</a>
+                    <a href="{% url 'account_login' %}" class="block px-4 py-3 text-base font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors mx-4 text-center">Login</a>
                 {% endif %}
             </div>
         </div>
