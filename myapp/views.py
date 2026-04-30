@@ -2366,18 +2366,40 @@ def class_detail(request, class_pk):
         created_by=request.user
     )
     
-    # Get students in this class
-    students = student_class.students.all()
+    # Get students in this class with search & pagination
+    student_search = request.GET.get('sq', '').strip()
+    students_query = student_class.students.all()
+    if student_search:
+        students_query = students_query.filter(
+            Q(first_name__icontains=student_search) |
+            Q(last_name__icontains=student_search) |
+            Q(username__icontains=student_search)
+        )
+        
+    from django.core.paginator import Paginator
+    students_paginator = Paginator(students_query.order_by('first_name'), 20)
+    student_page_number = request.GET.get('spage')
+    students = students_paginator.get_page(student_page_number)
     
-    # Get assigned exams
-    assigned_exams = student_class.assigned_exams.all()
+    # Get assigned exams with search & pagination
+    exam_search = request.GET.get('eq', '').strip()
+    exams_query = student_class.assigned_exams.all()
+    if exam_search:
+        exams_query = exams_query.filter(
+            Q(title__icontains=exam_search) |
+            Q(subject__icontains=exam_search)
+        )
+        
+    exams_paginator = Paginator(exams_query.order_by('-created_at'), 15)
+    exam_page_number = request.GET.get('epage')
+    assigned_exams = exams_paginator.get_page(exam_page_number)
     
     # Get available students (not in this class yet) — SCHOOL-SCOPED
     available_students = User.objects.filter(
         role='student',
         school=student_class.school   # Only students from same school
     ).exclude(
-        id__in=students.values_list('id', flat=True)
+        id__in=student_class.students.all().values_list('id', flat=True)
     )
 
     # Get available exams (created by this teacher, not assigned yet) — SCHOOL-SCOPED
@@ -2385,13 +2407,17 @@ def class_detail(request, class_pk):
         created_by=request.user,
         school=student_class.school   # Only exams from same school
     ).exclude(
-        id__in=assigned_exams.values_list('id', flat=True)
+        id__in=student_class.assigned_exams.all().values_list('id', flat=True)
     )
     
     context = {
         'student_class': student_class,
         'students': students,
         'assigned_exams': assigned_exams,
+        'total_students': students_paginator.count,
+        'total_exams': exams_paginator.count,
+        'student_search': student_search,
+        'exam_search': exam_search,
         # We no longer pass all available_students to avoid large payloads.
         # They will be fetched via AJAX search instead.
         'available_exams': available_exams,

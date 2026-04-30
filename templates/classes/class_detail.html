@@ -127,9 +127,15 @@
                         + Add Student
                     </button>
                 </div>
-                <!-- Search bar placeholder for scalability -->
+                <!-- Student Search -->
                 <div class="px-4 py-2 bg-gray-50 border-b border-gray-100">
-                    <input type="text" placeholder="Search students..." class="w-full text-xs bg-white border border-gray-200 rounded-md px-3 py-2 text-gray-700 focus:outline-none focus:border-blue-500">
+                    <form method="get" action="#roster" id="roster" class="flex gap-2">
+                        <input type="hidden" name="epage" value="{{ assigned_exams.number|default:1 }}">
+                        {% if exam_search %}<input type="hidden" name="eq" value="{{ exam_search }}">{% endif %}
+                        <input type="text" name="sq" value="{{ student_search }}" placeholder="Search students..." class="w-full text-xs bg-white border border-gray-200 rounded-md px-3 py-2 text-gray-700 focus:outline-none focus:border-blue-500">
+                        <button type="submit" class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700">Search</button>
+                        {% if student_search %}<a href="?epage={{ assigned_exams.number|default:1 }}{% if exam_search %}&eq={{ exam_search }}{% endif %}#roster" class="text-xs bg-gray-200 text-gray-700 px-3 py-1.5 rounded-md hover:bg-gray-300">Clear</a>{% endif %}
+                    </form>
                 </div>
 
                 <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
@@ -163,10 +169,25 @@
                     {% else %}
                         <div class="flex flex-col items-center justify-center h-full text-gray-400 p-6">
                             <svg class="w-12 h-12 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                            <p class="text-sm">No students enrolled yet.</p>
+                            <p class="text-sm">{% if student_search %}No students match your search.{% else %}No students enrolled yet.{% endif %}</p>
                         </div>
                     {% endif %}
                 </div>
+                
+                <!-- Student Pagination -->
+                {% if students.has_other_pages %}
+                <div class="p-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between text-xs rounded-b-xl">
+                    <span class="text-gray-500">Page {{ students.number }} of {{ students.paginator.num_pages }}</span>
+                    <div class="flex gap-1">
+                        {% if students.has_previous %}
+                        <a href="?spage={{ students.previous_page_number }}&epage={{ assigned_exams.number|default:1 }}{% if student_search %}&sq={{ student_search }}{% endif %}{% if exam_search %}&eq={{ exam_search }}{% endif %}#roster" class="px-2 py-1 bg-white border border-gray-200 rounded text-gray-600 hover:text-blue-600 hover:border-blue-300">Prev</a>
+                        {% endif %}
+                        {% if students.has_next %}
+                        <a href="?spage={{ students.next_page_number }}&epage={{ assigned_exams.number|default:1 }}{% if student_search %}&sq={{ student_search }}{% endif %}{% if exam_search %}&eq={{ exam_search }}{% endif %}#roster" class="px-2 py-1 bg-white border border-gray-200 rounded text-gray-600 hover:text-blue-600 hover:border-blue-300">Next</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
 
             <!-- Exam Management -->
@@ -180,9 +201,15 @@
                         + Assign Exam
                     </button>
                 </div>
-                <!-- Search bar placeholder -->
+                <!-- Exam Search -->
                 <div class="px-4 py-2 bg-gray-50 border-b border-gray-100">
-                    <input type="text" placeholder="Search exams..." class="w-full text-xs bg-white border border-gray-200 rounded-md px-3 py-2 text-gray-700 focus:outline-none focus:border-purple-500">
+                    <form method="get" action="#exams" id="exams" class="flex gap-2">
+                        <input type="hidden" name="spage" value="{{ students.number|default:1 }}">
+                        {% if student_search %}<input type="hidden" name="sq" value="{{ student_search }}">{% endif %}
+                        <input type="text" name="eq" value="{{ exam_search }}" placeholder="Search exams..." class="w-full text-xs bg-white border border-gray-200 rounded-md px-3 py-2 text-gray-700 focus:outline-none focus:border-purple-500">
+                        <button type="submit" class="text-xs bg-purple-600 text-white px-3 py-1.5 rounded-md hover:bg-purple-700">Search</button>
+                        {% if exam_search %}<a href="?spage={{ students.number|default:1 }}{% if student_search %}&sq={{ student_search }}{% endif %}#exams" class="text-xs bg-gray-200 text-gray-700 px-3 py-1.5 rounded-md hover:bg-gray-300">Clear</a>{% endif %}
+                    </form>
                 </div>
 
                 <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
@@ -213,10 +240,25 @@
                     {% else %}
                         <div class="flex flex-col items-center justify-center h-full text-gray-400 p-6">
                             <svg class="w-12 h-12 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                            <p class="text-sm">No exams assigned.</p>
+                            <p class="text-sm">{% if exam_search %}No exams match your search.{% else %}No exams assigned.{% endif %}</p>
                         </div>
                     {% endif %}
                 </div>
+                
+                <!-- Exam Pagination -->
+                {% if assigned_exams.has_other_pages %}
+                <div class="p-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between text-xs rounded-b-xl">
+                    <span class="text-gray-500">Page {{ assigned_exams.number }} of {{ assigned_exams.paginator.num_pages }}</span>
+                    <div class="flex gap-1">
+                        {% if assigned_exams.has_previous %}
+                        <a href="?epage={{ assigned_exams.previous_page_number }}&spage={{ students.number|default:1 }}{% if exam_search %}&eq={{ exam_search }}{% endif %}{% if student_search %}&sq={{ student_search }}{% endif %}#exams" class="px-2 py-1 bg-white border border-gray-200 rounded text-gray-600 hover:text-purple-600 hover:border-purple-300">Prev</a>
+                        {% endif %}
+                        {% if assigned_exams.has_next %}
+                        <a href="?epage={{ assigned_exams.next_page_number }}&spage={{ students.number|default:1 }}{% if exam_search %}&eq={{ exam_search }}{% endif %}{% if student_search %}&sq={{ student_search }}{% endif %}#exams" class="px-2 py-1 bg-white border border-gray-200 rounded text-gray-600 hover:text-purple-600 hover:border-purple-300">Next</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
