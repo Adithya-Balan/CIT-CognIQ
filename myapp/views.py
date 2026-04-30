@@ -228,18 +228,22 @@ def register_school(request):
         if form.is_valid():
             school_name = form.cleaned_data['school_name']
             
-            # Generate a unique school code based on name
-            import re
-            base_code = re.sub(r'[^A-Z0-9]', '', school_name.upper())[:5]
-            if len(base_code) < 3:
-                base_code = 'SCHL'
-                
-            code = base_code
-            counter = 1
-            while School.objects.filter(code=code).exists():
-                code = f"{base_code}{counter}"
-                counter += 1
-                
+            # Generate a strict 6-character unique alphanumeric school code
+            import random
+            import string
+            
+            def get_random_code():
+                while True:
+                    # Generate 6 char uppercase alphanumeric
+                    chars = random.choices(string.ascii_uppercase + string.digits, k=6)
+                    code = ''.join(chars)
+                    # Enforce that it contains at least one letter and at least one digit
+                    if any(c.isdigit() for c in code) and any(c.isalpha() for c in code):
+                        if not School.objects.filter(code=code).exists():
+                            return code
+
+            code = get_random_code()
+            
             # Create School
             school = School.objects.create(
                 name=school_name,
@@ -263,7 +267,7 @@ def register_school(request):
             )
             
             messages.success(request, f'School registered successfully! Welcome {admin_user.first_name}.')
-            login(request, admin_user)
+            login(request, admin_user, backend='django.contrib.auth.backends.ModelBackend')
             return redirect('dashboard')
     else:
         form = SchoolRegistrationForm()

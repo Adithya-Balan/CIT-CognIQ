@@ -101,7 +101,7 @@ class School(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            self.slug = f"{slugify(self.name)}-{self.code.lower()}"
         self.code = self.code.upper().strip()
         super().save(*args, **kwargs)
     
