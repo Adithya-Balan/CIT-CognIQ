@@ -39,6 +39,10 @@
 
     <!-- Table -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+        <h2 class="font-bold text-gray-900">All Students <span class="ml-2 text-sm font-normal text-gray-400">({{ total_students }})</span></h2>
+      </div>
+
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead class="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider">
@@ -111,16 +115,31 @@
         </table>
       </div>
 
-      <!-- Pagination -->
+      <!-- Pagination Controls -->
       {% if page_obj.has_other_pages %}
-      <div class="px-6 py-4 border-t border-gray-50 flex items-center justify-between">
-        <p class="text-sm text-gray-500">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</p>
-        <div class="flex gap-2">
+      <div class="px-6 py-4 border-t border-gray-50 flex items-center justify-between bg-gray-50/50">
+        <div class="text-sm text-gray-500">
+          Showing <span class="font-medium text-gray-900">{{ page_obj.start_index }}</span> to <span class="font-medium text-gray-900">{{ page_obj.end_index }}</span> of <span class="font-medium text-gray-900">{{ total_students }}</span> students
+        </div>
+        <div class="flex items-center gap-2">
           {% if page_obj.has_previous %}
-            <a href="?{% if search %}q={{ search }}&{% endif %}page={{ page_obj.previous_page_number }}" class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:border-emerald-400 text-gray-600 hover:text-emerald-600 transition-all font-medium">← Prev</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-emerald-600 transition-colors shadow-sm">
+              Previous
+            </a>
+          {% else %}
+            <span class="px-3 py-1.5 text-sm font-medium border border-gray-100 bg-gray-50 rounded-lg text-gray-400 cursor-not-allowed">Previous</span>
           {% endif %}
+          
+          <span class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg shadow-sm">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+          </span>
+          
           {% if page_obj.has_next %}
-            <a href="?{% if search %}q={{ search }}&{% endif %}page={{ page_obj.next_page_number }}" class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:border-emerald-400 text-gray-600 hover:text-emerald-600 transition-all font-medium">Next →</a>
+            <a href="?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-emerald-600 transition-colors shadow-sm">
+              Next
+            </a>
+          {% else %}
+            <span class="px-3 py-1.5 text-sm font-medium border border-gray-100 bg-gray-50 rounded-lg text-gray-400 cursor-not-allowed">Next</span>
           {% endif %}
         </div>
       </div>
