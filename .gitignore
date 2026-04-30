@@ -1,0 +1,10 @@
+/uploads/
+/node_modules/
+/staticfiles/
+/notes_text.txt
+
+*.pyc
+__pycache__/
+*.log
+db.sqlite3
+media

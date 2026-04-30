@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50">
+    <!-- Dark Header Section -->
+    <div class="bg-[#0f172b] pt-6 pb-24 sm:pt-8 sm:pb-32 px-4 sm:px-6 lg:px-8 border-b border-indigo-900/50 relative overflow-hidden">
+        <!-- Background Gradients -->
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent pointer-events-none"></div>
+
+        <div class="max-w-7xl mx-auto relative z-10">
+            <!-- Breadcrumbs -->
+            <nav class="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-400 mb-4 sm:mb-6">
+                <a href="{% url 'student_dashboard' %}" class="hover:text-white transition-colors">Dashboard</a>
+                <span class="text-slate-600">/</span>
+                <a href="{% url 'student_exam_list' %}" class="hover:text-white transition-colors">Exams</a>
+                <span class="text-slate-600">/</span>
+                <span class="text-white">History</span>
+            </nav>
+
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                <div>
+                     <div class="flex items-center gap-3 mb-2">
+                        <span class="text-3xl">📜</span>
+                        <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight">My Exam History</h1>
+                    </div>
+                    <p class="text-lg text-slate-400 font-medium ml-1">
+                        Track your performance and learning progress across all exams.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-20 space-y-6 sm:space-y-8 pb-20">
+
+        <!-- Overall Statistics Grid (Moved to top) -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+             <!-- Exams Taken -->
+            <div class="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-slate-200 p-3 sm:p-5 hover:-translate-y-1 transition-transform duration-300">
+                <div class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Exams Taken</div>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="p-1.5 sm:p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                         <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    </div>
+                    <span class="text-xl sm:text-3xl font-black text-slate-900">{{ unique_exams }}</span>
+                </div>
+            </div>
+
+             <!-- Passed Exams -->
+            <div class="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-slate-200 p-3 sm:p-5 hover:-translate-y-1 transition-transform duration-300">
+                <div class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Passed Exams</div>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="p-1.5 sm:p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                         <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <span class="text-xl sm:text-3xl font-black text-slate-900">{{ passed_exams }}</span>
+                </div>
+            </div>
+
+             <!-- Average Score -->
+            <div class="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-slate-200 p-3 sm:p-5 hover:-translate-y-1 transition-transform duration-300">
+                <div class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Avg Score</div>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="p-1.5 sm:p-2 bg-purple-50 text-purple-600 rounded-lg">
+                         <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <span class="text-xl sm:text-3xl font-black text-slate-900">{{ avg_score }}%</span>
+                </div>
+            </div>
+            
+             <!-- Total Attempts -->
+            <div class="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-slate-200 p-3 sm:p-5 hover:-translate-y-1 transition-transform duration-300">
+                <div class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Attempts</div>
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="p-1.5 sm:p-2 bg-orange-50 text-orange-600 rounded-lg">
+                         <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <span class="text-xl sm:text-3xl font-black text-slate-900">{{ total_attempts }}</span>
+                </div>
+            </div>
+        </div>
+
+        {% if organized_exams %}
+            <div class="space-y-3 sm:space-y-6">
+                {% for exam_data in organized_exams %}
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-300">
+                    <!-- Main Card Body -->
+                    <div class="p-3 sm:p-6">
+                        <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-3 sm:gap-6">
+                            <!-- Left: Header Info -->
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1 sm:mb-2">
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 uppercase tracking-wide border border-slate-200">
+                                        {{ exam_data.exam.subject }}
+                                    </span>
+                                    {% if exam_data.passed %}
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 uppercase tracking-wide border border-emerald-100">
+                                        Passed
+                                    </span>
+                                    {% else %}
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 uppercase tracking-wide border border-rose-100">
+                                        Failed
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <h3 class="text-base sm:text-xl font-black text-slate-900 mb-1">{{ exam_data.exam.title }}</h3>
+                                <p class="text-[10px] sm:text-xs text-slate-500 font-medium">Last attempted: {{ exam_data.latest_attempt.submitted_at|date:"M d, Y" }}</p>
+                            </div>
+
+                            <!-- Right: Key Stats Grid -->
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-6 w-full lg:w-auto mt-1 lg:mt-0">
+                                <!-- Best Score -->
+                                <div class="text-center p-2 sm:p-3 rounded-lg bg-emerald-50/50 border border-emerald-100/50">
+                                    <div class="text-[10px] font-bold text-emerald-600/70 uppercase tracking-wider mb-0.5">Best Score</div>
+                                    <div class="text-sm sm:text-lg font-black text-emerald-700">{{ exam_data.best_attempt.percentage }}%</div>
+                                </div>
+                                <!-- Latest Score -->
+                                <div class="text-center p-2 sm:p-3 rounded-lg bg-slate-50 border border-slate-100">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Latest</div>
+                                    <div class="text-sm sm:text-lg font-black text-slate-900">{{ exam_data.latest_attempt.percentage }}%</div>
+                                </div>
+                                <!-- Time Taken -->
+                                <div class="text-center p-2 sm:p-3 rounded-lg bg-slate-50 border border-slate-100">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Time</div>
+                                    <div class="text-sm sm:text-lg font-black text-slate-700">{{ exam_data.latest_attempt.duration_taken }}m</div>
+                                </div>
+                                <!-- Questions -->
+                                <div class="text-center p-2 sm:p-3 rounded-lg bg-slate-50 border border-slate-100">
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Questions</div>
+                                    <div class="text-sm sm:text-lg font-black text-slate-700">{{ exam_data.exam.question_count }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                         <!-- Actions Footer -->
+                         <div class="flex items-center justify-between mt-3 sm:mt-6 pt-3 sm:pt-4 border-t border-slate-100">
+                             <div class="text-[10px] sm:text-xs font-bold text-slate-400 hidden sm:block">
+                                 Total Attempts: <span class="text-slate-700">{{ exam_data.total_attempts }}</span>
+                             </div>
+                             
+                             <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                                {% if exam_data.total_attempts > 1 %}
+                                <button onclick="toggleHistory('exam-{{ exam_data.exam.id }}')" class="flex-1 sm:flex-none inline-flex justify-center items-center px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold text-[10px] sm:text-xs rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-colors">
+                                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5 sm:mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    History ({{ exam_data.total_attempts }})
+                                </button>
+                                {% endif %}
+                                <a href="{% url 'exam_results' exam_data.latest_attempt.pk %}" class="flex-1 sm:flex-none inline-flex justify-center items-center px-4 py-2 bg-indigo-600 text-white font-bold text-[10px] sm:text-xs rounded-lg hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition-colors">
+                                    View Results
+                                    <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1.5 sm:ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                </a>
+                             </div>
+                         </div>
+                    </div>
+
+                    <!-- Expandable History Section -->
+                    {% if exam_data.total_attempts > 1 %}
+                    <div id="exam-{{ exam_data.exam.id }}" class="hidden border-t border-slate-100 bg-slate-50/50">
+                        
+                        <!-- Desktop Table View -->
+                        <div class="hidden sm:block overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 uppercase tracking-wider">
+                                        <th class="px-6 py-3 font-semibold">Attempt</th>
+                                        <th class="px-6 py-3 font-semibold">Date</th>
+                                        <th class="px-6 py-3 font-semibold text-center">Score</th>
+                                        <th class="px-6 py-3 font-semibold text-center">Percentage</th>
+                                        <th class="px-6 py-3 font-semibold text-center">Time</th>
+                                        <th class="px-6 py-3 font-semibold text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    {% for attempt in exam_data.attempts %}
+                                    <tr class="hover:bg-indigo-50/30 transition-colors group">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center gap-2">
+                                                {% if attempt.attempt_mode == 'test' %}
+                                                <span class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold bg-violet-600 text-white shadow-sm shadow-violet-200">
+                                                    T
+                                                </span>
+                                                <span class="px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 text-[10px] font-bold border border-violet-100">Test</span>
+                                                {% else %}
+                                                <span class="font-bold text-slate-700">#{{ forloop.revcounter }}</span>
+                                                {% endif %}
+                                                {% if attempt == exam_data.best_attempt %}
+                                                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-100 text-yellow-700 border border-yellow-200 uppercase tracking-wide">Best</span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm font-medium text-slate-600">
+                                            {{ attempt.submitted_at|date:"M d, Y - h:i A" }}
+                                        </td>
+                                        <td class="px-6 py-4 text-center font-bold text-slate-700">
+                                            {{ attempt.score|floatformat:0 }} / {{ attempt.total_marks }}
+                                        </td>
+                                        <td class="px-6 py-4 text-center">
+                                            <span class="inline-block font-black {% if attempt.passed %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                                                {{ attempt.percentage }}%
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-center text-sm font-medium text-slate-600">
+                                            {{ attempt.duration_taken }}m
+                                        </td>
+                                        <td class="px-6 py-4 text-right">
+                                            <a href="{% url 'exam_results' attempt.pk %}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline">View</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Mobile Card View -->
+                        <div class="sm:hidden p-4 space-y-3">
+                             {% for attempt in exam_data.attempts %}
+                            <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                                <div class="flex justify-between items-center mb-2">
+                                    <div class="flex items-center gap-2">
+                                        {% if attempt.attempt_mode == 'test' %}
+                                        <span class="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold bg-violet-600 text-white shadow-sm">
+                                            T
+                                        </span>
+                                        <span class="px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 text-[9px] font-bold border border-violet-100">Test</span>
+                                        {% else %}
+                                        <span class="text-xs font-bold text-slate-900">Attempt #{{ forloop.revcounter }}</span>
+                                        {% endif %}
+                                        {% if attempt == exam_data.best_attempt %}
+                                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-yellow-100 text-yellow-700 border border-yellow-200 uppercase">Best</span>
+                                        {% endif %}
+                                    </div>
+                                    <span class="text-[10px] font-bold text-slate-400">{{ attempt.submitted_at|date:"M d, Y" }}</span>
+                                </div>
+                                <div class="flex items-end justify-between">
+                                    <div>
+                                         <div class="flex items-baseline gap-1">
+                                             <span class="text-lg font-black text-slate-900">{{ attempt.score|floatformat:0 }}</span>
+                                             <span class="text-xs font-bold text-slate-400">/{{ attempt.total_marks }}</span>
+                                         </div>
+                                         <div class="flex items-center gap-1.5 mt-0.5">
+                                             <span class="text-[10px] font-bold {% if attempt.passed %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                                                {{ attempt.percentage }}%
+                                             </span>
+                                             <span class="text-[10px] text-slate-300">•</span>
+                                             <span class="text-[10px] font-medium text-slate-500">{{ attempt.duration_taken }}m</span>
+                                         </div>
+                                    </div>
+                                    <a href="{% url 'exam_results' attempt.pk %}" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded hover:bg-indigo-100 transition-colors">
+                                        View
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+        {% else %}
+            <!-- Empty State -->
+            <div class="bg-white rounded-xl shadow-lg border border-slate-200 p-12 text-center">
+                <div class="bg-indigo-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-10 h-10 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-2">No Exam History Yet</h3>
+                <p class="text-slate-500 mb-8 max-w-sm mx-auto">You haven't taken any exams yet. Start an exam to track your performance and see your history here.</p>
+                <a href="{% url 'student_exam_list' %}" class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">
+                    Browse Available Exams
+                </a>
+            </div>
+        {% endif %}
+
+        <!-- Back Link -->
+        {% if organized_exams %}
+        <div class="text-center pt-4">
+            <a href="{% url 'student_exam_list' %}" class="text-indigo-600 hover:text-indigo-800 text-sm font-bold hover:underline transition-all">
+                ← Back to Available Exams
+            </a>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<script>
+// Toggle attempt history visibility
+function toggleHistory(examId) {
+    const element = document.getElementById(examId);
+    if (element.classList.contains('hidden')) {
+        element.classList.remove('hidden');
+    } else {
+        element.classList.add('hidden');
+    }
+}
+</script>
+{% endblock %}

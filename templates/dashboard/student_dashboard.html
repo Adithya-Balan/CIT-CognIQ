@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Student Dashboard - Evalora{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50 pb-12">
+    <!-- Header Section with gradient background -->
+    <div class="bg-slate-900 pt-10 pb-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        <!-- Background decoration -->
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-slate-900 to-slate-900 pointer-events-none"></div>
+        <div class="absolute top-0 right-0 p-12 opacity-10 transform translate-x-1/2 -translate-y-1/2">
+            <svg class="w-96 h-96 text-indigo-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2.5-1.25L12 8.5l-2.5 1.25L12 11zm0 2.5l-5-2.5-5 2.5L12 22l10-8.5-5-2.5-5 2.5z"/></svg>
+        </div>
+        
+        <div class="max-w-7xl mx-auto relative z-10 text-center sm:text-left">
+            <h1 class="text-3xl font-bold text-white tracking-tight">Welcome, {{ user.first_name }}!</h1>
+            <p class="text-slate-400 mt-2 text-base font-medium max-w-2xl">Ready to learn something new today?</p>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 relative z-20 space-y-8">
+        
+        <!-- Stats Cards Component -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            <!-- Exams Taken -->
+            <div class="bg-white rounded-xl p-6 shadow-md border border-slate-100 flex flex-col justify-between h-32 relative overflow-hidden group">
+                <div class="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <svg class="w-24 h-24 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Exams Taken</h3>
+                    <div class="mt-2 text-3xl font-extrabold text-slate-900">{{ exams_taken }}</div>
+                </div>
+                <div class="mt-auto">
+                    <span class="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">Completed</span>
+                </div>
+            </div>
+
+            <!-- Available Exams -->
+            <div class="bg-white rounded-xl p-6 shadow-md border border-slate-100 flex flex-col justify-between h-32 relative overflow-hidden group">
+                <div class="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <svg class="w-24 h-24 text-purple-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Available</h3>
+                    <div class="mt-2 text-3xl font-extrabold text-slate-900">{{ available_exams }}</div>
+                </div>
+                <div class="mt-auto">
+                    <span class="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded">To Do</span>
+                </div>
+            </div>
+
+            <!-- Ranking -->
+            <div class="bg-white rounded-xl p-6 shadow-md border border-slate-100 flex flex-col justify-between h-32 relative overflow-hidden group">
+                <div class="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <svg class="w-24 h-24 text-yellow-600" fill="currentColor" viewBox="0 0 24 24"><path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider">My Rank</h3>
+                    <div class="mt-2 text-3xl font-extrabold text-slate-900 flex items-baseline gap-1">
+                        {% if student_ranking %}
+                            #{{ student_ranking }}
+                            {% if total_students_in_classes %}
+                                <span class="text-lg text-slate-400 font-normal">/ {{ total_students_in_classes }}</span>
+                            {% endif %}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="mt-auto">
+                    <span class="text-xs font-medium text-yellow-600 bg-yellow-50 px-2 py-1 rounded">Current Position</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Grid -->
+        <div>
+            <h2 class="text-lg font-bold text-slate-800 mb-4 px-1">Quick Actions</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                
+                <!-- Available Exams -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-lg hover:border-indigo-200 transition-all duration-300 flex flex-col items-start h-full group">
+                    <div class="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600 mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">Available Exams</h3>
+                    <p class="text-sm text-slate-500 mt-2 mb-6 leading-relaxed flex-grow">View and attempt exams assigned to you.</p>
+                    <a href="{% url 'student_exam_list' %}" class="w-full text-center bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white py-2.5 px-4 rounded-lg text-sm font-semibold transition-colors duration-200">
+                        Browse Exams
+                    </a>
+                </div>
+
+                <!-- My Progress -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-lg hover:border-teal-200 transition-all duration-300 flex flex-col items-start h-full group">
+                    <div class="w-12 h-12 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600 mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-teal-600 transition-colors">My Progress</h3>
+                    <p class="text-sm text-slate-500 mt-2 mb-6 leading-relaxed flex-grow">Track your improvement journey over time.</p>
+                    <a href="{% url 'student_progress_dashboard' %}" class="w-full text-center bg-teal-50 text-teal-700 hover:bg-teal-600 hover:text-white py-2.5 px-4 rounded-lg text-sm font-semibold transition-colors duration-200">
+                        View Progress
+                    </a>
+                </div>
+
+                <!-- My Results -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-lg hover:border-green-200 transition-all duration-300 flex flex-col items-start h-full group">
+                    <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center text-green-600 mb-4 group-hover:scale-110 transition-transform">
+                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-green-600 transition-colors">My Results</h3>
+                    <p class="text-sm text-slate-500 mt-2 mb-6 leading-relaxed flex-grow">Check your scores and feedback.</p>
+                    <a href="{% url 'attempt_history' %}" class="w-full text-center bg-green-50 text-green-700 hover:bg-green-600 hover:text-white py-2.5 px-4 rounded-lg text-sm font-semibold transition-colors duration-200">
+                        View Results
+                    </a>
+                </div>
+
+                <!-- My Classes -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-lg hover:border-blue-200 transition-all duration-300 flex flex-col items-start h-full group">
+                     <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition-transform">
+                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">My Classes</h3>
+                    <p class="text-sm text-slate-500 mt-2 mb-6 leading-relaxed flex-grow">Manage your class enrollments.</p>
+                    <a href="{% url 'student_enrollment' %}" class="w-full text-center bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white py-2.5 px-4 rounded-lg text-sm font-semibold transition-colors duration-200">
+                        Manage Classes
+                    </a>
+                </div>
+
+                <!-- Class Rankings -->
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-lg hover:border-yellow-200 transition-all duration-300 flex flex-col items-start h-full group">
+                     <div class="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center text-yellow-600 mb-4 group-hover:scale-110 transition-transform">
+                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900 group-hover:text-yellow-600 transition-colors">Class Rankings</h3>
+                    <p class="text-sm text-slate-500 mt-2 mb-6 leading-relaxed flex-grow">Compare your performance with peers.</p>
+                    <a href="{% url 'student_rankings' %}" class="w-full text-center bg-yellow-50 text-yellow-700 hover:bg-yellow-600 hover:text-white py-2.5 px-4 rounded-lg text-sm font-semibold transition-colors duration-200">
+                        View Leaderboard
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

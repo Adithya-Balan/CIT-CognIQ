@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex items-center space-x-3 mb-2">
+                <a href="{% url 'analytics_dashboard' %}" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                </a>
+                <h1 class="text-4xl font-bold text-gray-900">{{ student.get_full_name }}</h1>
+            </div>
+            <p class="text-lg text-gray-600">@{{ student.username }}</p>
+        </div>
+
+        <!-- Performance Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                <p class="text-sm text-gray-500 mb-1">Total Attempts</p>
+                <p class="text-3xl font-bold text-gray-900">{{ total_attempts }}</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+                <p class="text-sm text-gray-500 mb-1">Average Score</p>
+                <p class="text-3xl font-bold text-gray-900">{{ avg_score }}%</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
+                <p class="text-sm text-gray-500 mb-1">Pass Rate</p>
+                <p class="text-3xl font-bold text-gray-900">{{ pass_rate }}%</p>
+                <p class="text-xs text-gray-500 mt-1">{{ passed }}/{{ total_attempts }} passed</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+                <p class="text-sm text-gray-500 mb-1">Highest Score</p>
+                <p class="text-3xl font-bold text-gray-900">{{ highest_score }}%</p>
+                <p class="text-xs text-gray-500 mt-1">Lowest: {{ lowest_score }}%</p>
+            </div>
+        </div>
+
+        <!-- Subject-wise Performance -->
+        {% if subject_performance %}
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Subject-wise Performance</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for subject, data in subject_performance.items %}
+                <div class="p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
+                    <p class="text-sm text-gray-600 mb-1">{{ subject }}</p>
+                    <p class="text-3xl font-bold text-gray-900 mb-1">{{ data.avg }}%</p>
+                    <p class="text-xs text-gray-500">{{ data.total }} attempt{{ data.total|pluralize }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Attempt History -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4 md:mb-0">Exam History</h2>
+                
+                <!-- Filters -->
+                <div class="flex flex-wrap gap-3">
+                    <!-- Class Filter -->
+                    <select id="classFilter" onchange="applyFilters()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                        <option value="">All Classes</option>
+                        {% for class in teacher_classes %}
+                        <option value="{{ class.id }}" {% if selected_class.id == class.id %}selected{% endif %}>
+                            {{ class.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    
+                    <!-- Exam Filter -->
+                    <select id="examFilter" onchange="applyFilters()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                        <option value="">All Exams</option>
+                        {% for exam in class_exams %}
+                        <option value="{{ exam.id }}" {% if selected_exam.id == exam.id %}selected{% endif %}>
+                            {{ exam.title|truncatewords:5 }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    
+                    <!-- Date Range Filter -->
+                    <select id="dateRangeFilter" onchange="applyFilters()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                        <option value="all" {% if date_range == 'all' %}selected{% endif %}>All Time</option>
+                        <option value="week" {% if date_range == 'week' %}selected{% endif %}>Last 7 Days</option>
+                        <option value="month" {% if date_range == 'month' %}selected{% endif %}>Last 30 Days</option>
+                        <option value="year" {% if date_range == 'year' %}selected{% endif %}>Last Year</option>
+                    </select>
+                    
+                    <!-- Sort By -->
+                    <select id="sortBy" onchange="applyFilters()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                        <option value="recent" {% if sort_by == 'recent' %}selected{% endif %}>Most Recent</option>
+                        <option value="score_high" {% if sort_by == 'score_high' %}selected{% endif %}>Highest Score</option>
+                        <option value="score_low" {% if sort_by == 'score_low' %}selected{% endif %}>Lowest Score</option>
+                    </select>
+                </div>
+            </div>
+            
+            <script>
+                function applyFilters() {
+                    const classFilter = document.getElementById('classFilter').value;
+                    const examFilter = document.getElementById('examFilter').value;
+                    const dateRangeFilter = document.getElementById('dateRangeFilter').value;
+                    const sortBy = document.getElementById('sortBy').value;
+                    
+                    const params = new URLSearchParams();
+                    
+                    if (classFilter) params.set('class_id', classFilter);
+                    if (examFilter) params.set('exam_id', examFilter);
+                    params.set('date_range', dateRangeFilter);
+                    params.set('sort', sortBy);
+                    
+                    window.location.search = params.toString();
+                }
+            </script>
+            
+            {% if page_obj %}
+            <div class="space-y-4">
+                {% for attempt in page_obj %}
+                <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">{{ attempt.exam.title }}</h3>
+                            <p class="text-sm text-gray-600">{{ attempt.exam.subject }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-3xl font-bold text-gray-900">{{ attempt.percentage }}%</p>
+                            {% if attempt.passed %}
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 mt-1">
+                                Passed
+                            </span>
+                            {% else %}
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800 mt-1">
+                                Failed
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                            <p class="text-gray-500">Score</p>
+                            <p class="font-semibold text-gray-900">{{ attempt.total_marks }}/{{ attempt.exam.total_marks }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Duration</p>
+                            <p class="font-semibold text-gray-900">
+                                {% if attempt.duration_taken %}
+                                    {{ attempt.duration_taken }} min
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Submitted</p>
+                            <p class="font-semibold text-gray-900">{{ attempt.submitted_at|date:"M d, Y" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Time</p>
+                            <p class="font-semibold text-gray-900">{{ attempt.submitted_at|time:"H:i" }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-6">
+                <div class="flex flex-1 justify-between sm:hidden">
+                    {% if page_obj.has_previous %}
+                    <a href="?{% if selected_class %}class_id={{ selected_class.id }}&{% endif %}{% if selected_exam %}exam_id={{ selected_exam.id }}&{% endif %}date_range={{ date_range }}&sort={{ sort_by }}&page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Previous</a>
+                    {% else %}
+                    <span class="relative inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400 cursor-not-allowed">Previous</span>
+                    {% endif %}
+                    
+                    {% if page_obj.has_next %}
+                    <a href="?{% if selected_class %}class_id={{ selected_class.id }}&{% endif %}{% if selected_exam %}exam_id={{ selected_exam.id }}&{% endif %}date_range={{ date_range }}&sort={{ sort_by }}&page={{ page_obj.next_page_number }}" class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Next</a>
+                    {% else %}
+                    <span class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400 cursor-not-allowed">Next</span>
+                    {% endif %}
+                </div>
+                
+                <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Showing
+                            <span class="font-medium">{{ page_obj.start_index }}</span>
+                            to
+                            <span class="font-medium">{{ page_obj.end_index }}</span>
+                            of
+                            <span class="font-medium">{{ page_obj.paginator.count }}</span>
+                            attempts
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                            {% if page_obj.has_previous %}
+                            <a href="?{% if selected_class %}class_id={{ selected_class.id }}&{% endif %}{% if selected_exam %}exam_id={{ selected_exam.id }}&{% endif %}date_range={{ date_range }}&sort={{ sort_by }}&page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                <span class="sr-only">Previous</span>
+                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <span class="relative z-10 inline-flex items-center bg-indigo-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">{{ num }}</span>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <a href="?{% if selected_class %}class_id={{ selected_class.id }}&{% endif %}{% if selected_exam %}exam_id={{ selected_exam.id }}&{% endif %}date_range={{ date_range }}&sort={{ sort_by }}&page={{ num }}" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">{{ num }}</a>
+                            {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                            <a href="?{% if selected_class %}class_id={{ selected_class.id }}&{% endif %}{% if selected_exam %}exam_id={{ selected_exam.id }}&{% endif %}date_range={{ date_range }}&sort={{ sort_by }}&page={{ page_obj.next_page_number }}" class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                                <span class="sr-only">Next</span>
+                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <p class="text-gray-500 text-center py-8">No attempts recorded for this student in your exams.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

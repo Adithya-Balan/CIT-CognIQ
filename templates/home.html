@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% load static %}
+<h1 class="text-3xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight leading-tight">
+                    Welcome to <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Evalora</span>
+                </h1>
+{% block title %}Welcome to Evalora - Ignite Knowledge. Inspire Excellence.{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50 font-sans selection:bg-indigo-100 selection:text-indigo-800">
+    
+    <!-- Hero Section -->
+    <div class="relative overflow-hidden bg-white">
+        <div class="absolute inset-0 z-0 opacity-40">
+            <div class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        </div>
+        <div class="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-indigo-50/50 to-transparent pointer-events-none"></div>
+
+        <div class="relative z-10 container mx-auto px-4 pt-20 pb-24 lg:pt-32 lg:pb-40">
+            <div class="max-w-5xl mx-auto text-center">
+                <!-- Logo Animation -->
+                <div class="mb-10 flex justify-center animate-fade-in-up">
+                    <div class="relative group cursor-default">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full opacity-20 group-hover:opacity-40 blur-xl transition duration-500"></div>
+                        <img src="{% static 'assets/logo.png' %}" alt="Evalora Logo" class="relative h-48 w-auto md:h-56 lg:h-64 object-contain transition-transform duration-500 hover:scale-[1.02]">
+                    </div>
+                </div>
+                
+                <h1 class="text-3xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight leading-tight">
+                    Welcome to <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Evalora</span>
+                </h1>
+                
+                <p class="text-lg md:text-xl text-indigo-900/80 font-semibold mb-6">
+                    Ignite Knowledge. Inspire Excellence.
+                </p>
+                
+                <p class="text-lg md:text-xl text-slate-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+                    A holistic assessment platform where regular testing meets instant mastery. 
+                    Transform examinations into <strong class="text-indigo-600 font-bold decoration-indigo-200 underline decoration-2 underline-offset-4">learning milestones</strong>, not just ranking metrics.
+                </p>
+                
+                <!-- CTA Buttons -->
+                <div class="flex flex-col sm:flex-row gap-5 justify-center items-center">
+                    <a href="{% url 'account_signup' %}" class="w-full sm:w-auto px-8 py-4 bg-indigo-600 text-white rounded-xl text-lg font-bold hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 group">
+                        Get Started
+                        <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                    </a>
+                    <a href="{% url 'account_login' %}" class="w-full sm:w-auto px-8 py-4 bg-white text-slate-700 rounded-xl text-lg font-bold border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 active:scale-95 transition-all duration-200 shadow-sm hover:shadow">
+                        Login to Account
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Wave Separator -->
+        <div class="absolute bottom-0 left-0 right-0">
+             <svg class="w-full h-12 md:h-24 text-slate-50 fill-current" viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg">
+                <path fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,112C672,96,768,96,864,117.3C960,139,1056,181,1152,186.7C1248,192,1344,160,1392,144L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="py-16 md:py-24 bg-slate-50 relative z-10">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12 md:mb-16">
+                <h2 class="text-3xl md:text-4xl font-black text-slate-900">Empowering Education Ecosystem</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 max-w-7xl mx-auto">
+                <!-- Feature 1: Teachers -->
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-md border border-indigo-100 transition-transform duration-300 hover:-translate-y-1">
+                    <div class="w-14 h-14 bg-indigo-600 rounded-xl flex items-center justify-center text-3xl mb-6 shadow-indigo-200 shadow-lg">
+                        <span class="text-white">👨‍🏫</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-indigo-900 mb-4">For Teachers</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-3 text-slate-700 text-sm font-medium">
+                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Design comprehensive MCQ examinations
+                        </li>
+                        <li class="flex items-start gap-3 text-slate-700 text-sm font-medium">
+                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Add rich learning explanations
+                        </li>
+                        <li class="flex items-start gap-3 text-slate-700 text-sm font-medium">
+                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Real-time performance monitoring
+                        </li>
+                        <li class="flex items-start gap-3 text-slate-700 text-sm font-medium">
+                            <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Actionable analytics on weak areas
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Feature 2: Students -->
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-md border border-purple-100 transition-transform duration-300 hover:-translate-y-1">
+                    <div class="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center text-3xl mb-6 shadow-purple-200 shadow-lg">
+                        <span class="text-white">🎓</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-purple-900 mb-4">For Students</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-3 text-slate-700 text-sm font-medium">
+                            <svg class="w-5 h-5 text-purple-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Interactive exam interface
+                        </li>
+                        <li class="flex items-start gap-3 text-slate-700 text-sm font-medium">
+                            <svg class="w-5 h-5 text-purple-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Instant grade & detailed feedback
+                        </li>
+                        <li class="flex items-start gap-3 text-slate-700 text-sm font-medium">
+                            <svg class="w-5 h-5 text-purple-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Track progress over time
+                        </li>
+                        <li class="flex items-start gap-3 text-slate-700 text-sm font-medium">
+                            <svg class="w-5 h-5 text-purple-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Contextual class leaderboards
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Feature 3: System -->
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-md border border-amber-100 transition-transform duration-300 hover:-translate-y-1">
+                    <div class="w-14 h-14 bg-amber-500 rounded-xl flex items-center justify-center text-3xl mb-6 shadow-amber-200 shadow-lg">
+                        <span class="text-white">⚡</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-amber-700 mb-4">Platform Power</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-3 text-slate-700 text-sm font-medium">
+                            <svg class="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Automatic reliable evaluation
+                        </li>
+                        <li class="flex items-start gap-3 text-slate-700 text-sm font-medium">
+                            <svg class="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Google Form-style instant responses
+                        </li>
+                        <li class="flex items-start gap-3 text-slate-700 text-sm font-medium">
+                            <svg class="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Secure time-bound assessments
+                        </li>
+                        <li class="flex items-start gap-3 text-slate-700 text-sm font-medium">
+                            <svg class="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Explanation-first learning model
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Learning Philosophy Banner -->
+    <div class="relative py-20 bg-slate-900 overflow-hidden">
+        <!-- Background decorative elements -->
+        <div class="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-indigo-600 opacity-20 blur-3xl"></div>
+        <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-purple-600 opacity-20 blur-3xl"></div>
+
+        <div class="container mx-auto px-4 relative z-10 text-center">
+            <span class="inline-block px-4 py-1.5 rounded-full bg-indigo-500/20 text-indigo-300 text-sm font-semibold mb-6 border border-indigo-500/30">Our Philosophy</span>
+            <h2 class="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight">"Assessment is Learning"</h2>
+            <div class="max-w-3xl mx-auto">
+                <p class="text-lg md:text-xl text-slate-300 leading-relaxed font-light">
+                    Every exam is a learning event, not just a scoring event. We believe feedback must be immediate, 
+                    analytics must be actionable, and progress must be visible. 
+                    <span class="text-white font-medium">Transform mistakes into mastery instantly.</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5 Core Principles -->
+    <div class="py-24 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                 <h2 class="text-3xl font-bold text-slate-900">5 Learning-Centric Principles</h2>
+                 <div class="w-24 h-1 bg-indigo-600 mx-auto mt-4 rounded-full"></div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 max-w-7xl mx-auto">
+                <!-- P1 -->
+                <div class="flex flex-col items-center text-center">
+                    <div class="w-16 h-16 md:w-20 md:h-20 bg-white border-2 border-indigo-500 rounded-full flex items-center justify-center mb-6 shadow-sm ring-4 ring-indigo-50 relative">
+                        <span class="text-2xl font-black text-indigo-600">1</span>
+                        <div class="absolute -bottom-2 px-3 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase rounded-full border border-indigo-100">Teach</div>
+                    </div>
+                    <h4 class="font-bold text-slate-900 mb-2">Assessment Must Teach</h4>
+                    <p class="text-sm text-slate-600 leading-snug px-2">Every question comes with mandatory detailed explanations.</p>
+                </div>
+                <!-- P2 -->
+                <div class="flex flex-col items-center text-center">
+                    <div class="w-16 h-16 md:w-20 md:h-20 bg-white border-2 border-purple-500 rounded-full flex items-center justify-center mb-6 shadow-sm ring-4 ring-purple-50 relative">
+                        <span class="text-2xl font-black text-purple-600">2</span>
+                        <div class="absolute -bottom-2 px-3 py-1 bg-purple-50 text-purple-700 text-[10px] font-bold uppercase rounded-full border border-purple-100">Speed</div>
+                    </div>
+                    <h4 class="font-bold text-slate-900 mb-2">Feedback Must Be Immediate</h4>
+                    <p class="text-sm text-slate-600 leading-snug px-2">Instant results right after submission. No waiting.</p>
+                </div>
+                <!-- P3 -->
+                <div class="flex flex-col items-center text-center">
+                    <div class="w-16 h-16 md:w-20 md:h-20 bg-white border-2 border-amber-500 rounded-full flex items-center justify-center mb-6 shadow-sm ring-4 ring-amber-50 relative">
+                        <span class="text-2xl font-black text-amber-600">3</span>
+                        <div class="absolute -bottom-2 px-3 py-1 bg-amber-50 text-amber-700 text-[10px] font-bold uppercase rounded-full border border-amber-100">Data</div>
+                    </div>
+                    <h4 class="font-bold text-slate-900 mb-2">Data Must Be Meaningful</h4>
+                    <p class="text-sm text-slate-600 leading-snug px-2">Analytics that show exactly where to focus next.</p>
+                </div>
+                <!-- P4 -->
+                <div class="flex flex-col items-center text-center">
+                     <div class="w-16 h-16 md:w-20 md:h-20 bg-white border-2 border-pink-500 rounded-full flex items-center justify-center mb-6 shadow-sm ring-4 ring-pink-50 relative">
+                        <span class="text-2xl font-black text-pink-600">4</span>
+                        <div class="absolute -bottom-2 px-3 py-1 bg-pink-50 text-pink-700 text-[10px] font-bold uppercase rounded-full border border-pink-100">Rank</div>
+                    </div>
+                    <h4 class="font-bold text-slate-900 mb-2">Competition Must Be Healthy</h4>
+                    <p class="text-sm text-slate-600 leading-snug px-2">Contextual, class-based leaderboards that motivate.</p>
+                </div>
+                <!-- P5 -->
+                <div class="flex flex-col items-center text-center">
+                     <div class="w-16 h-16 md:w-20 md:h-20 bg-white border-2 border-emerald-500 rounded-full flex items-center justify-center mb-6 shadow-sm ring-4 ring-emerald-50 relative">
+                        <span class="text-2xl font-black text-emerald-600">5</span>
+                        <div class="absolute -bottom-2 px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase rounded-full border border-emerald-100">Growth</div>
+                    </div>
+                    <h4 class="font-bold text-slate-900 mb-2">Progress Must Be Visible</h4>
+                    <p class="text-sm text-slate-600 leading-snug px-2">Clear visualization of improvement over time.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

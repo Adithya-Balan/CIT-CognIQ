@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 pb-24">
+    <!-- Dark Header Section -->
+    <div class="bg-[#0f172b] pt-12 pb-32 px-4 sm:px-6 lg:px-8 border-b border-gray-800">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex items-center justify-between mb-6">
+                <!-- Back Button -->
+                <a href="{% url 'exam_detail' exam.pk %}" class="inline-flex items-center text-sm font-medium text-gray-400 hover:text-white transition-colors group">
+                    <svg class="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Back to Exam
+                </a>
+            </div>
+
+            <div class="md:flex md:items-center md:justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-white tracking-tight mb-2">Add Questions</h1>
+                    <p class="text-gray-400 text-lg">Adding to: <span class="text-indigo-400 font-semibold">{{ exam.title }}</span></p>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content - Overlapping Card -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 relative z-10">
+        
+        <!-- Philosophy & Tips (Subtle Hint) -->
+        <div class="bg-gray-50 rounded-lg border border-gray-200 p-4 mb-8 flex items-start gap-3">
+            <div class="shrink-0 text-indigo-500 mt-0.5">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600 leading-relaxed">
+                    <span class="font-semibold text-gray-900">Make every question count.</span> 
+                    You can optionally provide explanations to help students learn. Ensure each question has 4 choices with exactly one correct answer.
+                </p>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form method="post" id="bulkQuestionForm" class="space-y-6">
+            {% csrf_token %}
+            <input type="hidden" name="num_questions" id="numQuestions" value="1">
+            <input type="hidden" name="submission_token" id="submissionToken" value="">
+            
+            <!-- Questions Container -->
+            <div id="questionsContainer" class="space-y-6">
+                <!-- Initial Question Template (will be cloned by JS) -->
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="sticky bottom-6 z-20">
+                <div class="bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-2xl border border-gray-200/50 flex items-center justify-between gap-4">
+                    <button type="button" id="addQuestionBtn" class="inline-flex items-center px-5 py-2.5 bg-white border border-gray-300 shadow-sm text-xs font-bold text-gray-700 rounded-lg hover:bg-gray-50 hover:text-indigo-600 transition-all focus:outline-none focus:ring-4 focus:ring-gray-100">
+                        <svg class="w-5 h-5 mr-2 text-gray-400 group-hover:text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Add Another Question
+                    </button>
+                    
+                    <div class="flex items-center gap-3">
+                        <a href="{% url 'exam_detail' exam.pk %}" class="hidden sm:inline-flex px-4 py-2.5 text-sm font-semibold text-gray-500 hover:text-gray-700 transition">
+                            Cancel
+                        </a>
+                        <button type="submit" id="submitBtn" class="inline-flex items-center px-6 py-2.5 bg-indigo-600 text-white text-xs font-bold rounded-lg shadow-md hover:bg-indigo-500 transition-all focus:outline-none focus:ring-4 focus:ring-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg class="w-5 h-5 mr-2" id="submitIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <svg class="w-5 h-5 mr-2 animate-spin hidden" id="loadingIcon" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span id="submitText">Save All Questions</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Question Template -->
+<template id="questionTemplate">
+    <div class="question-block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all hover:shadow-md group">
+        <!-- Card Header -->
+        <div class="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm">
+                    <span class="question-number">1</span>
+                </span>
+                <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wider">Question Details</h3>
+            </div>
+            <button type="button" class="remove-question-btn text-gray-400 hover:text-red-600 transition-colors p-1 rounded-md hover:bg-red-50 hidden" title="Remove Question">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
+        </div>
+
+        <div class="p-6 space-y-8">
+            <!-- Question & Marks Row -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <!-- Question Text -->
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                        Question Text <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="question_INDEX_text" rows="2" required
+                        class="block w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 sm:text-sm resize-y transition-all"
+                        placeholder="e.g. What implies the primary function of mitochondria?"></textarea>
+                </div>
+
+                <!-- Marks -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        Marks <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative rounded-md shadow-sm">
+                        <input type="number" name="question_INDEX_marks" min="1" value="1" required
+                            class="block w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 font-semibold placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 sm:text-sm pl-4 pr-12 transition-all">
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                            <span class="text-gray-400 text-xs font-bold">PTS</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-6">
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-4">
+                    Answer Choices <span class="normal-case font-normal text-gray-400 ml-1">(Select the correct answer)</span>
+                </label>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Choice A -->
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center p-2">
+                            <input type="checkbox" name="question_INDEX_choice_0_correct" 
+                                class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded choice-checkbox cursor-pointer transition-colors" title="Mark as correct">
+                        </div>
+                        <div class="relative flex-1">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-400 font-bold text-sm">A</span>
+                            </div>
+                            <input type="text" name="question_INDEX_choice_0_text" required
+                                class="block w-full rounded-lg border border-gray-200 bg-white pl-8 pr-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 sm:text-sm transition-all"
+                                placeholder="Option A">
+                        </div>
+                    </div>
+
+                    <!-- Choice B -->
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center p-2">
+                            <input type="checkbox" name="question_INDEX_choice_1_correct"
+                                class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded choice-checkbox cursor-pointer transition-colors" title="Mark as correct">
+                        </div>
+                        <div class="relative flex-1">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-400 font-bold text-sm">B</span>
+                            </div>
+                            <input type="text" name="question_INDEX_choice_1_text" required
+                                class="block w-full rounded-lg border border-gray-200 bg-white pl-8 pr-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 sm:text-sm transition-all"
+                                placeholder="Option B">
+                        </div>
+                    </div>
+
+                    <!-- Choice C -->
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center p-2">
+                            <input type="checkbox" name="question_INDEX_choice_2_correct"
+                                class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded choice-checkbox cursor-pointer transition-colors" title="Mark as correct">
+                        </div>
+                        <div class="relative flex-1">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-400 font-bold text-sm">C</span>
+                            </div>
+                            <input type="text" name="question_INDEX_choice_2_text" required
+                                class="block w-full rounded-lg border border-gray-200 bg-white pl-8 pr-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 sm:text-sm transition-all"
+                                placeholder="Option C">
+                        </div>
+                    </div>
+
+                    <!-- Choice D -->
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center justify-center p-2">
+                            <input type="checkbox" name="question_INDEX_choice_3_correct"
+                                class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded choice-checkbox cursor-pointer transition-colors" title="Mark as correct">
+                        </div>
+                        <div class="relative flex-1">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-400 font-bold text-sm">D</span>
+                            </div>
+                            <input type="text" name="question_INDEX_choice_3_text" required
+                                class="block w-full rounded-lg border border-gray-200 bg-white pl-8 pr-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 sm:text-sm transition-all"
+                                placeholder="Option D">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Explanation -->
+            <div class="border-t border-gray-100 pt-6">
+                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                    Explanation <span class="text-gray-400 text-[10px] font-normal normal-case">(Optional)</span>
+                </label>
+                <div class="relative">
+                    <textarea name="question_INDEX_explanation" rows="2"
+                        class="block w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 sm:text-sm transition-all"
+                        placeholder="Optional: Explain the correct answer to help students learn..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+let questionCount = 0;
+let isSubmitting = false;
+
+// Add first question on page load
+document.addEventListener('DOMContentLoaded', function() {
+    addQuestion();
+    
+    // Generate unique submission token
+    const submissionToken = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    document.getElementById('submissionToken').value = submissionToken;
+    
+    // Setup add question button
+    document.getElementById('addQuestionBtn').addEventListener('click', addQuestion);
+    
+    // Setup form submission with comprehensive protection
+    const form = document.getElementById('bulkQuestionForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+    const submitIcon = document.getElementById('submitIcon');
+    const loadingIcon = document.getElementById('loadingIcon');
+    
+    form.addEventListener('submit', function(e) {
+        // Prevent double submission
+        if (isSubmitting) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Update the count
+        document.getElementById('numQuestions').value = questionCount;
+        
+        // Validate each question has exactly one correct answer
+        let valid = true;
+        document.querySelectorAll('.question-block').forEach((block, index) => {
+            const checkedCount = block.querySelectorAll('.choice-checkbox:checked').length;
+            if (checkedCount !== 1) {
+                alert(`Question ${index + 1}: Please select exactly ONE correct answer.`);
+                valid = false;
+                return false;
+            }
+        });
+        
+        if (!valid) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Mark as submitting and disable button
+        isSubmitting = true;
+        submitBtn.disabled = true;
+        submitText.textContent = 'Saving...';
+        submitIcon.classList.add('hidden');
+        loadingIcon.classList.remove('hidden');
+        
+        // Allow form to submit
+        return true;
+    });
+    
+    // Prevent browser back button resubmission
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+            // Page was loaded from cache (back button)
+            window.location.reload();
+        }
+    });
+});
+
+function addQuestion() {
+    const template = document.getElementById('questionTemplate');
+    const container = document.getElementById('questionsContainer');
+    
+    // Clone template
+    const clone = template.content.cloneNode(true);
+    
+    // Update question number
+    const questionNumber = clone.querySelector('.question-number');
+    questionNumber.textContent = questionCount + 1;
+    
+    // Replace INDEX with actual index in all names
+    const inputs = clone.querySelectorAll('[name*="INDEX"]');
+    inputs.forEach(input => {
+        input.name = input.name.replace('INDEX', questionCount);
+    });
+    
+    // Show remove button if not first question
+    if (questionCount > 0) {
+        const removeBtn = clone.querySelector('.remove-question-btn');
+        removeBtn.classList.remove('hidden');
+        removeBtn.addEventListener('click', function() {
+            if (confirm('Remove this question?')) {
+                this.closest('.question-block').remove();
+                updateQuestionNumbers();
+            }
+        });
+    }
+    
+    // Add choice checkbox behavior (only one can be checked)
+    const checkboxes = clone.querySelectorAll('.choice-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                // Uncheck other checkboxes in the same question
+                const questionBlock = this.closest('.question-block');
+                questionBlock.querySelectorAll('.choice-checkbox').forEach(cb => {
+                    if (cb !== this) cb.checked = false;
+                });
+            }
+        });
+    });
+    
+    // Append to container
+    container.appendChild(clone);
+    questionCount++;
+    
+    // Scroll to new question
+    setTimeout(() => {
+        const newQuestion = container.lastElementChild;
+        newQuestion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+}
+
+function updateQuestionNumbers() {
+    const questions = document.querySelectorAll('.question-block');
+    questions.forEach((question, index) => {
+        question.querySelector('.question-number').textContent = index + 1;
+    });
+    questionCount = questions.length;
+    document.getElementById('numQuestions').value = questionCount;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,455 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50">
+    <!-- Dark Header Section -->
+    <div class="bg-[#0f172b] pt-8 pb-32 px-4 sm:px-6 lg:px-8 border-b border-indigo-900/50 relative overflow-hidden">
+        <!-- Background Gradients -->
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-transparent pointer-events-none"></div>
+        
+        <div class="max-w-7xl mx-auto relative z-10">
+            <!-- Breadcrumbs -->
+            <nav class="flex items-center gap-2 text-sm font-medium text-slate-400 mb-6">
+                <a href="{% url 'teacher_dashboard' %}" class="hover:text-white transition-colors">Dashboard</a>
+                <span class="text-slate-600">/</span>
+                <span class="text-white">Exam Responses</span>
+            </nav>
+
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight mb-2">
+                        Response Dashboard
+                    </h1>
+                    <p class="text-lg text-slate-400 font-medium">
+                        Manage student submissions across all exams and classes.
+                    </p>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 relative z-20 space-y-8 pb-20">
+
+        {% if not no_classes %}
+            <!-- Filters Card (Collapsible on Mobile) -->
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                <details class="group open:bg-white transition-all duration-300" open>
+                    <summary class="flex items-center justify-between p-5 sm:p-6 cursor-pointer list-none bg-white hover:bg-slate-50 transition-colors">
+                        <div class="flex items-center gap-2 text-slate-800">
+                            <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <h3 class="text-lg font-bold">Filter & Search</h3>
+                        </div>
+                        <span class="text-sm font-bold text-indigo-600 sm:hidden group-open:hidden">Show Filters</span>
+                        <svg class="w-5 h-5 text-slate-400 transform group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </summary>
+                    
+                    <div class="px-5 sm:px-6 pb-6 border-t border-slate-100">
+                        <form method="GET" class="space-y-6 pt-6">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                                <!-- Exam Filter -->
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">Exam</label>
+                                    <select name="exam_id" class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+                                        <option value="">All Exams</option>
+                                        {% for exam in all_class_exams %}
+                                        <option value="{{ exam.id }}" {% if selected_exam and selected_exam.id == exam.id %}selected{% endif %}>
+                                            {{ exam.title }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <!-- Class Filter -->
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">Class</label>
+                                    <select name="class_id" class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+                                        <option value="">All Classes</option>
+                                        {% for class in teacher_classes %}
+                                        <option value="{{ class.id }}" {% if selected_class and selected_class.id == class.id %}selected{% endif %}>
+                                            {{ class.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <!-- Student Search -->
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">Student</label>
+                                    <input type="text" name="student_search" value="{{ student_search }}" 
+                                           placeholder="Name or email..." 
+                                           class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+                                </div>
+
+                                 <!-- Status Filter -->
+                                <div class="space-y-1.5">
+                                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">Status</label>
+                                     <select name="pass_filter" class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+                                        <option value="">All Statuses</option>
+                                        <option value="passed" {% if pass_filter == 'passed' %}selected{% endif %}>Passed Only</option>
+                                        <option value="failed" {% if pass_filter == 'failed' %}selected{% endif %}>Failed Only</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Advanced Filters Toggle & Actions -->
+                            <div class="pt-4 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
+                                <div class="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                                    <!-- Score Range Inline -->
+                                    <div class="flex items-center justify-center gap-2 w-full sm:w-auto">
+                                        <span class="text-xs font-bold text-slate-400 uppercase whitespace-nowrap">Score %</span>
+                                        <input type="number" name="score_min" value="{{ score_min }}" placeholder="0" class="w-16 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-center font-bold">
+                                        <span class="text-slate-300">-</span>
+                                        <input type="number" name="score_max" value="{{ score_max }}" placeholder="100" class="w-16 px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-center font-bold">
+                                    </div>
+
+                                    <div class="h-8 w-px bg-slate-200 hidden md:block"></div>
+
+                                    <!-- Sort -->
+                                     <select name="sort" class="w-full sm:w-auto pl-2 pr-8 py-1.5 bg-transparent text-sm font-bold text-slate-600 border-none focus:ring-0 cursor-pointer hover:text-indigo-600 text-center sm:text-left">
+                                        <option value="exam_title" {% if sort_by == 'exam_title' %}selected{% endif %}>Sort: A-Z</option>
+                                        <option value="recent" {% if sort_by == 'recent' %}selected{% endif %}>Sort: Recent</option>
+                                        <option value="most_responses" {% if sort_by == 'most_responses' %}selected{% endif %}>Sort: Volume</option>
+                                    </select>
+                                </div>
+
+                                <div class="flex items-center gap-3 w-full md:w-auto">
+                                    <a href="{% url 'teacher_exam_responses' %}" class="flex-1 sm:flex-none text-center px-5 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all">
+                                        Clear
+                                    </a>
+                                    <button type="submit" class="flex-1 sm:flex-none px-6 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:shadow-indigo-300 hover:-translate-y-0.5 transition-all">
+                                        Apply Filters
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </details>
+            </div>
+
+            <!-- Exam Hierarchy Display -->
+            {% if page_obj %}
+            <div class="space-y-8">
+                {% for exam_data in page_obj %}
+                <!-- Exam Card -->
+                <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden group">
+                    <!-- Exam Header -->
+                    <div class="bg-gradient-to-r from-slate-50 to-white p-5 sm:p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <div class="flex items-center gap-3 mb-2 flex-wrap">
+                                <span class="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-[11px] font-bold uppercase tracking-wide border border-indigo-100">
+                                    {{ exam_data.exam.subject }}
+                                </span>
+                               
+                                <h2 class="text-xl font-bold text-slate-900 break-words">{{ exam_data.exam.title }}</h2>
+                                {% if exam_data.exam.exam_type == 'practice_test' %}
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-100 ring-1 ring-amber-600/10" title="Practice & Test">
+                                        <svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                        </svg>
+                                        Practice & Test
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-violet-50 text-violet-700 border border-violet-100 ring-1 ring-violet-600/10" title="Test">
+                                        <svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9 2 2 4-4" />
+                                        </svg>
+                                        Test
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div class="flex flex-wrap items-center gap-4 text-sm font-medium text-slate-500">
+                               
+                                <span class="hidden sm:inline w-1 h-1 rounded-full bg-slate-300"></span>
+                                <span class="flex items-center gap-1.5 whitespace-nowrap">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                                    {{ exam_data.total_students }} Students
+                                </span>
+                                <span class="hidden sm:inline w-1 h-1 rounded-full bg-slate-300"></span>
+                                <span class="flex items-center gap-1.5 whitespace-nowrap">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                                    {{ exam_data.total_attempts }} Attempts
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100 self-start md:self-auto">
+                             <div class="text-right">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Avg Score</p>
+                                <p class="text-xl font-black text-slate-900">{{ exam_data.exam_avg }}%</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full border-4 border-indigo-100 flex items-center justify-center">
+                                <span class="text-[10px] font-bold text-indigo-600">%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Class Level -->
+                    <div class="divide-y divide-slate-100">
+                        {% for class_data in exam_data.class_data %}
+                        <div class="bg-white">
+                            <!-- Class Header -->
+                            <div class="bg-slate-50/50 px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-1 h-8 rounded-full bg-indigo-500"></div>
+                                    <div>
+                                        <h3 class="text-base font-bold text-slate-900">{{ class_data.class.name }}</h3>
+                                        <p class="text-xs text-slate-500 font-medium">Year {{ class_data.class.year }} • {{ class_data.student_count }} Students</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-6 text-sm">
+                                    <div class="text-center">
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase">Avg</p>
+                                        <p class="font-bold text-slate-900">{{ class_data.class_avg }}%</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase">Pass Rate</p>
+                                        <p class="font-bold text-emerald-600">{{ class_data.class_pass_rate }}%</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Student List (Collapsible) -->
+                            <div class="divide-y divide-slate-50">
+                                {% for student_response in class_data.student_responses %}
+                                <details class="group bg-white open:bg-slate-50/50 transition-colors duration-200">
+                                    <summary class="list-none w-full px-4 sm:px-6 py-4 cursor-pointer hover:bg-slate-50 transition-colors flex items-center justify-between outline-none">
+                                        <!-- Student Info -->
+                                        <div class="flex items-center gap-3 sm:gap-4 overflow-hidden">
+                                            <div class="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center text-indigo-700 text-xs sm:text-sm font-bold border border-indigo-200/50 shadow-sm">
+                                                {{ student_response.student.first_name|first|default:student_response.student.username|first|upper }}
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-sm font-bold text-slate-900 truncate pr-2">{{ student_response.student.get_full_name|default:student_response.student.username }}</p>
+                                                <p class="text-xs text-slate-500 font-medium truncate">@{{ student_response.student.username }}</p>
+                                            </div>
+                                            <span class="hidden sm:inline-block ml-2 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200 group-open:bg-indigo-100 group-open:text-indigo-700 group-open:border-indigo-200 transition-colors">
+                                                {% if exam_data.exam.exam_type == 'practice_test' %}
+                                                    {{ student_response.practice_count }} Practice Attempt{{ student_response.practice_count|pluralize }}{% if student_response.test_count > 0 %} + Test{% endif %}
+                                                {% else %}
+                                                    {{ student_response.attempt_count }} Attempt{{ student_response.attempt_count|pluralize }}
+                                                {% endif %}
+                                            </span>
+                                        </div>
+
+                                        <!-- Summary Stats -->
+                                        <div class="flex items-center gap-4 sm:gap-10 flex-shrink-0">
+                                            <div class="block text-right">
+                                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Best</p>
+                                                <p class="text-sm font-bold text-emerald-600">{{ student_response.best_percentage }}%</p>
+                                            </div>
+                                            <div class="hidden sm:block text-right">
+                                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Latest</p>
+                                                <p class="text-sm font-bold {% if student_response.latest_attempt.passed %}text-slate-900{% else %}text-rose-600{% endif %}">
+                                                    {{ student_response.latest_percentage }}%
+                                                </p>
+                                            </div>
+                                            <svg class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        </div>
+                                    </summary>
+
+                                    <!-- Attempts Details -->
+                                    <div class="px-4 sm:px-6 pb-6 pt-2">
+                                        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                            <div class="overflow-x-auto">
+                                                <table class="w-full text-left border-collapse min-w-[500px]">
+                                                    <thead class="bg-slate-50 border-b border-slate-200">
+                                                        <tr>
+                                                            <th class="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Attempt</th>
+                                                            <th class="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                                                            <th class="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Score</th>
+                                                            <th class="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-slate-100">
+                                                        {% if exam_data.exam.exam_type == 'practice_test' %}
+                                                            <!-- Test Attempts (Always at top for Practice & Test exams) -->
+                                                            {% for attempt in student_response.test_attempts %}
+                                                            <tr class="hover:bg-slate-50/80 transition-colors {% if forloop.first %}bg-violet-50/30{% endif %}">
+                                                                <!-- Attempt # with Test Badge -->
+                                                                <td class="px-4 py-3">
+                                                                    <div class="flex items-center gap-2">
+                                                                        <span class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold bg-violet-600 text-white shadow-sm shadow-violet-200">
+                                                                            T
+                                                                        </span>
+                                                                        <span class="px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 text-[10px] font-bold border border-violet-100">Test</span>
+                                                                        {% if attempt.id == student_response.latest_attempt_id %}
+                                                                        <span class="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px] font-bold border border-indigo-100">Latest</span>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </td>
+                                                                <!-- Date -->
+                                                                <td class="px-4 py-3">
+                                                                    <p class="text-xs font-bold text-slate-700">{{ attempt.submitted_at|date:"M d, Y" }}</p>
+                                                                    <p class="text-[10px] text-slate-500 font-medium">{{ attempt.submitted_at|date:"h:i A" }}</p>
+                                                                </td>
+                                                                <!-- Score -->
+                                                                <td class="px-4 py-3">
+                                                                    <div class="flex items-center gap-3">
+                                                                        <span class="text-sm font-bold {% if attempt.passed %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                                                                            {{ attempt.percentage|floatformat:1 }}%
+                                                                        </span>
+                                                                        <span class="text-[10px] items-center px-1.5 py-0.5 rounded font-bold uppercase {% if attempt.passed %}bg-emerald-50 text-emerald-700{% else %}bg-rose-50 text-rose-700{% endif %}">
+                                                                            {% if attempt.passed %}Pass{% else %}Fail{% endif %}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <!-- Actions -->
+                                                                <td class="px-4 py-3 text-right">
+                                                                    <a href="{% url 'teacher_view_attempt' attempt.pk %}" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:text-indigo-600 hover:border-indigo-200 hover:shadow-sm transition-all">
+                                                                        Review
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                            
+                                                            <!-- Practice Attempts (Below test attempts) -->
+                                                            {% for attempt in student_response.practice_attempts %}
+                                                            <tr class="hover:bg-slate-50/80 transition-colors">
+                                                                <!-- Attempt # -->
+                                                                <td class="px-4 py-3">
+                                                                    <div class="flex items-center gap-2">
+                                                                        <span class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold bg-slate-100 text-slate-500">
+                                                                            {{ forloop.revcounter }}
+                                                                        </span>
+                                                                        {% if attempt.id == student_response.latest_attempt_id %}
+                                                                        <span class="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px] font-bold border border-indigo-100">Latest</span>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </td>
+                                                                <!-- Date -->
+                                                                <td class="px-4 py-3">
+                                                                    <p class="text-xs font-bold text-slate-700">{{ attempt.submitted_at|date:"M d, Y" }}</p>
+                                                                    <p class="text-[10px] text-slate-500 font-medium">{{ attempt.submitted_at|date:"h:i A" }}</p>
+                                                                </td>
+                                                                <!-- Score -->
+                                                                <td class="px-4 py-3">
+                                                                    <div class="flex items-center gap-3">
+                                                                        <span class="text-sm font-bold {% if attempt.passed %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                                                                            {{ attempt.percentage|floatformat:1 }}%
+                                                                        </span>
+                                                                        <span class="text-[10px] items-center px-1.5 py-0.5 rounded font-bold uppercase {% if attempt.passed %}bg-emerald-50 text-emerald-700{% else %}bg-rose-50 text-rose-700{% endif %}">
+                                                                            {% if attempt.passed %}Pass{% else %}Fail{% endif %}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <!-- Actions -->
+                                                                <td class="px-4 py-3 text-right">
+                                                                    <a href="{% url 'teacher_view_attempt' attempt.pk %}" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:text-indigo-600 hover:border-indigo-200 hover:shadow-sm transition-all">
+                                                                        Review
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        {% else %}
+                                                            <!-- Regular Test exams - show all attempts normally -->
+                                                            {% for attempt in student_response.attempts %}
+                                                            <tr class="hover:bg-slate-50/80 transition-colors">
+                                                                <!-- Attempt # -->
+                                                                <td class="px-4 py-3">
+                                                                    <div class="flex items-center gap-2">
+                                                                        <span class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold {% if forloop.first %}bg-indigo-600 text-white shadow-sm shadow-indigo-200{% else %}bg-slate-100 text-slate-500{% endif %}">
+                                                                            {{ forloop.revcounter }}
+                                                                        </span>
+                                                                        {% if forloop.first %}
+                                                                        <span class="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px] font-bold border border-indigo-100">Latest</span>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </td>
+                                                            <!-- Date -->
+                                                            <td class="px-4 py-3">
+                                                                <p class="text-xs font-bold text-slate-700">{{ attempt.submitted_at|date:"M d, Y" }}</p>
+                                                                <p class="text-[10px] text-slate-500 font-medium">{{ attempt.submitted_at|date:"h:i A" }}</p>
+                                                            </td>
+                                                            <!-- Score -->
+                                                            <td class="px-4 py-3">
+                                                                <div class="flex items-center gap-3">
+                                                                    <span class="text-sm font-bold {% if attempt.passed %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                                                                        {{ attempt.percentage|floatformat:1 }}%
+                                                                    </span>
+                                                                    <span class="text-[10px] items-center px-1.5 py-0.5 rounded font-bold uppercase {% if attempt.passed %}bg-emerald-50 text-emerald-700{% else %}bg-rose-50 text-rose-700{% endif %}">
+                                                                        {% if attempt.passed %}Pass{% else %}Fail{% endif %}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <!-- Actions -->
+                                                            <td class="px-4 py-3 text-right">
+                                                                <a href="{% url 'teacher_view_attempt' attempt.pk %}" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-bold text-slate-600 hover:text-indigo-600 hover:border-indigo-200 hover:shadow-sm transition-all">
+                                                                    Review
+                                                                </a>
+                                                            </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </details>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination (Stacked on Mobile) -->
+            {% if page_obj.has_other_pages %}
+            <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-200 pt-6">
+                <div class="text-sm font-medium text-slate-500 text-center sm:text-left">
+                    Showing <span class="text-slate-900">{{ page_obj.start_index }}-{{ page_obj.end_index }}</span> of <span class="text-slate-900">{{ page_obj.paginator.count }}</span>
+                </div>
+                <div class="flex gap-2 w-full sm:w-auto justify-center">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.exam_id %}&exam_id={{ request.GET.exam_id }}{% endif %}{% if request.GET.class_id %}&class_id={{ request.GET.class_id }}{% endif %}{% if request.GET.student_search %}&student_search={{ request.GET.student_search }}{% endif %}{% if request.GET.pass_filter %}&pass_filter={{ request.GET.pass_filter }}{% endif %}{% if request.GET.score_min %}&score_min={{ request.GET.score_min }}{% endif %}{% if request.GET.score_max %}&score_max={{ request.GET.score_max }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" 
+                       class="flex-1 sm:flex-none px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm text-center">
+                        Previous
+                    </a>
+                    {% endif %}
+                    
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.exam_id %}&exam_id={{ request.GET.exam_id }}{% endif %}{% if request.GET.class_id %}&class_id={{ request.GET.class_id }}{% endif %}{% if request.GET.student_search %}&student_search={{ request.GET.student_search }}{% endif %}{% if request.GET.pass_filter %}&pass_filter={{ request.GET.pass_filter }}{% endif %}{% if request.GET.score_min %}&score_min={{ request.GET.score_min }}{% endif %}{% if request.GET.score_max %}&score_max={{ request.GET.score_max }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" 
+                       class="flex-1 sm:flex-none px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm text-center">
+                        Next
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+        {% else %}
+            <!-- Empty State -->
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-12 text-center">
+                <div class="w-20 h-20 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-6 transform rotate-3">
+                    <svg class="w-10 h-10 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-2">No Responses yet</h3>
+                <p class="text-slate-500 mb-8 max-w-md mx-auto">It looks like no students have submitted exams yet, or your current filters match no records.</p>
+                <div class="flex justify-center gap-3">
+                     <a href="{% url 'teacher_exam_responses' %}" class="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition-colors">
+                        Clear Filters
+                    </a>
+                    <a href="{% url 'exam_list' %}" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all">
+                        View Exams
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+        {% endif %}
+        
+    </div>
+</div>
+{% endblock %}

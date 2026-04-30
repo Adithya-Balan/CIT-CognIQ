@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Exam - Evalora{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-br from-indigo-50 to-purple-50 min-h-screen py-8 flex items-center justify-center">
+    <div class="container mx-auto px-4 max-w-2xl">
+        <div class="bg-white rounded-xl shadow-2xl p-8">
+            <!-- Warning Icon -->
+            <div class="flex justify-center mb-6">
+                <div class="bg-red-100 p-4 rounded-full">
+                    <svg class="w-16 h-16 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <h2 class="text-3xl font-bold text-gray-900 text-center mb-4">Delete Exam?</h2>
+            <p class="text-gray-600 text-center mb-8">
+                Are you sure you want to delete <strong>"{{ object.title }}"</strong>? 
+                This will permanently remove the exam and all its questions. This action cannot be undone.
+            </p>
+
+            <!-- Exam Info -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-8">
+                <p class="text-sm text-gray-700"><strong>Subject:</strong> {{ object.subject }}</p>
+                <p class="text-sm text-gray-700"><strong>Questions:</strong> {{ object.question_count }}</p>
+                <p class="text-sm text-gray-700"><strong>Created:</strong> {{ object.created_at|date:"M d, Y" }}</p>
+            </div>
+
+            <!-- Form -->
+            <form method="post">
+                {% csrf_token %}
+                <div class="flex space-x-4">
+                    <a href="{% url 'exam_detail' object.pk %}" class="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-all font-semibold text-center">
+                        Cancel
+                    </a>
+                    <button type="submit" class="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-all font-semibold">
+                        Yes, Delete Exam
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

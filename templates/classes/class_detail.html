@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ student_class.name }} - Class Details{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 pb-12">
+    <!-- Dark Header Section -->
+    <div class="bg-[#0f172b] pt-8 pb-16 lg:pb-32 px-4 sm:px-6 lg:px-8 border-b border-gray-800">
+        <div class="max-w-7xl mx-auto">
+            <!-- Breadcrumb & Actions -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <a href="{% url 'class_list' %}" class="inline-flex items-center text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+                    <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Back to Classes
+                </a>
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'class_leaderboard' student_class.id %}" class="inline-flex items-center px-4 py-2 bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 rounded-lg hover:bg-indigo-600/30 transition text-sm font-semibold">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                        Leaderboard
+                    </a>
+                    <a href="{% url 'class_update' student_class.pk %}" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 transition text-sm font-bold">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        Edit
+                    </a>
+                    <form action="{% url 'class_delete' student_class.pk %}" method="get" class="inline" onsubmit="return confirm('Are you sure you want to delete this class?');">
+                        <button type="submit" class="p-2 text-gray-400 hover:text-red-400 transition rounded-lg hover:bg-white/5">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Title & Info -->
+            <div>
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight break-words">{{ student_class.name }}</h1>
+                    {% if student_class.is_active %}
+                        <span class="px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 text-[10px] sm:text-xs font-bold uppercase tracking-wide">Active</span>
+                    {% else %}
+                        <span class="px-2 py-0.5 rounded-full bg-gray-600/30 text-gray-400 border border-gray-600/30 text-[10px] sm:text-xs font-bold uppercase tracking-wide">Archived</span>
+                    {% endif %}
+                </div>
+                <p class="text-gray-400 max-w-3xl text-base sm:text-lg">{{ student_class.description|default:"No description provided." }}</p>
+                <div class="mt-4 flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-gray-400">
+                    <span class="flex items-center"><svg class="w-4 h-4 mr-2 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Academic Year: {{ student_class.year }}</span>
+                    <span class="flex items-center"><svg class="w-4 h-4 mr-2 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> {{ students.count }} Students</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Overlap -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 sm:-mt-24 relative z-10 space-y-6 sm:space-y-8">
+        
+        <!-- Summary & Enrollment Card -->
+        <div class="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
+            <div class="flex flex-col md:flex-row">
+                <!-- Enrollment Section -->
+                <div class="p-6 md:p-8 flex-1 border-b md:border-b-0 md:border-r border-gray-100">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between h-full">
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-1">Enrollment Code</h3>
+                            {% if student_class.allow_self_enrollment %}
+                                <div class="flex items-center gap-3 mt-2">
+                                    <code class="text-xl sm:text-2xl md:text-3xl font-mono font-bold text-indigo-600 tracking-wider bg-indigo-50 px-3 sm:px-4 py-2 rounded-lg border border-indigo-100 break-all">{{ student_class.enrollment_code }}</code>
+                                    <button onclick="navigator.clipboard.writeText('{{ student_class.enrollment_code }}'); alert('Copied!');" class="p-2 text-gray-400 hover:text-indigo-600 transition" title="Copy Code">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">Share this code with students to let them self-enroll.</p>
+                            {% else %}
+                                <p class="text-gray-900 font-medium mt-2">Self-enrollment is disabled.</p>
+                                <p class="text-xs text-gray-500 mt-1">Enable it to generate a code for students.</p>
+                            {% endif %}
+                        </div>
+                        <div class="flex flex-row md:flex-col gap-3 w-full md:w-auto mt-6 md:mt-0">
+                            <form action="{% url 'toggle_self_enrollment' student_class.pk %}" method="post" class="flex-1 md:flex-none">{% csrf_token %}
+                                <button type="submit" class="text-xs font-bold px-3 py-2 md:py-1.5 rounded-md border transition-colors w-full md:w-24 {% if student_class.allow_self_enrollment %}border-red-200 text-red-600 hover:bg-red-50{% else %}border-green-200 text-green-600 hover:bg-green-50{% endif %}">
+                                    {% if student_class.allow_self_enrollment %}Disable{% else %}Enable{% endif %}
+                                </button>
+                            </form>
+                            {% if student_class.allow_self_enrollment %}
+                            <form action="{% url 'regenerate_enrollment_code' student_class.pk %}" method="post" onsubmit="return confirm('Old code will stop working. Continue?');" class="flex-1 md:flex-none">{% csrf_token %}
+                                <button type="submit" class="text-xs font-bold text-gray-500 hover:text-gray-700 px-3 py-2 md:py-1.5 rounded-md border border-gray-200 hover:bg-gray-50 w-full md:w-24">Reset Code</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="p-6 md:p-8 w-full md:w-1/3 grid grid-cols-2 md:flex md:flex-col md:justify-center gap-4 md:gap-6 bg-gray-50/50 border-t md:border-t-0 md:border-l border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-gray-500 uppercase">Total Students</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ students.count }}</p>
+                        </div>
+                        <div class="p-2 bg-blue-100 rounded-lg text-blue-600">
+                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                         <div>
+                            <p class="text-xs font-bold text-gray-500 uppercase">Assigned Exams</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ assigned_exams.count }}</p>
+                        </div>
+                        <div class="p-2 bg-purple-100 rounded-lg text-purple-600">
+                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Managing Lists: Split View -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            
+            <!-- Students Management -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-auto max-h-[600px]">
+                <div class="p-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-xl z-20">
+                    <h2 class="text-lg font-bold text-gray-900 flex items-center">
+                        <span class="bg-blue-100 text-blue-700 p-1.5 rounded mr-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></span>
+                        Class Roster
+                    </h2>
+                    <button onclick="document.getElementById('addStudentsModal').classList.remove('hidden')" class="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition">
+                        + Add Student
+                    </button>
+                </div>
+                <!-- Search bar placeholder for scalability -->
+                <div class="px-4 py-2 bg-gray-50 border-b border-gray-100">
+                    <input type="text" placeholder="Search students..." class="w-full text-xs bg-white border border-gray-200 rounded-md px-3 py-2 text-gray-700 focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
+                    {% if students %}
+                        {% for student in students %}
+                        <div class="group flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all">
+                            <div class="flex items-center gap-3">
+                                <div class="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                                    {{ student.first_name|first|default:student.username|first|upper }}
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-sm font-bold text-gray-900 truncate">{{ student.get_full_name|default:student.username }}</p>
+                                    <p class="text-xs text-gray-500 truncate">@{{ student.username }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                                <a href="{% url 'teacher_reset_student_password' student.id %}" class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md" title="Reset Password">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                                    </svg>
+                                </a>
+                                <form action="{% url 'class_remove_student' student_class.pk student.id %}" method="post" onsubmit="return confirm('Remove {{ student }}?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md" title="Remove Student">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="flex flex-col items-center justify-center h-full text-gray-400 p-6">
+                            <svg class="w-12 h-12 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                            <p class="text-sm">No students enrolled yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Exam Management -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-auto max-h-[600px]">
+                <div class="p-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-xl z-20">
+                    <h2 class="text-lg font-bold text-gray-900 flex items-center">
+                        <span class="bg-purple-100 text-purple-700 p-1.5 rounded mr-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></span>
+                        Assigned Exams
+                    </h2>
+                    <button onclick="document.getElementById('assignExamsModal').classList.remove('hidden')" class="text-sm font-bold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-lg hover:bg-purple-100 transition">
+                        + Assign Exam
+                    </button>
+                </div>
+                <!-- Search bar placeholder -->
+                <div class="px-4 py-2 bg-gray-50 border-b border-gray-100">
+                    <input type="text" placeholder="Search exams..." class="w-full text-xs bg-white border border-gray-200 rounded-md px-3 py-2 text-gray-700 focus:outline-none focus:border-purple-500">
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
+                    {% if assigned_exams %}
+                        {% for exam in assigned_exams %}
+                        <div class="group flex items-start justify-between p-3 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h4 class="text-sm font-bold text-gray-900 truncate">{{ exam.title }}</h4>
+                                    <span class="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200">{{ exam.subject }}</span>
+                                </div>
+                                <div class="flex items-center gap-3 text-xs text-gray-500">
+                                    <span class="flex items-center"><svg class="w-3 h-3 mr-1 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> {{ exam.question_count }} Qs</span>
+                                    <span>•</span>
+                                    <span>{{ exam.total_marks }} Marks</span>
+                                    <span>•</span>
+                                    <span>{{ exam.duration_minutes }}m</span>
+                                </div>
+                            </div>
+                            <form action="{% url 'class_unassign_exam' student_class.pk exam.pk %}" method="post" onsubmit="return confirm('Unassign {{ exam.title }}?');" class="opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0 ml-2">
+                                {% csrf_token %}
+                                <button type="submit" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md" title="Unassign Exam">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="flex flex-col items-center justify-center h-full text-gray-400 p-6">
+                            <svg class="w-12 h-12 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                            <p class="text-sm">No exams assigned.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Students Modal -->
+<div id="addStudentsModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="document.getElementById('addStudentsModal').classList.add('hidden')"></div>
+
+        <div class="relative bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg w-full">
+            <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center text-gray-900">
+                <h3 class="text-lg font-bold" id="modal-title">Add Students</h3>
+                <button onclick="document.getElementById('addStudentsModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <form action="{% url 'class_add_students' student_class.pk %}" method="post">
+                {% csrf_token %}
+                <div class="px-4 py-5 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                    {% if available_students %}
+                        <div class="space-y-2">
+                            {% for student in available_students %}
+                            <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-200 cursor-pointer transition-colors group">
+                                <input type="checkbox" name="students" value="{{ student.id }}" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <div class="ml-3 flex items-center">
+                                    <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 mr-3">
+                                        {{ student.first_name|first|default:student.username|first|upper }}
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-gray-900 group-hover:text-blue-700">{{ student.get_full_name|default:student.username }}</p>
+                                        <p class="text-xs text-gray-500">@{{ student.username }}</p>
+                                    </div>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                            <p class="mt-2 text-sm text-gray-500">All available students are already enrolled.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    {% if available_students %}
+                    <button type="submit" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                        Add Selected
+                    </button>
+                    {% endif %}
+                    <button type="button" onclick="document.getElementById('addStudentsModal').classList.add('hidden')" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Exams Modal -->
+<div id="assignExamsModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="document.getElementById('assignExamsModal').classList.add('hidden')"></div>
+
+        <div class="relative bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg w-full">
+            <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center text-gray-900">
+                <h3 class="text-lg font-bold" id="modal-title">Assign Exams</h3>
+                <button onclick="document.getElementById('assignExamsModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <form action="{% url 'class_assign_exam' student_class.pk %}" method="post">
+                {% csrf_token %}
+                <div class="px-4 py-5 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                    {% if available_exams %}
+                        <div class="space-y-2">
+                            {% for exam in available_exams %}
+                            <label class="flex items-start p-3 rounded-lg border border-gray-200 hover:bg-purple-50 hover:border-purple-200 cursor-pointer transition-colors group">
+                                <input type="checkbox" name="exams" value="{{ exam.id }}" class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-1">
+                                <div class="ml-3 flex-1">
+                                    <p class="text-sm font-bold text-gray-900 group-hover:text-purple-700">{{ exam.title }}</p>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{{ exam.subject }}</span>
+                                        <span class="text-xs text-gray-400">{{ exam.question_count }} Qs • {{ exam.duration_minutes }}m</span>
+                                    </div>
+                                </div>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            <p class="mt-2 text-sm text-gray-500">All available exams are already assigned.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    {% if available_exams %}
+                    <button type="submit" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-purple-600 text-base font-medium text-white hover:bg-purple-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                        Assign Selected
+                    </button>
+                    {% endif %}
+                    <button type="button" onclick="document.getElementById('assignExamsModal').classList.add('hidden')" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

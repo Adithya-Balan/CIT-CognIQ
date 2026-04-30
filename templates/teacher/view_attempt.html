@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50/50 pb-24">
+    <!-- Dark Header Section with Gradient -->
+    <div class="bg-[#0f172b] relative overflow-hidden pt-6 pb-24 px-4 sm:px-6 lg:px-8 border-b border-white/5">
+         <!-- Background decorative elements -->
+         <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 rounded-full bg-indigo-500/10 blur-3xl"></div>
+         <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-purple-500/10 blur-3xl"></div>
+ 
+         <div class="max-w-5xl mx-auto relative z-10">
+            <!-- Breadcrumbs / Nav -->
+             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                 <div class="flex items-center gap-3">
+                     <a href="{% url 'teacher_exam_responses' %}" class="text-slate-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-xl backdrop-blur-sm border border-white/5">
+                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                     </a>
+                     <nav class="flex" aria-label="Breadcrumb">
+                         <ol class="flex items-center space-x-2">
+                             <li><a href="{% url 'analytics_dashboard' %}" class="text-slate-400 hover:text-indigo-300 text-xs font-semibold uppercase tracking-wide transition-colors">Analytics</a></li>
+                             <li><span class="text-slate-600">/</span></li>
+                             <li><a href="{% url 'teacher_exam_responses' %}" class="text-slate-400 hover:text-indigo-300 text-xs font-semibold uppercase tracking-wide transition-colors">All Responses</a></li>
+                             <li><span class="text-slate-600">/</span></li>
+                             <li><span class="text-white text-xs font-semibold uppercase tracking-wide" aria-current="page">{{ attempt.student.get_full_name|default:attempt.student.username }}</span></li>
+                         </ol>
+                     </nav>
+                 </div>
+             </div>
+
+             <div class="flex items-start justify-between">
+                 <div>
+                     <p class="text-3xl font-normal text-white tracking-tight">{{ attempt.exam.title }}</p>
+                     <p class="text-slate-400 mt-1 text-base flex items-center gap-2">
+                         <span class="w-1 h-1 rounded-full bg-slate-600"></span>
+                         {{ attempt.exam.subject }}
+                     </p>
+                 </div>
+             </div>
+         </div>
+    </div>
+
+    <!-- Main Content Overlap -->
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-10 space-y-6">
+        
+        {% if attempt.has_violation %}
+        <!-- Violation Alert Banner -->
+        <div class="bg-white rounded-xl shadow-lg border-l-4 border-rose-500 p-4 flex items-start gap-3">
+            <div class="flex-shrink-0 text-rose-500 mt-0.5">
+                <svg class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="flex-1">
+                <h3 class="font-bold text-rose-800 text-sm">⚠️ Violation Detected</h3>
+                <p class="text-rose-700 text-sm mt-1">{{ attempt.violation_reason }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Summary Information Card -->
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-0 overflow-hidden">
+            <div class="flex flex-col lg:flex-row divider-y lg:divide-y-0 lg:divide-x divide-slate-100">
+                
+                <!-- Student Profile (Left) -->
+                <div class="p-6 sm:p-8 flex items-center gap-5 lg:w-5/12">
+                    <div class="shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-indigo-100 ring-4 ring-indigo-50/50">
+                        {{ attempt.student.first_name|first|default:attempt.student.username|first|upper }}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h2 class="text-xl font-bold text-slate-900 leading-snug truncate">{{ attempt.student.get_full_name|default:attempt.student.username }}</h2>
+                        <p class="text-sm text-slate-500 font-medium truncate mb-2">@{{ attempt.student.username }}</p>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                            {{ attempt.student_class.name }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Performance (Middle) -->
+                <div class="p-6 sm:p-8 flex flex-col justify-center lg:w-4/12 bg-gray-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Performance</p>
+                        {% if attempt.passed %}
+                        <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-wide border border-emerald-200">Passed</span>
+                        {% else %}
+                        <span class="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold uppercase tracking-wide border border-rose-200">Failed</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex items-baseline gap-1 mb-3">
+                        <span class="text-5xl font-black text-slate-900 tracking-tight leading-none">{{ attempt.percentage|floatformat:1 }}</span>
+                        <span class="text-2xl text-slate-400 font-bold">%</span>
+                    </div>
+
+                    <div class="flex items-center gap-4 text-sm font-medium">
+                        <div class="flex items-center gap-2 text-slate-700">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                            <span><span class="font-bold text-slate-900">{{ attempt.score|floatformat:0 }}</span>/{{ attempt.total_marks }}</span>
+                            <span class="text-slate-400 text-xs uppercase font-bold ml-1">Score</span>
+                        </div>
+                        <div class="w-px h-4 bg-slate-300"></div>
+                        <div class="flex items-center gap-2 text-slate-700">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span><span class="font-bold text-slate-900">{{ attempt.correct_count }}</span></span>
+                            <span class="text-slate-400 text-xs uppercase font-bold ml-1">Correct</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Meta Details (Right) -->
+                <div class="p-6 sm:p-8 flex flex-col justify-center lg:w-3/12 bg-slate-50/50">
+                     <!-- Mobile/Tablet Grid View -->
+                    <div class="grid grid-cols-3 gap-4 lg:hidden">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Attempt</span>
+                            <span class="text-sm font-bold text-slate-900">{{ attempt_number }}<span class="text-slate-400 font-normal">/{{ total_attempts_for_exam }}</span></span>
+                        </div>
+                        <div class="flex flex-col pl-4 border-l border-slate-200">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Time</span>
+                            <span class="text-sm font-bold text-slate-900">{% if attempt.time_taken %}{{ attempt.time_taken|floatformat:0 }}m{% else %}-{% endif %}</span>
+                        </div>
+                        <div class="flex flex-col pl-4 border-l border-slate-200">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">Date</span>
+                            <span class="text-sm font-bold text-slate-900 truncate">{{ attempt.submitted_at|date:"M d" }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Desktop Compact Vertical List -->
+                    <div class="hidden lg:flex flex-col space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Attempt</span>
+                            <span class="font-mono text-sm font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-sm">{{ attempt_number }}<span class="text-slate-400">/{{ total_attempts_for_exam }}</span></span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Time</span>
+                            <span class="text-sm font-bold text-slate-900">{% if attempt.time_taken %}{{ attempt.time_taken|floatformat:0 }} mins{% else %}-{% endif %}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Date</span>
+                            <div class="text-right">
+                                <span class="block text-sm font-bold text-slate-900">{{ attempt.submitted_at|date:"M d, Y" }}</span>
+                                <span class="block text-[10px] text-slate-400 font-medium">{{ attempt.submitted_at|date:"h:i A" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Question Review -->
+        <div class="pt-2">
+            <h3 class="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                Question Analysis
+                <span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200">{{ results|length }} Questions</span>
+            </h3>
+            
+            <div class="space-y-6">
+                {% for result in results %}
+                <div class="bg-white rounded-xl shadow-md border border-slate-300 overflow-hidden hover:shadow-lg transition-all duration-300 group">
+                    <!-- Question Header -->
+                    <div class="p-3 border-b border-slate-200 bg-gradient-to-r from-slate-50/50 to-white flex items-start gap-5">
+                        <div class="flex-none pt-0.5">
+                            <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-white border-2 border-slate-200 text-slate-600 font-bold text-sm shadow-sm group-hover:border-indigo-400 group-hover:text-indigo-600 transition-colors">
+                                {{ forloop.counter }}
+                            </span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between mb-3">
+                                 <span class="text-xs font-bold text-slate-400 uppercase tracking-wide bg-slate-50 border border-slate-100 px-2 py-0.5 rounded">{{ result.question.marks }} Mark{{ result.question.marks|pluralize }}</span>
+                                 
+                                 <!-- Status Badge (Solid & Visible) -->
+                                 {% if result.student_answer and result.student_answer.is_correct %}
+                                 <div class="flex items-center gap-1.5 px-3 py-1 rounded-md bg-emerald-100 text-emerald-800 text-xs font-bold uppercase border border-emerald-200">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                    Correct
+                                 </div>
+                                 {% elif not result.student_answer %}
+                                 <div class="flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-bold uppercase border border-slate-200">
+                                    Skipped
+                                 </div>
+                                 {% else %}
+                                 <div class="flex items-center gap-1.5 px-3 py-1 rounded-md bg-rose-100 text-rose-800 text-xs font-bold uppercase border border-rose-200">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    Incorrect
+                                 </div>
+                                 {% endif %}
+                            </div>
+                            <p class="text-base font-bold text-slate-900 leading-snug">{{ result.question.question_text }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Answer Choices -->
+                    <div class="p-6 space-y-3">
+                        {% for choice in result.all_choices %}
+                        <div class="relative flex items-center p-4 rounded-xl border-2 transition-all duration-200
+                            {% if choice.is_correct %}
+                                bg-emerald-50/70 border-emerald-500 ring-1 ring-emerald-500/20 shadow-sm
+                            {% elif result.student_answer and result.student_answer.selected_choice.id == choice.id %}
+                                bg-rose-50/70 border-rose-500 ring-1 ring-rose-500/20 shadow-sm
+                            {% else %}
+                                bg-white border-slate-100 hover:border-slate-300
+                            {% endif %}">
+                            
+                            <!-- Icon Indicator -->
+                            <div class="flex-none mr-4">
+                                {% if choice.is_correct %}
+                                <div class="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-sm shadow-emerald-200">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                </div>
+                                {% elif result.student_answer and result.student_answer.selected_choice.id == choice.id %}
+                                <div class="w-6 h-6 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-sm shadow-rose-200">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </div>
+                                {% else %}
+                                <div class="w-6 h-6 rounded-full border-2 border-slate-200 bg-slate-50"></div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Text -->
+                            <div class="flex-1">
+                                <p class="text-sm {% if choice.is_correct %}font-bold text-emerald-900{% elif result.student_answer and result.student_answer.selected_choice.id == choice.id %}font-bold text-rose-900{% else %}font-medium text-slate-600{% endif %}">
+                                    {{ choice.choice_text }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        <!-- Explanation Section -->
+                        {% if result.question.explanation %}
+                        <div class="mt-5">
+                            <div class="bg-slate-50 rounded-lg p-4 border border-slate-200/60 flex gap-3">
+                                <div class="flex-none pt-0.5">
+                                    <div class="w-6 h-6 rounded-md bg-indigo-100 flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-indigo-900 uppercase tracking-wide mb-1">Explanation</h4>
+                                    <p class="text-sm text-slate-700 leading-relaxed font-medium">{{ result.question.explanation }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="flex items-center justify-center gap-4 pt-8 pb-4">
+                 <a href="{% url 'teacher_exam_responses' %}" class="inline-flex items-center px-6 py-3 border border-slate-300 shadow-sm text-sm font-bold rounded-lg text-slate-700 bg-white hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    <svg class="w-4 h-4 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Back to All Responses
+                </a>
+                 
+                 {% if attempt.attempt_mode == 'test' %}
+                     {% if attempt.exam.exam_type == 'practice_test' or attempt.exam.exam_type == 'test' %}
+                     <a href="{% url 'teacher_retest_exam' attempt.pk %}" class="inline-flex items-center px-6 py-3 border border-amber-300 shadow-sm text-sm font-bold rounded-lg text-amber-700 bg-amber-50 hover:bg-amber-100 hover:text-amber-800 hover:border-amber-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        Allow Retest
+                    </a>
+                     {% endif %}
+                 {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}Evalora - Ignite Knowledge. Inspire Excellence.{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <link href="{% static 'styles/output.css' %}" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'assets/logo.png' %}">
+    
+    <!-- Fonts (Optional, using system sans by default but preparing for premium feel) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col font-sans antialiased text-gray-900">
+    
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 bg-slate-900 border-b border-indigo-500/20 shadow-lg text-white">
+        <div class="container mx-auto px-4 max-w-7xl">
+            <div class="flex justify-between items-center py-4">
+                <!-- Logo -->
+                <a href="{% url 'home' %}" class="flex items-center gap-3 group">
+                    <img src="{% static 'assets/logo.png' %}" alt="Evalora Logo" class="h-12 w-auto transition-transform duration-300 group-hover:scale-105">
+                    <span class="text-2xl font-extrabold tracking-tight group-hover:text-indigo-300 transition-colors duration-300">
+                        Evalora
+                    </span>
+                </a>
+                
+                <!-- Desktop Navigation -->
+                <div class="hidden md:flex items-center gap-6">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard' %}" class="text-sm font-medium text-gray-300 hover:text-white transition-colors duration-200">
+                            Dashboard
+                        </a>
+                        
+                        <!-- User Dropdown -->
+                        <div class="relative ml-4">
+                            <button id="user-menu-btn" class="flex items-center gap-3 focus:outline-none group">
+                                <div class="text-right hidden lg:block">
+                                    <p class="text-sm font-semibold text-white group-hover:text-indigo-300 transition-colors">{{ user.first_name|default:user.username }}</p>
+                                    <p class="text-xs text-gray-400 group-hover:text-indigo-200 transition-colors">View Profile</p>
+                                </div>
+                                <div class="h-10 w-10 rounded-full bg-linear-to-r from-indigo-500 to-purple-500 p-0.5 shadow-sm">
+                                    <div class="h-full w-full rounded-full bg-slate-800 flex items-center justify-center">
+                                        <span class="font-bold text-indigo-400 text-sm">{{ user.username|make_list|first|upper }}</span>
+                                    </div>
+                                </div>
+                                <svg class="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+
+                            <!-- Dropdown Menu -->
+                            <div id="user-menu" class="hidden absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-2xl py-2 border border-gray-100 transform origin-top-right transition-all duration-200 z-50">
+                                <div class="px-4 py-3 border-b border-gray-100">
+                                    <p class="text-xs text-gray-500 uppercase tracking-wider font-bold">Signed in as</p>
+                                    <p class="text-sm font-medium text-gray-900 truncate">{{ user.username }}</p>
+                                </div>
+                                <a href="{% url 'dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-colors">
+                                    Dashboard
+                                </a>
+                                <a href="{% url 'profile_settings' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-colors">
+                                    Settings & Profile
+                                </a>
+                                <div class="my-1 border-t border-gray-100"></div>
+                                <form method="post" action="{% url 'account_logout' %}" class="block">
+                                    {% csrf_token %}
+                                    <button type="submit" class="w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+                                        Sign out
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="flex items-center gap-4">
+                            <a href="{% url 'account_login' %}" class="text-sm font-medium text-gray-300 hover:text-white transition-colors duration-200">
+                                Login
+                            </a>
+                            <a href="{% url 'account_signup' %}" class="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-full hover:bg-indigo-500 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-200">
+                                Get Started
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg text-gray-400 hover:text-white hover:bg-slate-800 focus:outline-none transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="hidden md:hidden border-t border-slate-800 py-4 space-y-2 animate-fade-in">
+                {% if user.is_authenticated %}
+                    <div class="px-4 py-2 flex items-center gap-3 mb-2">
+                        <div class="h-10 w-10 rounded-full bg-linear-to-r from-indigo-500 to-purple-500 p-0.5">
+                             <div class="h-full w-full rounded-full bg-slate-800 flex items-center justify-center">
+                                <span class="font-bold text-indigo-400">{{ user.username|make_list|first|upper }}</span>
+                             </div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-white">{{ user.username }}</p>
+                            <a href="{% url 'profile_settings' %}" class="text-xs text-slate-400">View Profile</a>
+                        </div>
+                    </div>
+                    <a href="{% url 'dashboard' %}" class="block px-4 py-3 text-base font-medium text-gray-300 rounded-xl hover:bg-slate-800 hover:text-white transition-colors">Dashboard</a>
+                    <a href="{% url 'profile_settings' %}" class="block px-4 py-3 text-base font-medium text-gray-300 rounded-xl hover:bg-slate-800 hover:text-white transition-colors">Settings</a>
+                    <div class="px-4 py-3">
+                        <form method="post" action="{% url 'account_logout' %}" class="block">
+                            {% csrf_token %}
+                            <button type="submit" class="w-full text-center px-4 py-2 text-sm font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+                                Sign Out
+                            </button>
+                        </form>
+                    </div>
+                {% else %}
+                    <a href="{% url 'account_login' %}" class="block px-4 py-3 text-base font-medium text-gray-300 rounded-xl hover:bg-slate-800 hover:text-white transition-colors">Login</a>
+                    <a href="{% url 'account_signup' %}" class="block px-4 py-3 text-base font-bold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors mx-4 text-center">Get Started</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Messages/Alerts (Toast Notification) -->
+    {% if messages %}
+        <div id="toast-container" class="fixed top-24 right-6 z-50 flex flex-col gap-4 w-full max-w-sm pointer-events-none">
+            {% for message in messages %}
+                <div class="toast-message pointer-events-auto transform transition-all duration-300 ease-in-out translate-x-0 opacity-100 flex items-center p-4 rounded-xl shadow-lg border-l-4 bg-white
+                    {% if message.tags == 'error' %}border-red-500 text-red-800
+                    {% elif message.tags == 'success' %}border-green-500 text-green-800
+                    {% elif message.tags == 'warning' %}border-yellow-500 text-yellow-800
+                    {% else %}border-blue-500 text-blue-800{% endif %}" role="alert">
+                    <div class="shrink-0 mr-3">
+                        {% if message.tags == 'error' %}
+                            <svg class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                        {% elif message.tags == 'success' %}
+                            <svg class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1 mr-2">
+                        <p class="text-sm font-medium">{{ message }}</p>
+                    </div>
+                    <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            {% endfor %}
+        </div>
+        <script>
+            // Auto-dismiss toasts after 5 seconds
+            document.addEventListener('DOMContentLoaded', () => {
+                const toasts = document.querySelectorAll('.toast-message');
+                toasts.forEach(toast => {
+                    setTimeout(() => {
+                        toast.classList.add('translate-x-full', 'opacity-0');
+                        setTimeout(() => toast.remove(), 300); // Remove from DOM after animation
+                    }, 5000);
+                });
+            });
+        </script>
+    {% endif %}
+    
+    <!-- Main Content -->
+    <main class="grow">
+        {% block content %}
+        {% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-50 border-t border-gray-200 py-6 mt-auto">
+        <div class="container mx-auto px-4 max-w-7xl flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-gray-400 text-xs font-medium">&copy; 2026 Evalora. All rights reserved.</p>
+            <div class="flex items-center gap-6">
+                <a href="#" class="text-gray-400 hover:text-indigo-600 text-xs font-medium transition-colors">Privacy</a>
+                <a href="#" class="text-gray-400 hover:text-indigo-600 text-xs font-medium transition-colors">Terms</a>
+                <a href="#" class="text-gray-400 hover:text-indigo-600 text-xs font-medium transition-colors">Support</a>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Scripts -->
+    <script>
+        // Use standard DOM manipulation for robust toggling
+        document.addEventListener('DOMContentLoaded', () => {
+            const mobileBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const userBtn = document.getElementById('user-menu-btn');
+            const userMenu = document.getElementById('user-menu');
+
+            // Toggle Mobile Menu
+            mobileBtn?.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // Toggle User Dropdown
+            userBtn?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userMenu.classList.toggle('hidden');
+            });
+
+            // Close Dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (userMenu && !userMenu.classList.contains('hidden')) {
+                    if (!userBtn.contains(e.target) && !userMenu.contains(e.target)) {
+                        userMenu.classList.add('hidden');
+                    }
+                }
+            });
+        });
+    </script>
+    
+    <!-- Custom Scripts -->
+    <script src="{% static 'scripts/script.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

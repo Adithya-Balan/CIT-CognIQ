@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50 py-8 sm:py-12">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8 md:flex md:items-center md:justify-between md:space-x-5">
+            <div class="flex items-start space-x-5">
+                <div class="pt-1.5 hidden sm:block">
+                    <div class="bg-indigo-600 text-white p-3 rounded-2xl shadow-lg shadow-indigo-100">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <nav class="sm:hidden" aria-label="Back">
+                        <a href="{% url 'bulk_upload_questions' exam.pk %}" class="flex items-center text-sm font-medium text-slate-500 hover:text-slate-700">
+                            <svg class="flex-shrink-0 -ml-1 mr-1 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                            </svg>
+                            Back to Upload
+                        </a>
+                    </nav><br>
+                    <nav class="hidden sm:flex mb-1" aria-label="Breadcrumb">
+                        <ol role="list" class="flex items-center space-x-4">
+                            <li>
+                                <div class="flex">
+                                    <a href="{% url 'teacher_dashboard' %}" class="text-sm font-medium text-slate-500 hover:text-slate-700">Dashboard</a>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="flex items-center">
+                                    <svg class="flex-shrink-0 h-5 w-5 text-slate-300" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z" />
+                                    </svg>
+                                    <a href="{% url 'exam_detail' exam.pk %}" class="ml-4 text-sm font-medium text-slate-500 hover:text-slate-700">{{ exam.title }}</a>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="flex items-center">
+                                    <svg class="flex-shrink-0 h-5 w-5 text-slate-300" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M5.555 17.776l8-16 .894.448-8 16-.894-.448z" />
+                                    </svg>
+                                    <span class="ml-4 text-sm font-medium text-indigo-600" aria-current="page">Preview</span>
+                                </div>
+                            </li>
+                        </ol>
+                    </nav>
+                    <h1 class="text-2xl font-bold text-slate-900 sm:text-3xl tracking-tight">Review Questions</h1>
+                    <p class="text-sm font-medium text-slate-500">Check the validation results before saving.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5 mb-6 md:mb-8">
+            <!-- Valid -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-slate-200">
+                <div class="p-3 md:p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-emerald-100 rounded-lg md:rounded-xl p-2 md:p-3">
+                            <svg class="h-5 w-5 md:h-6 md:w-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3 md:ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-xs md:text-sm font-medium text-slate-500 truncate">Valid Questions</dt>
+                                <dd class="flex items-baseline">
+                                    <div class="text-xl md:text-2xl font-bold text-slate-900">{{ parsed_questions|length }}</div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Errors -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-slate-200">
+                <div class="p-3 md:p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-rose-100 rounded-lg md:rounded-xl p-2 md:p-3">
+                            <svg class="h-5 w-5 md:h-6 md:w-6 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3 md:ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-xs md:text-sm font-medium text-slate-500 truncate">Errors Found</dt>
+                                <dd class="flex items-baseline">
+                                    <div class="text-xl md:text-2xl font-bold text-slate-900">{{ errors|length }}</div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total -->
+            <div class="col-span-2 md:col-span-1 bg-white overflow-hidden shadow-sm rounded-xl border border-slate-200">
+                <div class="p-3 md:p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-indigo-100 rounded-lg md:rounded-xl p-2 md:p-3">
+                            <svg class="h-5 w-5 md:h-6 md:w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-3 md:ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-xs md:text-sm font-medium text-slate-500 truncate">Total Rows</dt>
+                                <dd class="flex items-baseline">
+                                    <div class="text-xl md:text-2xl font-bold text-slate-900">{{ total_rows }}</div>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Errors Section -->
+        {% if errors %}
+        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4 md:p-6 mb-6 md:mb-8">
+            <h2 class="text-base md:text-lg font-bold text-rose-900 mb-3 md:mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+                Rows with Validation Errors
+            </h2>
+            <p class="text-rose-800 text-xs md:text-sm mb-4">The following rows contain errors and will be excluded from the import. Please correct them in your Excel file if needed.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                {% for error in errors %}
+                <div class="bg-white rounded-xl p-3 md:p-4 border-l-4 border-rose-500 shadow-sm">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-bold text-slate-900 text-xs md:text-sm">Row {{ error.row }}</span>
+                        <span class="text-[10px] md:text-xs font-semibold bg-rose-100 text-rose-600 px-2 py-0.5 rounded-full">Error</span>
+                    </div>
+                    <ul class="space-y-1">
+                        {% for err in error.errors %}
+                        <li class="text-xs md:text-sm text-slate-600 flex items-start gap-2">
+                            <span class="text-rose-500 mt-1">•</span>
+                            <span>{{ err }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Valid Questions Preview -->
+        {% if parsed_questions %}
+        <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-4 md:p-6 mb-6">
+            <h2 class="text-lg md:text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 md:w-6 md:h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Valid Questions ({{ parsed_questions|length }})
+            </h2>
+            <p class="text-sm md:text-base text-slate-600 mb-4 md:mb-6">These questions will be added to the exam. Review them carefully before confirming.</p>
+            
+            <div class="space-y-4 md:space-y-6">
+                {% for question in parsed_questions %}
+                <div class="border-2 border-slate-200 rounded-xl p-3 md:p-5 hover:border-indigo-300 transition-colors bg-slate-50">
+                    <!-- Question Header -->
+                    <div class="flex flex-col sm:flex-row sm:items-start justify-between mb-3 gap-2 sm:gap-4">
+                        <div class="flex items-start gap-3">
+                            <span class="flex-shrink-0 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-indigo-600 text-white font-bold flex items-center justify-center text-xs md:text-sm">
+                                {{ forloop.counter }}
+                            </span>
+                            <div class="flex-1">
+                                <p class="font-normal text-slate-900 text-base md:text-lg">{{ question.question_text }}</p>
+                                <p class="text-[10px] md:text-xs text-slate-500 mt-0.5">From Row: {{ question.row_number }}</p>
+                            </div>
+                        </div>
+                        <div class="pl-9 sm:pl-0">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700">
+                                {{ question.marks }} mark{{ question.marks|pluralize }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Options -->
+                    <div class="space-y-2 mb-3 md:mb-4 pl-0 sm:pl-11">
+                        {% for option in question.options %}
+                        <div class="flex items-start gap-2 md:gap-3 p-2 md:p-3 rounded-lg {% if forloop.counter0 == question.correct_choice_index %}bg-emerald-100 border-2 border-emerald-500{% else %}bg-white border border-slate-200{% endif %}">
+                            <span class="flex-shrink-0 w-5 h-5 md:w-6 md:h-6 rounded-md {% if forloop.counter0 == question.correct_choice_index %}bg-emerald-600 text-white{% else %}bg-slate-200 text-slate-600{% endif %} font-bold text-[10px] md:text-xs flex items-center justify-center">
+                                {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% endif %}
+                            </span>
+                            <span class="flex-1 text-xs md:text-sm {% if forloop.counter0 == question.correct_choice_index %}font-bold text-emerald-900{% else %}text-slate-700{% endif %}">
+                                {{ option }}
+                                {% if forloop.counter0 == question.correct_choice_index %}
+                                <span class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white">
+                                    ✓ Correct
+                                </span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Explanation -->
+                    {% if question.explanation %}
+                    <div class="ml-0 sm:ml-11 bg-indigo-50 border border-indigo-200 rounded-lg p-2 md:p-3">
+                        <p class="text-[10px] md:text-xs font-bold text-indigo-900 uppercase tracking-wide mb-0.5">Explanation</p>
+                        <p class="text-xs md:text-sm text-indigo-800">{{ question.explanation }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="fixed bottom-0 left-0 right-0 z-10 bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-3 md:p-6 lg:px-8">
+            <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+                <div class="block text-center sm:text-left">
+                    <p class="text-xs md:text-sm text-slate-500">
+                        <span class="font-bold text-slate-900">{{ parsed_questions|length }}</span> valid questions ready.
+                    </p>
+                </div>
+                
+                <form method="post" action="{% url 'bulk_upload_confirm' exam.pk %}" id="confirmForm" class="w-full sm:w-auto flex gap-2 sm:gap-3">
+                    {% csrf_token %}
+                    
+                    {% if parsed_questions %}
+                        <a href="{% url 'bulk_upload_questions' exam.pk %}" class="flex-1 sm:flex-none py-2.5 px-4 md:py-3 md:px-6 bg-white border border-slate-300 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-all text-center text-xs md:text-base">
+                            Cancel
+                        </a>
+                        
+                        <button type="submit" 
+                                id="confirmBtn"
+                                class="flex-1 sm:flex-none py-2.5 px-4 md:py-3 md:px-6 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 transform active:scale-95 flex items-center justify-center gap-2 text-xs md:text-base">
+                            <span>Confirm & Import</span>
+                            <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </button>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+        
+        <!-- Bottom spacing for fixed footer -->
+        <div class="h-24"></div>
+
+        {% else %}
+        <div class="bg-white border text-center border-slate-200 rounded-2xl p-12 max-w-lg mx-auto">
+            <div class="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2">No Valid Questions</h3>
+            <p class="text-slate-500 mb-6">All rows in your uploaded file contained errors. Please check the validation messages above, fix your Excel file, and try again.</p>
+            <a href="{% url 'bulk_upload_questions' exam.pk %}" class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                </svg>
+                Upload Corrected File
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.getElementById('confirmForm')?.addEventListener('submit', function(e) {
+    const confirmBtn = document.getElementById('confirmBtn');
+    
+    if (!confirm('Are you sure you want to add these questions to the exam? This action cannot be easily undone.')) {
+        e.preventDefault();
+        return;
+    }
+    
+    // Show loading state
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<svg class="animate-spin h-6 w-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving Questions...';
+});
+</script>
+{% endblock %}

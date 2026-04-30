@@ -1,0 +1,427 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 pb-12">
+    <!-- Dark Header Section -->
+    <div class="bg-[#0f172b] pt-8 pb-16 lg:pb-32 px-4 sm:px-6 lg:px-8 border-b border-gray-800">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <!-- Title & Context -->
+                <div>
+                    <div class="flex items-center gap-3 mb-2">
+                        <a href="{% url 'analytics_dashboard' %}" class="text-indigo-300 hover:text-white transition-colors bg-white/10 hover:bg-white/20 p-1.5 rounded-lg">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                        </a>
+                        <span class="text-indigo-300 font-medium text-sm uppercase tracking-wider">Exam Analytics</span>
+                    </div>
+                    <h1 class="text-3xl font-bold text-white tracking-tight">{{ exam.title }}</h1>
+                    <div class="flex items-center gap-4 mt-2 text-indigo-200 text-sm font-medium">
+                        <span class="flex items-center gap-1.5">
+                            <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                            {{ exam.subject }}
+                        </span>
+                        <span class="flex items-center gap-1.5">
+                            <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            {{ exam.duration_minutes }} mins
+                        </span>
+                        <span class="flex items-center gap-1.5">
+                            <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            {{ exam.total_marks }} Marks
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Overlap -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 sm:-mt-24 relative z-10 space-y-6">
+
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+            <!-- Total Attempts -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 flex flex-col justify-between h-full hover:border-blue-200 transition-colors group">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="p-2 md:p-3 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition-colors">
+                        <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-2xl md:text-3xl font-bold text-gray-900">{{ total_attempts }}</h3>
+                    <p class="text-xs md:text-sm font-medium text-gray-500 mt-1">Total Attempts</p>
+                </div>
+            </div>
+
+            <!-- Average Score -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 flex flex-col justify-between h-full hover:border-green-200 transition-colors group">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="p-2 md:p-3 bg-green-50 text-green-600 rounded-lg group-hover:bg-green-100 transition-colors">
+                        <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-2xl md:text-3xl font-bold text-gray-900">{{ avg_score }}%</h3>
+                    <p class="text-xs md:text-sm font-medium text-gray-500 mt-1">Average Score</p>
+                </div>
+            </div>
+
+            <!-- Pass Rate -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 flex flex-col justify-between h-full hover:border-yellow-200 transition-colors group">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="p-2 md:p-3 bg-yellow-50 text-yellow-600 rounded-lg group-hover:bg-yellow-100 transition-colors">
+                        <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-2xl md:text-3xl font-bold text-gray-900">{{ pass_rate }}%</h3>
+                    <p class="text-xs md:text-sm font-medium text-gray-500 mt-1">Pass Rate</p>
+                </div>
+            </div>
+
+            <!-- Avg Duration -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 flex flex-col justify-between h-full hover:border-purple-200 transition-colors group">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="p-2 md:p-3 bg-purple-50 text-purple-600 rounded-lg group-hover:bg-purple-100 transition-colors">
+                        <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-2xl md:text-3xl font-bold text-gray-900">{{ avg_duration }}m</h3>
+                    <p class="text-xs md:text-sm font-medium text-gray-500 mt-1">Avg Duration</p>
+                </div>
+            </div>
+        </div>
+
+        {% if total_attempts > 0 %}
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Score Distribution -->
+            <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-bold text-gray-900 mb-6">Score Distribution</h2>
+                <div class="flex items-end justify-between h-48 sm:h-64 gap-2">
+                    {% for range, count in score_ranges.items %}
+                    <div class="flex flex-col items-center justify-end h-full flex-1 group relative">
+                        <!-- Tooltip -->
+                        <div class="absolute -top-8 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                            {{ count }} Attempts
+                        </div>
+                        
+                        <!-- Bar -->
+                        <div class="w-full bg-indigo-50 rounded-t-sm relative overflow-hidden transition-all duration-300 group-hover:bg-indigo-100" style="height: 100%;">
+                            <div class="absolute bottom-0 inset-x-0 bg-indigo-500 rounded-t-sm transition-all duration-500" 
+                                 style="height: {% widthratio count total_attempts 100 %}%; min-height: {% if count > 0 %}4px{% else %}0px{% endif %};">
+                            </div>
+                        </div>
+                        
+                        <!-- Label -->
+                        <div class="mt-2 text-[10px] sm:text-xs text-gray-500 font-medium text-center rotate-0 whitespace-nowrap">{{ range }}%</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Pass/Fail Stats -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col">
+                <h2 class="text-lg font-bold text-gray-900 mb-6">Performance Split</h2>
+                <div class="space-y-4 flex-1">
+                    <div class="p-4 bg-green-50 rounded-lg border border-green-100 flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-green-800 font-semibold">Passed</p>
+                            <p class="text-xs text-green-600">Score ≥ 40%</p>
+                        </div>
+                        <span class="text-2xl font-bold text-green-700">{{ passed }}</span>
+                    </div>
+                    
+                    <div class="p-4 bg-red-50 rounded-lg border border-red-100 flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-red-800 font-semibold">Failed</p>
+                            <p class="text-xs text-red-600">Score < 40%</p>
+                        </div>
+                        <span class="text-2xl font-bold text-red-700">{{ failed }}</span>
+                    </div>
+
+                    <div class="mt-auto grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                        <div class="text-center">
+                            <p class="text-xs text-gray-500 uppercase tracking-wide">Highest</p>
+                            <p class="text-xl font-bold text-gray-900">{{ highest_score }}%</p>
+                        </div>
+                        <div class="text-center border-l border-gray-100">
+                            <p class="text-xs text-gray-500 uppercase tracking-wide">Lowest</p>
+                            <p class="text-xl font-bold text-gray-900">{{ lowest_score }}%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Difficulty Analysis -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-auto max-h-[500px] overflow-hidden">
+            <div class="p-6 border-b border-gray-100 bg-white z-20 flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900">Question Difficulty</h2>
+                    <p class="text-sm text-gray-500">Analysis per question</p>
+                </div>
+                <a href="{% url 'question_analytics' exam.pk %}" class="text-sm font-bold text-indigo-600 hover:text-indigo-700 hover:underline">
+                    Detailed Report &rarr;
+                </a>
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-0">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Question</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Accuracy</th>
+                            <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Difficulty</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for stat in question_stats %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900">Q{{ stat.question.order|add:1 }}</div>
+                                <div class="text-xs text-gray-500 truncate max-w-xs">{{ stat.question.question_text|truncatechars:60 }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-bold text-gray-900">{{ stat.accuracy }}%</span>
+                                    <div class="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                        <div class="h-full rounded-full {% if stat.accuracy >= 70 %}bg-green-500{% elif stat.accuracy >= 40 %}bg-yellow-500{% else %}bg-red-500{% endif %}" style="width: {{ stat.accuracy }}%"></div>
+                                    </div>
+                                </div>
+                                <div class="text-[10px] text-gray-400 mt-0.5">{{ stat.correct }}/{{ stat.total }} Correct</div>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <span class="inline-flex px-2 py-0.5 text-xs font-medium rounded-full
+                                    {% if stat.difficulty == 'Easy' %}bg-green-100 text-green-800
+                                    {% elif stat.difficulty == 'Medium' %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ stat.difficulty }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Student Attempts Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+            <div class="p-6 border-b border-gray-100 bg-white z-20 flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900">All Attempts</h2>
+                    <p class="text-sm text-gray-500">Individual student performance ({{ total_attempts }} total)</p>
+                </div>
+                {% if total_attempts > 25 %}
+                <span class="text-xs text-gray-400">Page {{ attempts.number }} of {{ attempts.paginator.num_pages }}</span>
+                {% endif %}
+            </div>
+            {% if attempts %}
+            <div class="flex-1 overflow-x-auto custom-scrollbar">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 shadow-sm">Rank</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 shadow-sm">Student</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 shadow-sm">Score</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 shadow-sm">Percentage</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 shadow-sm">Duration</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 shadow-sm">Submitted</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 shadow-sm">Status</th>
+                            <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50 shadow-sm">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for attempt in attempts %}
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-500">#{{ forloop.counter|add:attempts.start_index|add:"-1" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ attempt.student.get_full_name }}</div>
+                                <div class="text-xs text-gray-500">@{{ attempt.student.username }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ attempt.score|floatformat:0 }}/{{ exam.total_marks }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="text-sm font-bold text-gray-900">{{ attempt.percentage }}%</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {% if attempt.duration_taken %}
+                                    {{ attempt.duration_taken }} min
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {{ attempt.submitted_at|date:"M d, Y" }}
+                                <span class="text-xs text-gray-400 block">{{ attempt.submitted_at|date:"H:i" }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if attempt.passed %}
+                                <span class="inline-flex px-2 py-0.5 text-xs font-bold rounded-full bg-green-100 text-green-800 border border-green-200">
+                                    Passed
+                                </span>
+                                {% else %}
+                                <span class="inline-flex px-2 py-0.5 text-xs font-bold rounded-full bg-red-100 text-red-800 border border-red-200">
+                                    Failed
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                <a href="{% url 'teacher_view_attempt' attempt.pk %}" class="text-indigo-600 hover:text-indigo-900 font-bold bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors text-xs">
+                                    View Report
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination Controls -->
+            {% if attempts.paginator.num_pages > 1 %}
+            <div class="px-3 sm:px-6 py-4 bg-gray-50 border-t border-gray-200">
+                <!-- Pagination Info (visible on larger screens) -->
+                <div class="hidden sm:block mb-3">
+                    <p class="text-sm text-gray-700 text-center">
+                        Showing
+                        <span class="font-medium">{{ attempts.start_index }}</span>
+                        to
+                        <span class="font-medium">{{ attempts.end_index }}</span>
+                        of
+                        <span class="font-medium">{{ total_attempts }}</span>
+                        attempts
+                    </p>
+                </div>
+                
+                <!-- Responsive Pagination Navigation -->
+                <nav class="flex items-center justify-center" aria-label="Pagination">
+                    <div class="flex items-center gap-1 sm:gap-0 sm:-space-x-px">
+                        <!-- First Page Button -->
+                        {% if attempts.has_previous %}
+                        <a href="?page=1" class="relative inline-flex items-center px-2 py-2 rounded-md sm:rounded-l-md sm:rounded-r-none border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors" title="First Page">
+                            <span class="sr-only">First</span>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        {% else %}
+                        <span class="relative inline-flex items-center px-2 py-2 rounded-md sm:rounded-l-md sm:rounded-r-none border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                        {% endif %}
+                        
+                        <!-- Previous Button -->
+                        {% if attempts.has_previous %}
+                        <a href="?page={{ attempts.previous_page_number }}" class="relative inline-flex items-center px-2 sm:px-2 py-2 sm:rounded-none rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors" title="Previous Page">
+                            <span class="sr-only">Previous</span>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        {% else %}
+                        <span class="relative inline-flex items-center px-2 sm:px-2 py-2 sm:rounded-none rounded-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                        {% endif %}
+                        
+                        <!-- Page Numbers -->
+                        {% for num in attempts.paginator.page_range %}
+                            {% if attempts.number == num %}
+                            <!-- Current Page -->
+                            <span class="z-10 bg-indigo-600 border-indigo-600 text-white relative inline-flex items-center px-3 sm:px-4 py-2 border text-xs sm:text-sm font-bold sm:rounded-none rounded-md" aria-current="page">
+                                {{ num }}
+                            </span>
+                            {% elif num > attempts.number|add:'-2' and num < attempts.number|add:'2' %}
+                            <!-- Pages near current (±1 on mobile, shown on all screens) -->
+                            <a href="?page={{ num }}" class="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 relative inline-flex items-center px-3 sm:px-4 py-2 border text-xs sm:text-sm font-medium transition-colors sm:rounded-none rounded-md">
+                                {{ num }}
+                            </a>
+                            {% elif num == 1 or num == attempts.paginator.num_pages %}
+                            <!-- Always show first and last page (hidden on mobile) -->
+                            <a href="?page={{ num }}" class="hidden sm:inline-flex bg-white border-gray-300 text-gray-700 hover:bg-gray-50 relative items-center px-4 py-2 border text-sm font-medium transition-colors">
+                                {{ num }}
+                            </a>
+                            {% elif num == attempts.number|add:'-2' or num == attempts.number|add:'2' %}
+                            <!-- Ellipsis (hidden on mobile) -->
+                            <span class="hidden sm:inline-flex relative items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500">
+                                ...
+                            </span>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <!-- Next Button -->
+                        {% if attempts.has_next %}
+                        <a href="?page={{ attempts.next_page_number }}" class="relative inline-flex items-center px-2 sm:px-2 py-2 sm:rounded-none rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors" title="Next Page">
+                            <span class="sr-only">Next</span>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        {% else %}
+                        <span class="relative inline-flex items-center px-2 sm:px-2 py-2 sm:rounded-none rounded-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                        {% endif %}
+                        
+                        <!-- Last Page Button -->
+                        {% if attempts.has_next %}
+                        <a href="?page={{ attempts.paginator.num_pages }}" class="relative inline-flex items-center px-2 py-2 rounded-md sm:rounded-r-md sm:rounded-l-none border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors" title="Last Page">
+                            <span class="sr-only">Last</span>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                <path fill-rule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                        {% else %}
+                        <span class="relative inline-flex items-center px-2 py-2 rounded-md sm:rounded-r-md sm:rounded-l-none border border-gray-300 bg-gray-100 text-sm font-medium text-gray-400 cursor-not-allowed">
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                <path fill-rule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </span>
+                        {% endif %}
+                    </div>
+                </nav>
+                
+                <!-- Mobile Pagination Info -->
+                <div class="sm:hidden mt-3">
+                    <p class="text-xs text-gray-600 text-center">
+                        Page <span class="font-bold text-gray-900">{{ attempts.number }}</span> of <span class="font-bold text-gray-900">{{ attempts.paginator.num_pages }}</span>
+                        <span class="text-gray-400 mx-1">•</span>
+                        <span class="font-medium">{{ total_attempts }}</span> total
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="flex flex-col items-center justify-center p-12 text-gray-400">
+                <svg class="w-16 h-16 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <h3 class="text-lg font-bold text-gray-900 mb-1">No Attempts Yet</h3>
+                <p class="text-sm text-gray-500">Students haven't taken this exam yet.</p>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="bg-white rounded-xl shadow-xl border border-gray-200 p-12 text-center">
+            <div class="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">No Data Available</h3>
+            <p class="text-gray-500 mb-6">There are no attempts recorded for this exam yet.</p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

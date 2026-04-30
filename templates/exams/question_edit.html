@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 pb-24">
+    <!-- Dark Header Section -->
+    <div class="bg-[#0f172b] pt-12 pb-32 px-4 sm:px-6 lg:px-8 border-b border-gray-800">
+        <div class="max-w-3xl mx-auto">
+            <div class="flex items-center justify-between mb-6">
+                <!-- Back Button -->
+                <a href="{% url 'exam_detail' exam.pk %}" class="inline-flex items-center text-sm font-medium text-gray-400 hover:text-white transition-colors group">
+                    <svg class="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Back to Exam
+                </a>
+            </div>
+
+            <h1 class="text-3xl font-bold text-white tracking-tight mb-2">Edit Question</h1>
+            <p class="text-gray-400 text-lg">Exam: <span class="text-indigo-400 font-semibold">{{ exam.title }}</span></p>
+        </div>
+    </div>
+
+    <!-- Main Content - Overlapping Card -->
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 relative z-10">
+        <!-- Form -->
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                <!-- Card Header -->
+                <div class="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
+                    <span class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm">
+                        {{ question.order }}
+                    </span>
+                    <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wide">Question Details</h3>
+                </div>
+
+                <div class="p-6 space-y-8">
+                    <!-- Question Text & Marks -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="md:col-span-3">
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                                Question Text <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                {{ question_form.question_text }}
+                                {% if question_form.question_text.errors %}
+                                    <p class="text-red-500 text-xs mt-1 absolute -bottom-5 left-0">{{ question_form.question_text.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                                Marks <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                {{ question_form.marks }}
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-400 text-xs font-bold">PTS</span>
+                                </div>
+                                {% if question_form.marks.errors %}
+                                    <p class="text-red-500 text-xs mt-1 absolute -bottom-5 left-0">{{ question_form.marks.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden order field -->
+                    <div style="display: none;">
+                        {{ question_form.order }}
+                    </div>
+
+                    <!-- Answer Choices -->
+                    <div class="border-t border-gray-100 pt-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                Answer Choices <span class="normal-case font-normal text-gray-400 ml-1">(Select the correct answer)</span>
+                            </label>
+                        </div>
+                        
+                        {{ choice_formset.management_form }}
+                        
+                        <div class="space-y-2">
+                            {% for form in choice_formset %}
+                                <div class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:border-indigo-300 transition bg-white">
+                                    <!-- Correct Answer Checkbox -->
+                                    <div class="flex items-center justify-center">
+                                        {{ form.is_correct }}
+                                    </div>
+
+                                    <!-- Choice Text Input -->
+                                    <div class="flex-1">
+                                        <!-- Label visually hidden or very compact? The user image showed labels. Let's keep them but compact. -->
+                                        <!-- Actually user said "Remove extra left indentation". The label might normally be above. 
+                                             Let's try a row layout: [Checkbox] [Choice X: Input]
+                                             Or just compact the vertical stack.
+                                             Let's stick to the stack but tighter.
+                                        -->
+                                        <div class="flex flex-col">
+                                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Choice {{ forloop.counter }}</label>
+                                            {{ form.choice_text }}
+                                        </div>
+                                        {% if form.choice_text.errors %}
+                                            <p class="text-red-500 text-xs mt-1">{{ form.choice_text.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Hidden Fields -->
+                                    {{ form.id }}
+                                    {{ form.DELETE }}
+                                    {{ form.order }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Explanation -->
+                    <div class="border-t border-gray-100 pt-6">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                            Explanation <span class="text-gray-400 text-[10px] font-normal normal-case">(Optional)</span>
+                        </label>
+                        <div class="relative">
+                            {{ question_form.explanation }}
+                            {% if question_form.explanation.errors %}
+                                <p class="text-red-500 text-xs mt-1">{{ question_form.explanation.errors.0 }}</p>
+                            {% endif %}
+                            <p class="text-xs text-gray-400 mt-1 text-right">Optional: Help students learn with an explanation</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
+                    <a href="{% url 'exam_detail' exam.pk %}" class="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit" class="inline-flex items-center px-6 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg shadow-sm hover:bg-indigo-500 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        Update Question
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Ensure only one checkbox can be checked at a time
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('input[type="checkbox"][name$="-is_correct"]');
+    
+    // Style the django rendered inputs to match our theme
+    document.querySelectorAll('input[type="text"], textarea, input[type="number"]').forEach(el => {
+        if (!el.classList.contains('choice-checkbox')) {
+            // Base styles - MORE COMPACT
+            let classes = ['block', 'w-full', 'rounded-md', 'border', 'border-gray-200', 'bg-gray-50', 'px-3', 'py-2', 'text-gray-900', 'placeholder-gray-400', 'focus:bg-white', 'focus:border-indigo-500', 'focus:ring-2', 'focus:ring-indigo-500/10', 'sm:text-sm', 'transition-all'];
+            el.classList.add(...classes);
+        }
+    });
+
+    // Specific styling for checkboxes
+    checkboxes.forEach(checkbox => {
+        checkbox.classList.add('h-5', 'w-5', 'text-indigo-600', 'focus:ring-indigo-500', 'border-gray-300', 'rounded', 'cursor-pointer');
+        
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                checkboxes.forEach(cb => {
+                    if (cb !== this) cb.checked = false;
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

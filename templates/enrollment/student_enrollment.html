@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50 pb-12">
+    <!-- Header -->
+    <div class="bg-[#0f172b] pb-24 pt-8 sm:pt-12 px-4 sm:px-6 lg:px-8 shadow-sm relative overflow-hidden">
+        <!-- Background Elements -->
+        <div class="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div class="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+
+        <div class="max-w-7xl mx-auto relative z-10">
+            <!-- Breadcrumbs -->
+            <nav class="flex mb-4 sm:mb-6" aria-label="Breadcrumb">
+                <ol class="flex items-center space-x-2">
+                    <li>
+                        <a href="{% url 'student_dashboard' %}" class="text-slate-400 hover:text-white transition-colors">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                        </a>
+                    </li>
+                    <li class="text-slate-500">/</li>
+                    <li><span class="text-white font-medium">My Classes</span></li>
+                </ol>
+            </nav>
+
+            <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight mb-2 sm:mb-3">
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Class Management</span>
+            </h1>
+            <p class="text-slate-400 text-sm sm:text-base max-w-xl leading-relaxed">
+                View your enrolled classes, check rankings, or join new classes using a code.
+            </p>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-16 relative z-20 space-y-8">
+        
+        <!-- Join Class Card -->
+        <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-6 sm:p-8 border border-slate-100">
+            <div class="flex flex-col md:flex-row items-center gap-6 sm:gap-10">
+                <div class="flex-1 w-full text-center md:text-left">
+                    <h2 class="text-xl font-bold text-slate-900 mb-2">Have a Class Code?</h2>
+                    <p class="text-slate-500 text-sm mb-6 max-w-md mx-auto md:mx-0">Enter the unique 8-character code provided by your instructor to instantly enroll in a class.</p>
+                    
+                    <form action="{% url 'join_class_by_code' %}" method="post" class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto md:mx-0">
+                        {% csrf_token %}
+                        <div class="relative flex-1">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                </svg>
+                            </div>
+                            <input 
+                                type="text" 
+                                name="code" 
+                                placeholder="Enter Code"
+                                maxlength="8"
+                                class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-bold placeholder-slate-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent uppercase tracking-wider transition-all"
+                                required
+                            >
+                        </div>
+                        <button type="submit" class="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 hover:-translate-y-0.5 active:translate-y-0 flex justify-center items-center gap-2">
+                             <span>Join Class</span>
+                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                        </button>
+                    </form>
+                </div>
+                <!-- Decorative Icon -->
+                <div class="hidden md:flex justify-end lg:pr-12">
+                     <div class="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center relative">
+                        <div class="absolute inset-0 bg-indigo-100 rounded-full animate-ping opacity-20"></div>
+                        <svg class="w-12 h-12 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enrolled Classes -->
+        <div>
+            <div class="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 class="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-3">
+                    Enrolled Classes
+                    <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-full border border-indigo-200">{{ enrolled_classes.count }}</span>
+                </h2>
+            </div>
+            
+            {% if enrolled_classes %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for class in enrolled_classes %}
+                <div class="bg-white rounded-2xl shadow-sm hover:shadow-xl hover:shadow-indigo-100/50 transition-all duration-300 border border-slate-200 overflow-hidden flex flex-col group h-full border-t-[6px] border-t-indigo-500">
+                    <!-- Card Header -->
+                    <div class="p-5 border-b border-slate-100 bg-slate-50">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-lg font-bold text-slate-900 leading-tight line-clamp-2 w-full pr-2" title="{{ class.name }}">{{ class.name }}</h3>
+                            <span class="shrink-0 px-2.5 py-1 bg-white border border-slate-200 text-slate-700 text-[11px] font-black uppercase rounded shadow-sm tracking-wide">{{ class.year }}</span>
+                        </div>
+                        <div class="flex items-center text-sm text-slate-600 font-medium">
+                            <div class="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] text-indigo-700 font-bold mr-2 shrink-0 ring-2 ring-white shadow-sm">
+                                {{ class.created_by.first_name|slice:":1" }}{{ class.created_by.last_name|slice:":1" }}
+                            </div>
+                            <span class="truncate">By {{ class.created_by.get_full_name }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Card Body -->
+                    <div class="p-5 flex-1 flex flex-col">
+                        {% if class.description %}
+                            <p class="text-slate-600 text-sm mb-5 line-clamp-3 leading-relaxed">{{ class.description }}</p>
+                        {% else %}
+                            <p class="text-slate-400 text-sm mb-5 italic">No description provided.</p>
+                        {% endif %}
+                        
+                        <!-- Actions -->
+                        <div class="mt-auto pt-4 flex gap-3 border-t border-slate-50">
+                             <a href="{% url 'class_leaderboard' class.id %}" class="flex-1 py-2.5 px-4 bg-indigo-50 border border-indigo-100 text-indigo-700 font-bold text-sm rounded-xl hover:bg-indigo-100 hover:border-indigo-200 transition-all flex items-center justify-center gap-2 group/btn shadow-sm">
+                                <svg class="w-4 h-4 text-indigo-500 group-hover/btn:text-indigo-700 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                <span>Rankings</span>
+                            </a>
+                            <form action="{% url 'leave_class' class.pk %}" method="post" onsubmit="return confirm('Are you sure you want to leave this class?');">
+                                {% csrf_token %}
+                                <button type="submit" class="p-2.5 text-rose-600 bg-rose-50 rounded-xl transition-colors border border-transparent hover:border-rose-100" title="Leave Class">
+                                    <svg class="w-5 h-5" fill="none" into stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <!-- Empty Enrolled State -->
+            <div class="bg-white rounded-2xl shadow-sm border-2 border-dashed border-slate-200 p-12 text-center">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 mb-1">Not Enrolled Yet</h3>
+                <p class="text-slate-500 max-w-sm mx-auto">Use a class code to join your first class, or check for available open enrollment classes below.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Available Classes -->
+        <div class="pb-8">
+            <div class="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 class="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-3">
+                    Open Enrollment
+                    <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-full border border-emerald-200">{{ available_classes.count }}</span>
+                </h2>
+            </div>
+            
+            {% if available_classes %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for class in available_classes %}
+                <div class="bg-white rounded-2xl shadow-sm border border-emerald-100 overflow-hidden flex flex-col hover:shadow-xl hover:shadow-emerald-100/50 transition-all h-full">
+                     <!-- Green Accent Header -->
+                    <div class="h-2 w-full bg-linear-to-r from-emerald-500 to-teal-600"></div>
+                    
+                    <div class="p-5 flex-1 flex flex-col">
+                        <div class="flex justify-between items-start mb-2">
+                             <h3 class="text-xl font-bold text-slate-900 leading-tight line-clamp-2 w-full pr-2">{{ class.name }}</h3>
+                             <span class="shrink-0 px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-100 text-[11px] font-black uppercase rounded shadow-sm tracking-wide">{{ class.year }}</span>
+                        </div>
+                        
+                        <div class="flex items-center text-sm text-slate-600 font-medium mb-4">
+                            <span class="truncate">By {{ class.created_by.get_full_name }}</span>
+                        </div>
+                        
+                         {% if class.description %}
+                            <p class="text-slate-600 text-sm mb-4 line-clamp-3 leading-relaxed">{{ class.description }}</p>
+                        {% endif %}
+                        
+                        <div class="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center">
+                            <div class="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                <span>{{ class.student_count }} Students</span>
+                            </div>
+                            <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">Open Access</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="mt-6 flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                 <svg class="w-5 h-5 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                 <p class="text-sm text-blue-800 leading-relaxed">
+                     <span class="font-bold">Did you know?</span> These classes allow self-enrollment without a code. If a class requires a code, please ask your instructor.
+                 </p>
+            </div>
+            
+            {% else %}
+             <!-- Empty Available State -->
+              <div class="bg-slate-50 rounded-2xl p-8 text-center border border-slate-100">
+                <p class="text-slate-500 font-medium">No open enrollment classes are currently available.</p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

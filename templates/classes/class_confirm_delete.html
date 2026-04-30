@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Class - {{ student_class.name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50 py-12">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-xl shadow-2xl overflow-hidden">
+            <!-- Warning Header -->
+            <div class="bg-gradient-to-r from-red-500 to-red-600 px-6 py-8 text-center">
+                <div class="bg-red-700 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold text-white mb-2">Delete Class</h1>
+                <p class="text-red-100">This action cannot be undone</p>
+            </div>
+
+            <!-- Content -->
+            <div class="p-8">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ student_class.name }}</h2>
+                    <p class="text-gray-600">Year {{ student_class.year }}</p>
+                    {% if student_class.description %}
+                    <p class="text-gray-500 mt-2">{{ student_class.description }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Impact Warning -->
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-yellow-800">Warning</h3>
+                            <div class="mt-2 text-sm text-yellow-700">
+                                <p>Deleting this class will:</p>
+                                <ul class="list-disc list-inside mt-2 space-y-1">
+                                    <li>Remove {{ students.count }} student(s) from this class</li>
+                                    <li>Unassign {{ assigned_exams.count }} exam(s) from this class</li>
+                                    <li>Not delete any student data or exam attempts</li>
+                                    <li>Not delete the exams themselves</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="bg-blue-50 rounded-lg p-4 text-center">
+                        <p class="text-3xl font-bold text-blue-600">{{ students.count }}</p>
+                        <p class="text-sm text-gray-600 mt-1">Students</p>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-4 text-center">
+                        <p class="text-3xl font-bold text-purple-600">{{ assigned_exams.count }}</p>
+                        <p class="text-sm text-gray-600 mt-1">Assigned Exams</p>
+                    </div>
+                </div>
+
+                <!-- Alternative Options -->
+                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-blue-800">Consider archiving instead</h3>
+                            <div class="mt-2 text-sm text-blue-700">
+                                <p>Instead of deleting, you can mark the class as inactive by editing it. This preserves all data and relationships while hiding it from active listings.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+                    <div class="flex space-x-4">
+                        <button type="submit" class="flex-1 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition font-bold text-lg shadow-lg hover:shadow-xl">
+                            Yes, Delete This Class
+                        </button>
+                        <a href="{% url 'class_detail' student_class.pk %}" class="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition font-bold text-lg text-center">
+                            Cancel
+                        </a>
+                    </div>
+                    <a href="{% url 'class_update' student_class.pk %}" class="block w-full bg-blue-100 text-blue-700 px-6 py-3 rounded-lg hover:bg-blue-200 transition font-semibold text-center">
+                        Edit Class Instead
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

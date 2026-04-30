@@ -1,0 +1,565 @@
+{% extends 'base.html' %}
+{% load timezone_filters %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50 pb-24">
+    <!-- Fixed Header with Timer -->
+    <div class="sticky top-0 z-50 bg-[#0f172b] shadow-2xl border-b border-indigo-500/30 backdrop-blur-md bg-opacity-95 supports-backdrop-blur:bg-opacity-90">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+             <div class="py-4 sm:py-6 flex items-center justify-between gap-6">
+                 <!-- Exam Info -->
+                <div class="flex-1 min-w-0">
+                    <h1 class="text-lg sm:text-2xl font-black text-white truncate tracking-tight mb-1">{{ exam.title }}</h1>
+                    <div class="flex items-center gap-3 text-xs sm:text-sm text-slate-300 font-medium">
+                        <span class="truncate uppercase tracking-wider font-bold opacity-80">{{ exam.subject }}</span>
+                         {% if attempt_number > 1 %}
+                            <span class="bg-indigo-500/20 text-indigo-100 px-2 py-0.5 rounded text-[10px] sm:text-xs font-bold border border-indigo-500/40 shadow-[0_0_10px_rgba(99,102,241,0.2)]">
+                                Attempt #{{ attempt_number }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Timer -->
+                 <div class="flex-shrink-0 text-right bg-slate-800/90 px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl border border-slate-700/80 shadow-lg ring-1 ring-white/5">
+                    <p class="text-[10px] sm:text-xs uppercase font-bold text-slate-400 tracking-wider mb-0.5">Time Left</p>
+                    <div id="timer" class="text-2xl sm:text-3xl font-black text-rose-500 font-mono leading-none tabular-nums drop-shadow-sm filter">
+                        {{ exam.duration_minutes }}:00
+                    </div>
+                </div>
+             </div>
+
+             <!-- Progress Bar -->
+             <div class="pb-4 sm:pb-5">
+                 <div class="flex items-center justify-between text-[10px] sm:text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                     <span class="opacity-80">Progress</span>
+                     <span id="progress-text" class="text-indigo-300">0/{{ questions_count }} Answered</span>
+                 </div>
+                <div class="bg-slate-800 rounded-full h-2 sm:h-2.5 overflow-hidden shadow-inner ring-1 ring-white/5">
+                    <div id="progress" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-full rounded-full transition-all duration-300 ease-out shadow-[0_0_15px_rgba(139,92,246,0.6)]" style="width: 0%"></div>
+                </div>
+             </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8">
+        <!-- Proctoring Banner (Condensed) -->
+        <div class="mb-6 rounded-lg border-l-4 border-rose-500 bg-rose-50 shadow-sm p-4 flex gap-4 items-start">
+            <div class="flex-shrink-0 text-rose-500 mt-0.5">
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            </div>
+            <div class="text-sm">
+            <h3 class="font-bold text-rose-800 mb-1">Exam Rules (Proctoring On)</h3>
+            <ul class="text-rose-700 space-y-1 list-disc pl-4 marker:text-rose-500">
+                <li><span class="font-bold text-amber-600">First violation</span>: Tab switching or focus loss shows a warning. You may continue.</li>
+                <li><span class="font-bold text-rose-600">Second violation</span>: Exam terminates immediately.</li>
+                <li>Using the Back button or any link to leave will ask you to submit and exit.</li>
+            </ul>
+            </div>
+        </div>
+
+        <!-- Exam Form -->
+        <form method="post" action="{% url 'exam_submit' attempt.pk %}" id="examForm">
+            {% csrf_token %}
+            
+            <!-- Questions -->
+            <div class="space-y-6 sm:space-y-8">
+                {% for question in questions %}
+                <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 overflow-hidden scroll-mt-40 transition-shadow hover:shadow-md" id="q{{ question.id }}">
+                    <!-- Question Header -->
+                    <div class="p-2 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                         <span class="flex items-center justify-center h-7 px-2.5 bg-indigo-100 text-indigo-700 text-xs sm:text-sm font-black rounded-lg border border-indigo-200 shadow-sm">
+                            Q{{ forloop.counter }}
+                        </span>
+                        <span class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wide bg-white border border-slate-200 px-2 py-1 rounded">
+                            {{ question.marks }} mark{{ question.marks|pluralize }}
+                        </span>
+                    </div>
+
+                    <div class="p-4 sm:p-6">
+                         <p class="text-base sm:text-lg font-semibold text-slate-800 mb-6 leading-relaxed">{{ question.question_text }}</p>
+                        
+                        <!-- Choices (randomized per attempt) -->
+                        <div class="space-y-3">
+                            {% for choice in question.shuffled_choices %}
+                            <label class="group relative flex items-start p-3 sm:p-4 border-2 border-slate-100 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-slate-50 transition-all duration-200 question-choice active:scale-[0.99] touch-manipulation">
+                                <div class="flex items-center h-5 mt-0.5">
+                                    <input type="radio" 
+                                           name="question_{{ question.id }}" 
+                                           value="{{ choice.id }}" 
+                                           class="w-5 h-5 text-indigo-600 border-slate-300 focus:ring-indigo-500 focus:ring-offset-0 transition duration-150 ease-in-out cursor-pointer"
+                                           onchange="updateProgress()">
+                                </div>
+                                <span class="ml-3 flex-1">
+                                    <span class="block text-sm sm:text-base font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">
+                                         <span class="inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-slate-100 text-slate-500 font-bold text-[10px] sm:text-xs mr-2 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                                            {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% endif %}
+                                        </span>
+                                        {{ choice.choice_text }}
+                                    </span>
+                                </span>
+                                <!-- Selection Highlight Border (Optional visual enhancement via CSS sibling selector could go here, but relying on border color change for now) -->
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Submit Button Footer -->
+            <div id="submitSection" class="mt-8 sm:mt-12 flex flex-col-reverse sm:flex-row items-center justify-between gap-4 pb-8">
+                <a href="{% url 'student_exam_list' %}" class="w-full sm:w-auto px-6 py-3.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 hover:text-slate-800 transition shadow-sm text-sm text-center">
+                    Cancel Exam
+                </a>
+                <button type="button" onclick="confirmSubmit()" class="w-full sm:w-auto flex-1 sm:flex-none px-8 py-3.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-200 transform hover:-translate-y-0.5 active:translate-y-0 text-sm sm:text-base flex justify-center items-center gap-2">
+                    <span>Submit Exam</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Floating Scroll to Submit Button -->
+    <button id="scrollToSubmit" onclick="scrollToSubmitSection()" class="fixed bottom-6 right-6 z-40 w-12 h-12 sm:w-14 sm:h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-2xl shadow-indigo-900/40 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 border-2 border-indigo-400/50 group" title="Jump to Submit">
+        <svg class="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+        </svg>
+        <div class="absolute -top-12 right-0 bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            Jump to Submit
+        </div>
+    </button>
+</div>
+
+<script>
+// Timer functionality
+const durationMinutes = {{ exam.duration_minutes }};
+const startTime = new Date('{{ attempt.started_at|to_ist|date:"c" }}');
+const endTime = new Date(startTime.getTime() + durationMinutes * 60000);
+let timerInterval;
+
+function updateTimer() {
+    const now = new Date();
+    const remaining = endTime - now;
+    
+    if (remaining <= 0) {
+        clearInterval(timerInterval);
+        document.getElementById('timer').textContent = '0:00';
+        document.getElementById('timer').classList.add('animate-pulse');
+        
+        // Mark exam as submitted to prevent violation detection
+        examSubmitted = true;
+        
+        // Remove beforeunload warning for smooth auto-submit
+        window.removeEventListener('beforeunload', beforeUnloadHandler);
+        systemDialogActive = true;
+        alert('Time is up! Your exam will be submitted automatically.');
+        systemDialogActive = false;
+        document.getElementById('examForm').submit();
+        return;
+    }
+    
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+    
+    document.getElementById('timer').textContent = 
+        `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    // Change color when time is running out
+    if (minutes < 5) {
+        document.getElementById('timer').classList.replace('text-rose-500', 'text-rose-600');
+        document.getElementById('timer').classList.add('animate-pulse');
+    }
+}
+
+// Progress tracking
+function updateProgress() {
+    const totalQuestions = {{ questions_count }};
+    const radios = document.querySelectorAll('input[type="radio"]');
+    const questionNames = new Set();
+    
+    radios.forEach(radio => {
+        if (radio.checked) {
+            questionNames.add(radio.name);
+            
+            // Visual enhancement: Highlight selected parent label
+            // Reset all labels first (simplified approach, better handled via CSS peer-checked but JS works for explicit classes)
+            const questionId = radio.name.split('_')[1];
+            const qContainer = document.getElementById('q' + questionId);
+            if(qContainer) {
+                 const labels = qContainer.querySelectorAll('label');
+                 labels.forEach(l => {
+                     l.classList.remove('border-indigo-500', 'bg-indigo-50/50', 'ring-1', 'ring-indigo-500');
+                     l.classList.add('border-slate-100');
+                 });
+                 // Find parent label of this radio
+                 const parentLabel = radio.closest('label');
+                 if(parentLabel) {
+                     parentLabel.classList.remove('border-slate-100');
+                     parentLabel.classList.add('border-indigo-500', 'bg-indigo-50/50', 'ring-1', 'ring-indigo-500');
+                 }
+            }
+        }
+    });
+    
+    const answered = questionNames.size;
+    const percentage = (answered / totalQuestions) * 100;
+    
+    document.getElementById('progress').style.width = percentage + '%';
+    document.getElementById('progress-text').textContent = 
+        `${answered}/${totalQuestions} Answered`;
+}
+
+// ============================================================================
+// NAVIGATION PREVENTION - INTERCEPT ALL NAVIGATION ATTEMPTS
+// ============================================================================
+let navigationDetected = false;
+let pendingNavigationUrl = null;
+
+// Prevent accidental navigation with beforeunload warning
+const beforeUnloadHandler = function (e) {
+    if (!examSubmitted && !tabSwitchDetected) {
+        // Mark system dialog as active (browser's native leave dialog)
+        systemDialogActive = true;
+        
+        // Set a timeout to reset the flag after the dialog closes
+        // This handles both "Stay" and "Leave" choices
+        setTimeout(() => {
+            systemDialogActive = false;
+        }, 100);
+        
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+    }
+};
+window.addEventListener('beforeunload', beforeUnloadHandler);
+
+// Function to handle navigation with confirmation
+function handleNavigationAttempt(reason, targetUrl = null) {
+    console.log('Navigation attempt detected:', reason);
+    
+    // Show confirmation dialog
+    systemDialogActive = true;
+    const confirmed = confirm(
+        '⚠️ LEAVE EXAM?\n\n' +
+        'You are attempting to navigate away from the exam page.\n\n' +
+        'If you leave now:\n' +
+        '• Your exam will be automatically submitted\n' +
+        '• Your current answers will be saved\n' +
+        '• You cannot return to continue this attempt\n\n' +
+        'Do you want to leave and submit your exam?'
+    );
+    systemDialogActive = false;
+    
+    if (confirmed) {
+        // User confirmed - submit exam
+        console.log('User confirmed navigation - submitting exam');
+        autoSubmitExam('You chose to leave the exam page. Your exam has been submitted.');
+        
+        // If there's a target URL, navigate after a brief delay to allow form submission
+        if (targetUrl) {
+            setTimeout(function() {
+                window.location.href = targetUrl;
+            }, 500);
+        }
+    } else {
+        // User cancelled - continue exam
+        console.log('User cancelled navigation - continuing exam');
+        // No action needed, exam continues
+    }
+    
+    return confirmed;
+}
+
+// Intercept all clicks on links and prevent navigation
+document.addEventListener('click', function(e) {
+    // Check if it's a link click
+    const link = e.target.closest('a');
+    if (link && !examSubmitted && !tabSwitchDetected) {
+        // Get the href
+        const href = link.getAttribute('href');
+        
+        // Allow same-page anchors (starting with #) and javascript: links
+        if (href && !href.startsWith('#') && !href.startsWith('javascript:')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Show confirmation dialog
+            const confirmed = handleNavigationAttempt('Link click to: ' + href, href);
+            
+            // If user cancelled, do nothing (exam continues)
+            // If user confirmed, autoSubmitExam will be called by handleNavigationAttempt
+        }
+    }
+}, true); // Use capture phase to catch it early
+
+// Detect browser back/forward button usage
+let originalHistoryLength = window.history.length;
+window.addEventListener('popstate', function(e) {
+    if (!examSubmitted && !tabSwitchDetected) {
+        console.log('Browser back/forward button detected');
+        
+        // Prevent the navigation by pushing state back
+        window.history.pushState(null, '', window.location.href);
+        
+        // Show confirmation dialog
+        handleNavigationAttempt('Browser back/forward button');
+    }
+});
+
+// Push initial state to enable popstate detection
+window.history.pushState(null, '', window.location.href);
+
+// Additional safety: detect URL changes
+let lastUrl = window.location.href;
+setInterval(function() {
+    if (window.location.href !== lastUrl && !examSubmitted && !tabSwitchDetected) {
+        console.log('URL change detected');
+        const newUrl = window.location.href;
+        lastUrl = window.location.href;
+        
+        // Show confirmation dialog
+        handleNavigationAttempt('Manual URL change', newUrl);
+    }
+}, 100); // Check every 100ms
+
+// Confirm before submit with single prompt
+function confirmSubmit() {
+    const totalQuestions = {{ questions_count }};
+    const radios = document.querySelectorAll('input[type="radio"]');
+    const questionNames = new Set();
+    
+    radios.forEach(radio => {
+        if (radio.checked) {
+            questionNames.add(radio.name);
+        }
+    });
+    
+    const answered = questionNames.size;
+    
+    // Single confirmation prompt
+    let message = 'Are you sure you want to submit your exam? This action cannot be undone.';
+    
+    if (answered < totalQuestions) {
+        const unanswered = totalQuestions - answered;
+        message = `You have ${unanswered} unanswered question${unanswered > 1 ? 's' : ''}. Submit exam anyway? This action cannot be undone.`;
+    }
+    
+    systemDialogActive = true;
+    const confirmed = confirm(message);
+    systemDialogActive = false;
+    
+    if (confirmed) {
+        // Mark exam as submitted to prevent violation detection during submission
+        examSubmitted = true;
+        
+        // Remove beforeunload warning for smooth submission
+        window.removeEventListener('beforeunload', beforeUnloadHandler);
+        document.getElementById('examForm').submit();
+    }
+}
+
+// Smooth scroll to submit section
+function scrollToSubmitSection() {
+    const submitSection = document.getElementById('submitSection');
+    if (submitSection) {
+        submitSection.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+        });
+    }
+}
+
+// Start timer
+timerInterval = setInterval(updateTimer, 1000);
+updateTimer();
+
+// Disable copy-paste and right-click
+document.addEventListener('copy', (e) => e.preventDefault());
+document.addEventListener('cut', (e) => e.preventDefault());
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// Initial call to set visual states if browser restores selections on back
+document.addEventListener('DOMContentLoaded', updateProgress);
+
+// ============================================================================
+// TAB SWITCHING & NAVIGATION DETECTION - AUTO-SUBMIT EXAM
+// ============================================================================
+let tabSwitchDetected = false;
+let examSubmitted = false;
+let violationCount = 0; // Track proctoring violations (tab switching, focus loss)
+const MAX_VIOLATIONS = 1; // Allow 1 violation before termination
+let lastViolationTime = 0; // Track last violation timestamp to prevent double-counting
+const VIOLATION_DEBOUNCE_MS = 1000; // 1 second debounce window
+let systemDialogActive = false; // Track when system dialogs (alert/confirm) are active
+
+function autoSubmitExam(reason) {
+    // Prevent multiple submissions
+    if (examSubmitted || tabSwitchDetected) {
+        console.log('Auto-submit already triggered, ignoring duplicate call');
+        return;
+    }
+    
+    console.log('Auto-submitting exam:', reason);
+    tabSwitchDetected = true;
+    examSubmitted = true;
+    
+    // Stop the timer
+    if (typeof timerInterval !== 'undefined') {
+        clearInterval(timerInterval);
+    }
+    
+    // Remove beforeunload warning to allow smooth submission
+    window.removeEventListener('beforeunload', beforeUnloadHandler);
+    
+    // Add violation flag to form
+    const form = document.getElementById('examForm');
+    if (form) {
+        // Add hidden input for violation tracking
+        const violationInput = document.createElement('input');
+        violationInput.type = 'hidden';
+        violationInput.name = 'has_violation';
+        violationInput.value = 'true';
+        form.appendChild(violationInput);
+        
+        const reasonInput = document.createElement('input');
+        reasonInput.type = 'hidden';
+        reasonInput.name = 'violation_reason';
+        reasonInput.value = reason;
+        form.appendChild(reasonInput);
+    }
+    
+    // Mark system dialog as active before showing alert
+    systemDialogActive = true;
+    
+    // Show alert to inform student
+    alert(`⚠️ EXAM TERMINATED\n\n${reason}\n\nYour exam has been automatically submitted with your current answers.`);
+    
+    // Reset system dialog flag
+    systemDialogActive = false;
+    
+    // Auto-submit the form
+    if (form) {
+        form.submit();
+    } else {
+        console.error('Exam form not found!');
+    }
+}
+
+function recordViolation(violationType) {
+    const now = Date.now();
+    
+    // Check if this is a duplicate violation within debounce window
+    if (now - lastViolationTime < VIOLATION_DEBOUNCE_MS) {
+        console.log('Duplicate violation ignored (debounce):', violationType);
+        return false;
+    }
+    
+    // Record this as a new violation
+    lastViolationTime = now;
+    violationCount++;
+    console.log(`Violation recorded: ${violationCount}/${MAX_VIOLATIONS} - ${violationType}`);
+    
+    return true;
+}
+
+function showViolationWarning(violationType) {
+    // Create warning banner
+    const warningDiv = document.createElement('div');
+    warningDiv.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-rose-600 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-lg shadow-2xl z-50 w-[calc(100%-2rem)] sm:w-auto sm:max-w-md text-center';
+    warningDiv.innerHTML = `
+        <div class="font-bold text-base sm:text-lg mb-1">⚠️ EXAM VIOLATION DETECTED</div>
+        <div class="text-xs sm:text-sm mb-2">${violationType}</div>
+        <div class="text-xs font-semibold bg-white/20 px-2 sm:px-3 py-1 sm:py-1.5 rounded">
+            WARNING ${violationCount}/${MAX_VIOLATIONS} - Next violation will terminate your exam!
+        </div>
+    `;
+    document.body.appendChild(warningDiv);
+    
+    // Auto-remove after 6 seconds
+    setTimeout(() => {
+        warningDiv.style.transition = 'opacity 0.3s';
+        warningDiv.style.opacity = '0';
+        setTimeout(() => warningDiv.remove(), 300);
+    }, 6000);
+    
+    console.log(`⚠️ Violation ${violationCount}/${MAX_VIOLATIONS}: ${violationType}`);
+}
+
+// Detect tab switching using Page Visibility API
+document.addEventListener('visibilitychange', function() {
+    // Ignore visibility changes caused by system dialogs
+    if (systemDialogActive) {
+        console.log('Visibility change ignored: system dialog active');
+        return;
+    }
+    
+    if (document.hidden && !examSubmitted && !tabSwitchDetected) {
+        // Record violation with debounce protection
+        if (!recordViolation('Tab switch or browser minimize')) {
+            return; // Duplicate violation, ignore
+        }
+        
+        if (violationCount > MAX_VIOLATIONS) {
+            // Terminate exam on second violation
+            autoSubmitExam('Multiple proctoring violations detected. You switched tabs or minimized the browser multiple times.');
+        } else {
+            // Show warning on first violation
+            showViolationWarning('You switched to another tab or minimized the browser.');
+        }
+    }
+});
+
+// Detect window blur (additional safeguard for focus loss)
+window.addEventListener('blur', function() {
+    // Ignore blur events caused by system dialogs
+    if (systemDialogActive) {
+        console.log('Blur event ignored: system dialog active');
+        return;
+    }
+    
+    // Only trigger on actual blur, not on alert/confirm dialogs
+    setTimeout(function() {
+        // Double-check system dialog flag after timeout
+        if (systemDialogActive) {
+            console.log('Blur event ignored after timeout: system dialog active');
+            return;
+        }
+        
+        if (!document.hasFocus() && !examSubmitted && !tabSwitchDetected) {
+            // Record violation with debounce protection
+            if (!recordViolation('Window focus loss')) {
+                return; // Duplicate violation, ignore
+            }
+            
+            if (violationCount > MAX_VIOLATIONS) {
+                // Terminate exam on second violation
+                autoSubmitExam('Multiple proctoring violations detected. The exam window lost focus multiple times.');
+            } else {
+                // Show warning on first violation
+                showViolationWarning('The exam window lost focus.');
+            }
+        }
+    }, 100);
+});
+
+// Reset systemDialogActive flag when focus returns (safety measure)
+window.addEventListener('focus', function() {
+    if (systemDialogActive && !examSubmitted && !tabSwitchDetected) {
+        // Small delay to ensure dialog has fully closed
+        setTimeout(() => {
+            systemDialogActive = false;
+            console.log('System dialog flag reset on focus return');
+        }, 50);
+    }
+});
+
+console.log('🔒 Exam proctoring enabled: Tab switching will terminate the exam.');
+</script>
+{% endblock %}
