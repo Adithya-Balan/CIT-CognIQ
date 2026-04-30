@@ -3730,9 +3730,17 @@ def school_admin_manage_teachers(request):
             Q(username__icontains=search)
         )
 
+    # Implement pagination (20 items per page)
+    from django.core.paginator import Paginator
+    paginator = Paginator(teachers, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
         'school': school,
-        'teachers': teachers,
+        'teachers': page_obj,
+        'page_obj': page_obj,
+        'total_count': paginator.count,
         'search': search,
         'page_title': 'Manage Teachers',
     }
