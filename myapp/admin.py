@@ -89,12 +89,10 @@ class ChoiceInline(admin.TabularInline):
     fields = ('choice_text', 'is_correct', 'order')
 
 
-class QuestionInline(admin.StackedInline):
+class ExamQuestionInline(admin.TabularInline):
     """Inline questions for exams"""
-    model = Question
+    model = Exam.questions.through
     extra = 1
-    fields = ('question_text', 'marks', 'explanation', 'order')
-    show_change_link = True
 
 
 @admin.register(Exam)
@@ -124,7 +122,7 @@ class ExamAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = ('created_at', 'updated_at', 'total_marks')
-    inlines = [QuestionInline]
+    inlines = [ExamQuestionInline]
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -135,14 +133,17 @@ class ExamAdmin(admin.ModelAdmin):
 class QuestionAdmin(admin.ModelAdmin):
     """Question Admin"""
 
-    list_display = ('exam', 'question_text_short', 'marks', 'order', 'has_explanation')
-    list_filter = ('exam__subject', 'marks', 'exam__created_by', 'exam__school')
-    search_fields = ('question_text', 'explanation', 'exam__title')
-    ordering = ('exam', 'order')
+    list_display = ('school', 'subject', 'grade', 'chapter', 'question_text_short', 'marks', 'created_by', 'has_explanation')
+    list_filter = ('school', 'subject', 'grade', 'created_by')
+    search_fields = ('question_text', 'explanation', 'chapter')
+    ordering = ('-created_at',)
 
     fieldsets = (
-        ('Question', {
-            'fields': ('exam', 'question_text', 'marks', 'order')
+        ('Categorization', {
+            'fields': ('school', 'created_by', 'subject', 'grade', 'chapter')
+        }),
+        ('Question Content', {
+            'fields': ('question_text', 'marks')
         }),
         ('Explanation (Mandatory)', {
             'fields': ('explanation',),
@@ -167,7 +168,7 @@ class ChoiceAdmin(admin.ModelAdmin):
     """Choice Admin"""
 
     list_display = ('question', 'choice_text_short', 'is_correct', 'order')
-    list_filter = ('is_correct', 'question__exam__subject')
+    list_filter = ('is_correct', 'question__subject')
     search_fields = ('choice_text', 'question__question_text')
     ordering = ('question', 'order')
 

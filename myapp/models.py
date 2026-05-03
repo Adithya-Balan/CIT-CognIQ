@@ -431,6 +431,9 @@ class Exam(models.Model):
     )
     description = models.TextField(blank=True, verbose_name='Description/Instructions')
     
+    grade = models.CharField(max_length=50, blank=True, verbose_name='Grade/Standard')
+    chapter = models.CharField(max_length=200, blank=True, verbose_name='Chapter/Topic/Category')
+    
     # Exam Type
     exam_type = models.CharField(
         max_length=20,
@@ -470,6 +473,15 @@ class Exam(models.Model):
         blank=True,
         verbose_name='Assigned Classes',
         help_text='Classes that can take this exam'
+    )
+    
+    # Shared Question Bank Link
+    questions = models.ManyToManyField(
+        'Question',
+        through='ExamQuestion',
+        related_name='exams',
+        blank=True,
+        verbose_name='Questions'
     )
     
     # Metadata
@@ -518,27 +530,41 @@ class Exam(models.Model):
 
 class Question(models.Model):
     """
-    Question Model - Core Assessment Unit
+    Question Model - Core Assessment Unit (Shared Question Bank)
     
     Philosophy:
-    - Each question has 4 conceptual layers:
-      1. Question statement (problem definition)
-      2. Multiple choices (decision paths)
-      3. Correct answer (ground truth)
-      4. Explanation (optional learning reinforcement)
+    - Questions belong to a School and are created by a Teacher.
+    - They can be reused across multiple exams.
+    - Each question has conceptual layers: problem definition, choices, correct answer, explanation.
     """
     
-    exam = models.ForeignKey(
-        Exam, 
-        on_delete=models.CASCADE, 
-        related_name='questions',
-        verbose_name='Exam'
+    school = models.ForeignKey(
+        'School',
+        on_delete=models.CASCADE,
+        related_name='question_bank',
+        verbose_name='School'
     )
+    
+    created_by = models.ForeignKey(
+        'User',
+        on_delete=models.CASCADE,
+        related_name='created_questions',
+        limit_choices_to={'role': 'teacher'},
+        verbose_name='Created By'
+    )
+    
+    # Categorization
+    subject = models.CharField(
+        max_length=100, 
+        choices=Exam.SUBJECT_CHOICES,
+        verbose_name='Subject'
+    )
+    grade = models.CharField(max_length=50, blank=True, verbose_name='Grade/Standard')
+    chapter = models.CharField(max_length=200, blank=True, verbose_name='Chapter/Topic')
     
     # Question Content
     question_text = models.TextField(verbose_name='Question')
     marks = models.PositiveIntegerField(default=1, verbose_name='Marks')
-    order = models.PositiveIntegerField(default=0, verbose_name='Order')
     
     # Optional Explanation (Learning Enhancement)
     explanation = models.TextField(
@@ -555,15 +581,31 @@ class Question(models.Model):
     class Meta:
         verbose_name = 'Question'
         verbose_name_plural = 'Questions'
-        ordering = ['exam', 'order']
+        ordering = ['-created_at']
         
     def __str__(self):
-        return f"Q{self.order}: {self.question_text[:50]}..."
+        return f"{self.subject} - {self.question_text[:50]}..."
     
     @property
     def correct_choice(self):
         """Get the correct choice"""
         return self.choices.filter(is_correct=True).first()
+
+
+class ExamQuestion(models.Model):
+    """
+    Junction table for Exam and Question to maintain order.
+    """
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    order = models.PositiveIntegerField(default=0, verbose_name='Order')
+
+    class Meta:
+        ordering = ['exam', 'order']
+        unique_together = ['exam', 'question']
+
+    def __str__(self):
+        return f"{self.exam.title} - Q{self.order}"
 
 
 class Choice(models.Model):
@@ -779,12 +821,11 @@ class StudentAnswer(models.Model):
     class Meta:
         verbose_name = 'Student Answer'
         verbose_name_plural = 'Student Answers'
-        ordering = ['question__order']
         unique_together = ['attempt', 'question']  # One answer per question per attempt
     
     def __str__(self):
         status = "✓" if self.is_correct else "✗"
-        return f"{status} {self.attempt.student.get_full_name()} - Q{self.question.order}"
+        return f"{status} {self.attempt.student.get_full_name()} - Q_ID:{self.question.pk}"
     
     def save(self, *args, **kwargs):
         """Auto-set is_correct based on selected choice"""

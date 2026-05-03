@@ -273,7 +273,7 @@ class ExamForm(forms.ModelForm):
     class Meta:
         model = Exam
         fields = [
-            'title', 'subject', 'description',
+            'title', 'subject', 'grade', 'chapter', 'description',
             'exam_type',
             'duration_minutes',
             'pass_percentage'
@@ -285,6 +285,14 @@ class ExamForm(forms.ModelForm):
             }),
             'subject': forms.Select(attrs={
                 'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500'
+            }),
+            'grade': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
+                'placeholder': 'e.g., Grade 10'
+            }),
+            'chapter': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
+                'placeholder': 'e.g., Algebra or Mid-Term'
             }),
             'description': forms.Textarea(attrs={
                 'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
@@ -322,7 +330,7 @@ class QuestionForm(forms.ModelForm):
 
     class Meta:
         model = Question
-        fields = ['question_text', 'marks', 'explanation', 'order']
+        fields = ['question_text', 'marks', 'explanation', 'subject', 'grade', 'chapter']
         widgets = {
             'question_text': forms.Textarea(attrs={
                 'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
@@ -339,10 +347,17 @@ class QuestionForm(forms.ModelForm):
                 'placeholder': 'Optional: Explain why the correct answer is correct to help students learn.',
                 'rows': 3
             }),
-            'order': forms.NumberInput(attrs={
-                'class': 'w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
-                'min': '0'
-            })
+            'subject': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
+            }),
+            'grade': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
+                'placeholder': 'e.g., Grade 10'
+            }),
+            'chapter': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
+                'placeholder': 'e.g., Algebra'
+            }),
         }
 
 
@@ -368,16 +383,7 @@ class ChoiceForm(forms.ModelForm):
         }
 
 
-# Formsets for managing multiple questions and choices
-QuestionFormSet = inlineformset_factory(
-    Exam,
-    Question,
-    form=QuestionForm,
-    extra=1,
-    can_delete=True,
-    min_num=1,
-    validate_min=True
-)
+# QuestionFormSet removed as Question is no longer directly linked to Exam.
 
 
 class BaseChoiceFormSet(forms.BaseInlineFormSet):

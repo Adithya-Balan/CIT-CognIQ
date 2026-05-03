@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Assign Exam - {{ exam.title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50 py-8">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Assign Exam to Classes</h1>
+                <p class="mt-2 text-sm text-gray-500">Select which of your classes should take the exam <span class="font-bold text-gray-700">"{{ exam.title }}"</span>.</p>
+            </div>
+            <a href="{% url 'exam_bank' %}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                &larr; Back to Bank
+            </a>
+        </div>
+
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                    <h3 class="text-lg font-medium text-gray-900">Your Classes</h3>
+                </div>
+                
+                <div class="p-6">
+                    {% if teacher_classes %}
+                        <div class="space-y-4">
+                            {% for student_class in teacher_classes %}
+                                <label class="flex items-center p-4 rounded-lg border {% if student_class.id in already_assigned %}border-indigo-200 bg-indigo-50/30{% else %}border-gray-200 hover:bg-gray-50 cursor-pointer{% endif %} transition-colors">
+                                    <div class="flex-shrink-0 mr-4">
+                                        <input type="checkbox" name="classes" value="{{ student_class.id }}" class="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" 
+                                            {% if student_class.id in already_assigned %}checked disabled{% endif %}>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex justify-between">
+                                            <h4 class="text-sm font-medium text-gray-900">{{ student_class.name }}</h4>
+                                            {% if student_class.id in already_assigned %}
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">Already Assigned</span>
+                                            {% endif %}
+                                        </div>
+                                        <p class="text-sm text-gray-500">{{ student_class.students.count }} Students Enrolled</p>
+                                    </div>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">No classes found</h3>
+                            <p class="mt-1 text-sm text-gray-500">You need to create a class before you can assign exams.</p>
+                            <div class="mt-4">
+                                <a href="{% url 'class_create' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                                    Create a Class
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <a href="{% url 'exam_bank' %}" class="px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-3 border border-transparent rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Assign Exam
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

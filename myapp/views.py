@@ -7,8 +7,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
 from django.db.models import Q, Avg, Count, Sum, Max, Min
 from django.utils import timezone
-from .forms import ExamForm, QuestionForm, ChoiceForm, QuestionFormSet, ChoiceFormSet, ProfileUpdateForm, TeacherCreationForm, StudentCreationForm, BulkStudentUploadForm
-from .models import User, Exam, Question, Choice, ExamAttempt, StudentAnswer, StudentClass, School
+from .forms import ExamForm, QuestionForm, ChoiceForm, ChoiceFormSet, ProfileUpdateForm, TeacherCreationForm, StudentCreationForm, BulkStudentUploadForm
+from .models import User, Exam, Question, Choice, ExamAttempt, StudentAnswer, StudentClass, School, ExamQuestion
 
 
 # Home/Landing Page
@@ -329,13 +329,12 @@ class ExamDetailView(LoginRequiredMixin, TeacherRequiredMixin, DetailView):
 
     def get_queryset(self):
         return Exam.objects.filter(
-            created_by=self.request.user,
             school=self.request.user.school
         )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['questions'] = self.object.questions.prefetch_related('choices').all()
+        context['questions'] = self.object.questions.prefetch_related('choices').order_by('examquestion__order')
         context['page_title'] = f'Exam: {self.object.title}'
         return context
 
@@ -418,7 +417,11 @@ def question_edit(request, exam_pk, question_pk):
         return redirect('dashboard')
     
     exam = get_object_or_404(Exam, pk=exam_pk, created_by=request.user)
-    question = get_object_or_404(Question, pk=question_pk, exam=exam)
+    question = get_object_or_404(exam.questions, pk=question_pk)
+    
+    if question.created_by != request.user:
+        messages.error(request, 'Access denied. You can only edit questions you created.')
+        return redirect('exam_detail', pk=exam.pk)
     
     if request.method == 'POST':
         question_form = QuestionForm(request.POST, instance=question)
@@ -554,19 +557,24 @@ def question_delete(request, exam_pk, question_pk):
         return redirect('dashboard')
     
     exam = get_object_or_404(Exam, pk=exam_pk, created_by=request.user)
-    question = get_object_or_404(Question, pk=question_pk, exam=exam)
+    question = get_object_or_404(exam.questions, pk=question_pk)
     
     if request.method == 'POST':
-        question.delete()
+        exam.questions.remove(question)
+        # Re-order remaining questions
+        for index, eq in enumerate(exam.examquestion_set.order_by('order')):
+            eq.order = index
+            eq.save(update_fields=['order'])
+            
         # Update total marks
         exam.update_total_marks()
-        messages.success(request, 'Question deleted successfully!')
+        messages.success(request, 'Question removed from exam successfully!')
         return redirect('exam_detail', pk=exam.pk)
     
     context = {
         'exam': exam,
         'question': question,
-        'page_title': 'Delete Question'
+        'page_title': 'Remove Question from Exam'
     }
     return render(request, 'exams/question_confirm_delete.html', context)
 
@@ -612,12 +620,21 @@ def exam_add_questions(request, exam_pk):
                 if not question_text:
                     continue
                 
-                # Create question with correct order
+                # Create question in the shared bank
                 question = Question.objects.create(
-                    exam=exam,
+                    school=exam.school,
+                    created_by=request.user,
+                    subject=exam.subject,
                     question_text=question_text,
                     marks=int(question_marks),
-                    explanation=question_explanation if question_explanation else None,
+                    explanation=question_explanation if question_explanation else None
+                )
+                
+                # Link question to exam with correct order
+                from .models import ExamQuestion
+                ExamQuestion.objects.create(
+                    exam=exam,
+                    question=question,
                     order=base_order + created_count
                 )
                 
@@ -984,12 +1001,20 @@ def bulk_upload_confirm(request, exam_pk):
             created_count = 0
             
             for idx, q_data in enumerate(parsed_questions):
-                # Create question
+                # Create question in shared bank
                 question = Question.objects.create(
-                    exam=exam,
+                    school=exam.school,
+                    created_by=request.user,
+                    subject=exam.subject,
                     question_text=q_data['question_text'],
                     marks=q_data['marks'],
-                    explanation=q_data['explanation'],
+                    explanation=q_data['explanation']
+                )
+                
+                # Link to exam
+                ExamQuestion.objects.create(
+                    exam=exam,
+                    question=question,
                     order=base_order + idx
                 )
                 
@@ -1236,7 +1261,7 @@ def exam_take(request, exam_pk):
     )
     
     # Get questions with choices
-    questions = list(exam.questions.prefetch_related('choices').order_by('order'))
+    questions = list(exam.questions.prefetch_related('choices').order_by('examquestion__order'))
     
     # Randomize question order for each attempt (per-attempt randomization)
     import random

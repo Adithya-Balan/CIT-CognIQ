@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Exam Bank - {{ request.user.school.name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50 pb-12">
+    <!-- Header -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Shared Exam Bank</h1>
+                    <p class="text-sm text-gray-500 mt-1">Browse, filter, and reuse exams created by teachers at {{ request.user.school.name }}.</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex space-x-3">
+                    <a href="{% url 'exam_create' %}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Create Exam
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Filters -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-8">
+            <form method="GET" action="" class="flex flex-col md:flex-row md:items-end gap-4">
+                <div class="flex-1">
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                    <input type="text" name="search" id="search" value="{{ search_query|default:'' }}" placeholder="Search exam title..." class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                </div>
+                <div class="w-full md:w-48">
+                    <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                    <select name="subject" id="subject" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="">All Subjects</option>
+                        {% for subj in subjects %}
+                            <option value="{{ subj }}" {% if current_subject == subj %}selected{% endif %}>{{ subj }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="w-full md:w-48">
+                    <label for="grade" class="block text-sm font-medium text-gray-700 mb-1">Grade</label>
+                    <select name="grade" id="grade" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="">All Grades</option>
+                        {% for gr in grades %}
+                            <option value="{{ gr }}" {% if current_grade == gr %}selected{% endif %}>{{ gr }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="w-full md:w-48">
+                    <label for="chapter" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <select name="chapter" id="chapter" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="">All Categories</option>
+                        {% for chap in chapters %}
+                            <option value="{{ chap }}" {% if current_chapter == chap %}selected{% endif %}>{{ chap }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <button type="submit" class="w-full md:w-auto inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                        Filter
+                    </button>
+                </div>
+                {% if search_query or current_subject or current_grade or current_chapter %}
+                    <div>
+                        <a href="{% url 'exam_bank' %}" class="w-full md:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-100">
+                            Clear
+                        </a>
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Exams List -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for exam in page_obj %}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md hover:border-indigo-300 transition-all duration-200 flex flex-col h-full">
+                    <div class="p-6 flex-grow">
+                        <div class="flex items-center space-x-2 mb-3 flex-wrap gap-y-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{{ exam.subject }}</span>
+                            {% if exam.grade %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{{ exam.grade }}</span>
+                            {% endif %}
+                            {% if exam.chapter %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">{{ exam.chapter }}</span>
+                            {% endif %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">{{ exam.total_marks }} Marks</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">{{ exam.title }}</h3>
+                        
+                        <div class="text-sm text-gray-500 mb-4 line-clamp-2">
+                            {{ exam.description|default:"No description provided." }}
+                        </div>
+                        
+                        <div class="flex items-center justify-between text-sm text-gray-500 border-t border-gray-100 pt-4 mt-auto">
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                {{ exam.duration_minutes }} min
+                            </div>
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                {{ exam.questions.count }} Qs
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 text-xs text-gray-400 flex items-center justify-between">
+                            <span>By: {{ exam.created_by.get_full_name|default:exam.created_by.username }}</span>
+                            <span>{{ exam.created_at|date:"M d, Y" }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center gap-2">
+                        <a href="{% url 'assign_exam_from_bank' exam.pk %}" class="flex-1 text-center bg-indigo-600 text-white hover:bg-indigo-700 py-2 px-3 rounded-lg text-sm font-semibold transition-colors duration-200">
+                            Assign to Class
+                        </a>
+                        
+                        <!-- Clone Form -->
+                        <form method="POST" action="{% url 'clone_exam' exam.pk %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="flex items-center justify-center bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 py-2 px-3 rounded-lg text-sm font-medium transition-colors duration-200" title="Duplicate to edit">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                Clone
+                            </button>
+                        </form>
+                        
+                        {% if exam.created_by == request.user %}
+                        <a href="{% url 'exam_detail' exam.pk %}" class="flex items-center justify-center bg-white border border-gray-300 text-indigo-600 hover:bg-indigo-50 py-2 px-3 rounded-lg text-sm font-medium transition-colors duration-200" title="Edit Original">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-span-full text-center py-16 bg-white rounded-xl border border-dashed border-gray-300">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No exams found</h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Try adjusting your filters or create a new exam.
+                    </p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+            <div class="mt-8 flex justify-center">
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if current_grade %}&grade={{ current_grade }}{% endif %}{% if current_chapter %}&chapter={{ current_chapter }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Previous</span>
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        </a>
+                    {% endif %}
+                    
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-indigo-50 text-sm font-medium text-indigo-600">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if current_grade %}&grade={{ current_grade }}{% endif %}{% if current_chapter %}&chapter={{ current_chapter }}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Next</span>
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </a>
+                    {% endif %}
+                </nav>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
