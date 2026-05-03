@@ -12,7 +12,7 @@ def exam_bank(request):
         messages.error(request, 'Access denied. Teachers only.')
         return redirect('dashboard')
         
-    exams = Exam.objects.filter(school=request.user.school).select_related('created_by').prefetch_related('questions')
+    exams = Exam.objects.filter(school=request.user.school, is_cloned=False).select_related('created_by').prefetch_related('questions')
     
     # Filtering
     subject = request.GET.get('subject')
@@ -35,9 +35,9 @@ def exam_bank(request):
     page_obj = paginator.get_page(page_number)
     
     # Get unique values for filters
-    subjects = Exam.objects.filter(school=request.user.school).values_list('subject', flat=True).distinct()
-    grades = Exam.objects.filter(school=request.user.school).exclude(grade='').values_list('grade', flat=True).distinct()
-    chapters = Exam.objects.filter(school=request.user.school).exclude(chapter='').values_list('chapter', flat=True).distinct()
+    subjects = Exam.objects.filter(school=request.user.school, is_cloned=False).values_list('subject', flat=True).distinct()
+    grades = Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(grade='').values_list('grade', flat=True).distinct()
+    chapters = Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(chapter='').values_list('chapter', flat=True).distinct()
     
     context = {
         'page_obj': page_obj,
@@ -115,6 +115,7 @@ def clone_exam(request, exam_pk):
                     exam_type=original_exam.exam_type,
                     school=request.user.school,
                     created_by=request.user,
+                    is_cloned=True,
                     duration_minutes=original_exam.duration_minutes,
                     pass_percentage=original_exam.pass_percentage,
                     total_marks=original_exam.total_marks

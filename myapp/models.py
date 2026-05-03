@@ -443,6 +443,12 @@ class Exam(models.Model):
         help_text='Practice & Test: Unlimited practice + One test attempt | Test: Single attempt only'
     )
     
+    is_cloned = models.BooleanField(
+        default=False,
+        verbose_name='Is Cloned Copy',
+        help_text='Indicates if this exam is a duplicate working copy of an original exam from the bank.'
+    )
+    
     # School FK — exams are strictly scoped to one school
     school = models.ForeignKey(
         'School',
