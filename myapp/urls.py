@@ -46,6 +46,7 @@ urlpatterns = [
 
     # Shared Exam Bank
     path('exam-bank/', exam_bank_views.exam_bank, name='exam_bank'),
+    path('exam-bank/api/categories/', exam_bank_views.api_search_categories, name='api_search_categories'),
     path('exam-bank/<int:exam_pk>/assign/', exam_bank_views.assign_exam_from_bank, name='assign_exam_from_bank'),
     path('exam-bank/<int:exam_pk>/clone/', exam_bank_views.clone_exam, name='clone_exam'),
 

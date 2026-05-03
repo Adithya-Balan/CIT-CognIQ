@@ -142,3 +142,42 @@ def clone_exam(request, exam_pk):
             return redirect('exam_bank')
             
     return redirect('exam_bank')
+
+from django.http import JsonResponse
+
+@login_required
+def api_search_categories(request):
+    """
+    Async API endpoint for debounced searchable dropdown (Typeahead)
+    Returns a JSON list of categories matching the query.
+    """
+    if not request.user.is_teacher:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+        
+    query = request.GET.get('q', '').strip()
+    page = int(request.GET.get('page', 1))
+    per_page = 20
+    
+    # Base query for chapters in the school's exam bank
+    qs = Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(chapter='')
+    
+    if query:
+        qs = qs.filter(chapter__icontains=query)
+        
+    # Get distinct values and order them
+    chapters = qs.values_list('chapter', flat=True).distinct().order_by('chapter')
+    
+    # Pagination
+    paginator = Paginator(chapters, per_page)
+    try:
+        page_obj = paginator.page(page)
+        results = list(page_obj.object_list)
+        has_more = page_obj.has_next()
+    except Exception:
+        results = []
+        has_more = False
+        
+    return JsonResponse({
+        'results': [{'id': name, 'text': name} for name in results],
+        'pagination': {'more': has_more}
+    })

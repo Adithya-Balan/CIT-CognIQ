@@ -431,7 +431,13 @@ class Exam(models.Model):
     )
     description = models.TextField(blank=True, verbose_name='Description/Instructions')
     
-    grade = models.CharField(max_length=50, verbose_name='Grade/Standard')
+    GRADE_CHOICES = [(str(i), f"Grade {i}") for i in range(1, 13)]
+    
+    grade = models.CharField(
+        max_length=50, 
+        choices=GRADE_CHOICES,
+        verbose_name='Grade/Standard'
+    )
     chapter = models.CharField(max_length=200, verbose_name='Chapter/Topic/Category')
     
     # Exam Type

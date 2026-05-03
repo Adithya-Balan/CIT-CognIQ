@@ -113,6 +113,22 @@
                                 <p class="mt-2 text-sm text-red-600">{{ form.subject.errors.0 }}</p>
                             {% endif %}
                         </div>
+
+                        <div class="col-span-2 sm:col-span-1">
+                            <label for="{{ form.grade.id_for_label }}" class="block text-sm font-semibold leading-6 text-gray-900 mb-2">Grade (Standard) <span class="text-red-500">*</span></label>
+                            {{ form.grade }}
+                            {% if form.grade.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.grade.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-span-2">
+                            <label for="{{ form.chapter.id_for_label }}" class="block text-sm font-semibold leading-6 text-gray-900 mb-2">Category (Chapter/Topic) <span class="text-red-500">*</span></label>
+                            {{ form.chapter }}
+                            {% if form.chapter.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.chapter.errors.0 }}</p>
+                            {% endif %}
+                        </div>
                         
                         <!-- Description full width -->
                         <div class="col-span-2">
