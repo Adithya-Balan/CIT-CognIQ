@@ -102,6 +102,10 @@ def clone_exam(request, exam_pk):
         
     original_exam = get_object_or_404(Exam, pk=exam_pk, school=request.user.school)
     
+    if original_exam.created_by == request.user:
+        messages.error(request, 'You cannot clone your own exam.')
+        return redirect('exam_bank')
+    
     if request.method == 'POST':
         try:
             with transaction.atomic():

@@ -318,6 +318,9 @@ class ExamForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['description'].required = False
+        self.fields['subject'].required = True
+        self.fields['grade'].required = True
+        self.fields['chapter'].required = True
         self.fields['pass_percentage'].help_text = 'Minimum percentage required to pass (default: 40%)'
 
 
