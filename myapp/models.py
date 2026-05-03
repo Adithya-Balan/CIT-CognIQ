@@ -541,7 +541,7 @@ class Question(models.Model):
     school = models.ForeignKey(
         'School',
         on_delete=models.CASCADE,
-        related_name='question_bank',
+        related_name='questions',
         verbose_name='School'
     )
     

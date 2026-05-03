@@ -1,6 +1,5 @@
 from django.urls import path
 from . import views
-from . import question_bank_views
 from . import exam_bank_views
 
 urlpatterns = [
@@ -42,13 +41,8 @@ urlpatterns = [
 
     # Question Management
     path('exams/<int:exam_pk>/add-questions/', views.exam_add_questions, name='exam_add_questions'),
-    path('exams/<int:exam_pk>/add-from-bank/', question_bank_views.exam_add_from_bank, name='exam_add_from_bank'),
     path('exams/<int:exam_pk>/question/<int:question_pk>/edit/', views.question_edit, name='question_edit'),
     path('exams/<int:exam_pk>/question/<int:question_pk>/delete/', views.question_delete, name='question_delete'),
-
-    # Shared Question Bank
-    path('question-bank/', question_bank_views.question_bank, name='question_bank'),
-    path('question-bank/create/', question_bank_views.question_create, name='question_create'),
 
     # Shared Exam Bank
     path('exam-bank/', exam_bank_views.exam_bank, name='exam_bank'),
