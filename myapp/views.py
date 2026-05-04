@@ -2427,13 +2427,7 @@ def class_detail(request, class_pk):
         id__in=student_class.students.all().values_list('id', flat=True)
     )
 
-    # Get available exams (created by this teacher, not assigned yet) — SCHOOL-SCOPED
-    available_exams = Exam.objects.filter(
-        created_by=request.user,
-        school=student_class.school   # Only exams from same school
-    ).exclude(
-        id__in=student_class.assigned_exams.all().values_list('id', flat=True)
-    )
+    # available_exams are now fetched via AJAX (search_exams_for_class) for scalability
     
     context = {
         'student_class': student_class,
@@ -2443,9 +2437,7 @@ def class_detail(request, class_pk):
         'total_exams': exams_paginator.count,
         'student_search': student_search,
         'exam_search': exam_search,
-        # We no longer pass all available_students to avoid large payloads.
-        # They will be fetched via AJAX search instead.
-        'available_exams': available_exams,
+        # available_students and available_exams are fetched via AJAX for scalability
         'page_title': f'{student_class.name}'
     }
     return render(request, 'classes/class_detail.html', context)
@@ -2494,6 +2486,61 @@ def search_students_for_class(request, class_pk):
             'name': student.get_full_name() or student.username,
             'username': student.username,
             'initials': (student.first_name[:1] if student.first_name else student.username[:1]).upper()
+        })
+        
+    return JsonResponse({'results': results})
+
+
+@login_required
+def search_exams_for_class(request, class_pk):
+    """
+    AJAX endpoint to search for exams owned by the teacher
+    that are not already assigned to the specified class.
+    Supports thousands of exams via debounced async search.
+    """
+    if not request.user.is_teacher:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+        
+    student_class = get_object_or_404(
+        StudentClass, 
+        pk=class_pk, 
+        created_by=request.user
+    )
+    
+    query = request.GET.get('q', '').strip()
+    
+    # Get IDs of already-assigned exams
+    assigned_ids = student_class.assigned_exams.values_list('id', flat=True)
+    
+    # Base queryset: teacher's own exams from the same school, not yet assigned
+    available = Exam.objects.filter(
+        created_by=request.user,
+        school=student_class.school
+    ).exclude(
+        id__in=assigned_ids
+    )
+    
+    # Apply search filter if query is provided
+    if query:
+        available = available.filter(
+            Q(title__icontains=query) |
+            Q(subject__icontains=query) |
+            Q(chapter__icontains=query)
+        )
+    
+    # Order and limit results for performance
+    available = available.order_by('-created_at')[:20]
+    
+    results = []
+    for exam in available:
+        results.append({
+            'id': exam.id,
+            'title': exam.title,
+            'subject': exam.subject,
+            'question_count': exam.question_count,
+            'duration_minutes': exam.duration_minutes,
+            'grade': exam.get_grade_display() if exam.grade else '',
+            'chapter': exam.chapter or '',
         })
         
     return JsonResponse({'results': results})

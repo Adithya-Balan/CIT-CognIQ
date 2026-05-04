@@ -305,49 +305,38 @@
     </div>
 </div>
 
-<!-- Assign Exams Modal -->
-<div id="assignExamsModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+<!-- Assign Exams Modal (Async Search) -->
+<div id="assignExamsModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="assign-exams-title" role="dialog" aria-modal="true">
     <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="document.getElementById('assignExamsModal').classList.add('hidden')"></div>
 
         <div class="relative bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg w-full">
             <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center text-gray-900">
-                <h3 class="text-lg font-bold" id="modal-title">Assign Exams</h3>
+                <h3 class="text-lg font-bold" id="assign-exams-title">Assign Exams</h3>
                 <button onclick="document.getElementById('assignExamsModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-500 focus:outline-none">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             </div>
-            <form action="{% url 'class_assign_exam' student_class.pk %}" method="post">
+            
+            <div class="p-4 border-b border-gray-100 bg-white">
+                <input type="text" id="examSearchInput" placeholder="Search exams by title, subject, or category..." 
+                       class="w-full text-sm bg-gray-50 border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all">
+                <p class="text-xs text-gray-500 mt-2">Search your exams to assign them to this class.</p>
+            </div>
+
+            <form id="assignExamsForm" action="{% url 'class_assign_exam' student_class.pk %}" method="post">
                 {% csrf_token %}
-                <div class="px-4 py-5 max-h-[60vh] overflow-y-auto custom-scrollbar">
-                    {% if available_exams %}
-                        <div class="space-y-2">
-                            {% for exam in available_exams %}
-                            <label class="flex items-start p-3 rounded-lg border border-gray-200 hover:bg-purple-50 hover:border-purple-200 cursor-pointer transition-colors group">
-                                <input type="checkbox" name="exams" value="{{ exam.id }}" class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-1">
-                                <div class="ml-3 flex-1">
-                                    <p class="text-sm font-bold text-gray-900 group-hover:text-purple-700">{{ exam.title }}</p>
-                                    <div class="flex items-center gap-2 mt-1">
-                                        <span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{{ exam.subject }}</span>
-                                        <span class="text-xs text-gray-400">{{ exam.question_count }} Qs • {{ exam.duration_minutes }}m</span>
-                                    </div>
-                                </div>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="text-center py-8">
-                            <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                            <p class="mt-2 text-sm text-gray-500">All available exams are already assigned.</p>
-                        </div>
-                    {% endif %}
+                <div class="px-4 py-5 max-h-[50vh] overflow-y-auto custom-scrollbar bg-gray-50/30" id="examSearchResults">
+                    <div class="text-center py-8 text-gray-400">
+                        <svg class="mx-auto h-10 w-10 opacity-50 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <p class="text-sm">Type to search your exams</p>
+                    </div>
                 </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    {% if available_exams %}
-                    <button type="submit" class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-purple-600 text-base font-medium text-white hover:bg-purple-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200">
+                    <button type="submit" id="assignExamsSubmitBtn" disabled class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-purple-600 text-base font-medium text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none sm:ml-3 sm:w-auto sm:text-sm transition-all">
                         Assign Selected
                     </button>
-                    {% endif %}
                     <button type="button" onclick="document.getElementById('assignExamsModal').classList.add('hidden')" class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                         Cancel
                     </button>
@@ -473,6 +462,127 @@ document.addEventListener('DOMContentLoaded', function() {
             hiddenInput.name = 'students';
             hiddenInput.value = id;
             form.appendChild(hiddenInput);
+        });
+    });
+});
+
+// ========== Assign Exams Modal (Async Search) ==========
+document.addEventListener('DOMContentLoaded', function() {
+    const examSearchInput = document.getElementById('examSearchInput');
+    const examResultsContainer = document.getElementById('examSearchResults');
+    const examSubmitBtn = document.getElementById('assignExamsSubmitBtn');
+    let examDebounceTimer;
+
+    // Track selected exams across searches
+    const selectedExams = new Set();
+
+    function updateExamSubmitButton() {
+        examSubmitBtn.disabled = selectedExams.size === 0;
+        examSubmitBtn.textContent = selectedExams.size > 0 ? `Assign Selected (${selectedExams.size})` : 'Assign Selected';
+    }
+
+    function renderExamResults(results) {
+        if (!results || results.length === 0) {
+            examResultsContainer.innerHTML = `
+                <div class="text-center py-8 text-gray-400">
+                    <svg class="mx-auto h-10 w-10 opacity-50 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <p class="text-sm">No matching exams found.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '<div class="space-y-2">';
+        results.forEach(exam => {
+            const isChecked = selectedExams.has(exam.id.toString());
+            html += `
+                <label class="flex items-start p-3 rounded-lg border ${isChecked ? 'border-purple-300 bg-purple-50' : 'border-gray-200 bg-white hover:bg-purple-50 hover:border-purple-200'} cursor-pointer transition-colors group">
+                    <input type="checkbox" name="exams" value="${exam.id}" class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 mt-1 exam-checkbox" ${isChecked ? 'checked' : ''}>
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm font-bold text-gray-900 group-hover:text-purple-700">${exam.title}</p>
+                        <div class="flex items-center gap-2 mt-1 flex-wrap">
+                            <span class="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">${exam.subject}</span>
+                            <span class="text-xs text-gray-400">${exam.question_count} Qs • ${exam.duration_minutes}m</span>
+                        </div>
+                    </div>
+                </label>
+            `;
+        });
+        html += '</div>';
+        examResultsContainer.innerHTML = html;
+
+        // Re-attach event listeners to new checkboxes
+        document.querySelectorAll('.exam-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const label = this.closest('label');
+                if (this.checked) {
+                    selectedExams.add(this.value);
+                    label.classList.add('bg-purple-50', 'border-purple-300');
+                    label.classList.remove('bg-white', 'border-gray-200');
+                } else {
+                    selectedExams.delete(this.value);
+                    label.classList.remove('bg-purple-50', 'border-purple-300');
+                    label.classList.add('bg-white', 'border-gray-200');
+                }
+                updateExamSubmitButton();
+            });
+        });
+    }
+
+    function fetchExams(query) {
+        examResultsContainer.innerHTML = `
+            <div class="flex justify-center items-center py-12">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+            </div>
+        `;
+
+        fetch(`{% url 'search_exams_for_class' student_class.pk %}?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                renderExamResults(data.results);
+            })
+            .catch(error => {
+                console.error('Error fetching exams:', error);
+                examResultsContainer.innerHTML = `
+                    <div class="text-center py-8 text-red-400">
+                        <p class="text-sm font-medium">Error loading results. Please try again.</p>
+                    </div>
+                `;
+            });
+    }
+
+    examSearchInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        clearTimeout(examDebounceTimer);
+
+        debounceTimer = setTimeout(() => {
+            fetchExams(query);
+        }, 300);
+    });
+
+    // Load initial results when modal opens
+    document.querySelector('[onclick*="assignExamsModal"]').addEventListener('click', function() {
+        // Small delay to let the modal render
+        setTimeout(() => {
+            fetchExams('');
+            examSearchInput.value = '';
+            examSearchInput.focus();
+        }, 100);
+    });
+
+    // Make sure hidden inputs exist for all selected exams upon form submit
+    const examForm = document.getElementById('assignExamsForm');
+    examForm.addEventListener('submit', function(e) {
+        // Remove existing checkboxes to avoid duplicates
+        document.querySelectorAll('.exam-checkbox').forEach(cb => cb.remove());
+        
+        // Append hidden inputs for all selected IDs
+        selectedExams.forEach(id => {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'exams';
+            hiddenInput.value = id;
+            examForm.appendChild(hiddenInput);
         });
     });
 });
