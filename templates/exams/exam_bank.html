@@ -25,63 +25,89 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        <!-- Filters -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-8">
-            <form method="GET" action="" class="flex flex-col md:flex-row md:items-end gap-4">
-                <div class="flex-1">
-                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                    <input type="text" name="search" id="search" value="{{ search_query|default:'' }}" placeholder="Search exam title..." class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                </div>
-                <div class="w-full md:w-48">
-                    <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-                    <select name="subject" id="subject" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="">All Subjects</option>
-                        {% for subj in subjects %}
-                            <option value="{{ subj }}" {% if current_subject == subj %}selected{% endif %}>{{ subj }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="w-full md:w-48">
-                    <label for="grade" class="block text-sm font-medium text-gray-700 mb-1">Grade</label>
-                    <select name="grade" id="grade" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="">All Grades</option>
-                        {% for gr in grades %}
-                            <option value="{{ gr }}" {% if current_grade == gr %}selected{% endif %}>{{ gr }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="w-full md:w-48 relative">
-                    <label for="chapter-search" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+        <!-- Modern Filters -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-8">
+            <form method="GET" action="" class="flex flex-col lg:flex-row gap-4 lg:items-end">
+                
+                <!-- Search -->
+                <div class="flex-1 min-w-[200px]">
+                    <label for="search" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Search</label>
                     <div class="relative">
-                        <input type="text" id="chapter-search" placeholder="Search..." value="{{ current_chapter|default:'' }}" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 pr-8" autocomplete="off">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <input type="text" name="search" id="search" value="{{ search_query|default:'' }}" placeholder="Search exam title..." class="block w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-colors placeholder-gray-400 text-gray-900">
+                    </div>
+                </div>
+                
+                <!-- Subject -->
+                <div class="w-full lg:w-48 relative group">
+                    <label for="subject" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Subject</label>
+                    <div class="relative">
+                        <select name="subject" id="subject" class="block w-full pl-3 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-colors text-gray-900 appearance-none cursor-pointer">
+                            <option value="">All Subjects</option>
+                            {% for subj in subjects %}
+                                <option value="{{ subj }}" {% if current_subject == subj %}selected{% endif %}>{{ subj }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grade -->
+                <div class="w-full lg:w-40 relative group">
+                    <label for="grade" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Grade</label>
+                    <div class="relative">
+                        <select name="grade" id="grade" class="block w-full pl-3 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-colors text-gray-900 appearance-none cursor-pointer">
+                            <option value="">All Grades</option>
+                            {% for gr in grades %}
+                                <option value="{{ gr }}" {% if current_grade == gr %}selected{% endif %}>{{ gr }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category -->
+                <div class="w-full lg:w-56 relative group">
+                    <label for="chapter-search" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Category</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-4 w-4 text-gray-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                        </div>
+                        <input type="text" id="chapter-search" placeholder="Search category..." value="{{ current_chapter|default:'' }}" class="block w-full pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-colors placeholder-gray-400 text-gray-900" autocomplete="off">
                         <input type="hidden" name="chapter" id="chapter-hidden" value="{{ current_chapter|default:'' }}">
                         
                         <!-- Loading spinner -->
-                        <div id="category-loading" class="hidden absolute right-2 top-2.5">
-                            <svg class="animate-spin h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <div id="category-loading" class="hidden absolute right-2.5 top-2.5">
+                            <svg class="animate-spin h-4 w-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                         </div>
                         
                         <!-- Dropdown menu -->
-                        <ul id="category-dropdown" class="hidden absolute z-50 w-full md:w-64 mt-1 bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                        <ul id="category-dropdown" class="hidden absolute z-50 w-full mt-1 bg-white shadow-xl border border-gray-100 max-h-60 rounded-xl py-1 text-sm overflow-auto focus:outline-none">
                             <!-- Items injected by JS -->
                         </ul>
                     </div>
                 </div>
-                <div>
-                    <button type="submit" class="w-full md:w-auto inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+
+                <!-- Actions -->
+                <div class="flex items-center gap-2">
+                    <button type="submit" class="w-full lg:w-auto inline-flex justify-center items-center px-6 py-2 border border-transparent text-sm font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-sm transition-all">
                         Filter
                     </button>
-                </div>
-                {% if search_query or current_subject or current_grade or current_chapter %}
-                    <div>
-                        <a href="{% url 'exam_bank' %}" class="w-full md:w-auto inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-100">
-                            Clear
+                    {% if search_query or current_subject or current_grade or current_chapter %}
+                        <a href="{% url 'exam_bank' %}" class="inline-flex justify-center items-center px-3 py-2 border border-gray-200 text-sm font-medium rounded-xl text-gray-500 bg-white hover:bg-gray-50 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 shadow-sm transition-all" title="Clear Filters">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </a>
-                    </div>
-                {% endif %}
+                    {% endif %}
+                </div>
             </form>
         </div>
 
