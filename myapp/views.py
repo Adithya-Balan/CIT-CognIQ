@@ -2527,12 +2527,24 @@ def search_exams_for_class(request, class_pk):
             Q(subject__icontains=query) |
             Q(chapter__icontains=query)
         )
+    # Pagination
+    page = int(request.GET.get('page', 1))
+    per_page = 15
     
-    # Order and limit results for performance
-    available = available.order_by('-created_at')[:20]
+    # Order for consistent pagination
+    available = available.order_by('-created_at')
+    
+    # Use Django Paginator for efficient slicing
+    from django.core.paginator import Paginator as DjPaginator
+    paginator = DjPaginator(available, per_page)
+    
+    try:
+        page_obj = paginator.page(page)
+    except Exception:
+        return JsonResponse({'results': [], 'has_more': False, 'total_count': 0})
     
     results = []
-    for exam in available:
+    for exam in page_obj.object_list:
         results.append({
             'id': exam.id,
             'title': exam.title,
@@ -2543,7 +2555,11 @@ def search_exams_for_class(request, class_pk):
             'chapter': exam.chapter or '',
         })
         
-    return JsonResponse({'results': results})
+    return JsonResponse({
+        'results': results,
+        'has_more': page_obj.has_next(),
+        'total_count': paginator.count,
+    })
 
 
 @login_required
