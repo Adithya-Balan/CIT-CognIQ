@@ -197,6 +197,7 @@
     --radius-lg: 0.5rem;
     --radius-xl: 0.75rem;
     --radius-2xl: 1rem;
+    --radius-3xl: 1.5rem;
     --drop-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.15);
     --ease-in: cubic-bezier(0.4, 0, 1, 1);
     --ease-out: cubic-bezier(0, 0, 0.2, 1);
@@ -434,6 +435,9 @@
   .top-3 {
     top: calc(var(--spacing) * 3);
   }
+  .top-4 {
+    top: calc(var(--spacing) * 4);
+  }
   .top-6 {
     top: calc(var(--spacing) * 6);
   }
@@ -460,6 +464,9 @@
   }
   .right-10 {
     right: calc(var(--spacing) * 10);
+  }
+  .right-12 {
+    right: calc(var(--spacing) * 12);
   }
   .-bottom-2 {
     bottom: calc(var(--spacing) * -2);
@@ -1343,6 +1350,9 @@
   .rounded-2xl {
     border-radius: var(--radius-2xl);
   }
+  .rounded-3xl {
+    border-radius: var(--radius-3xl);
+  }
   .rounded-full {
     border-radius: calc(infinity * 1px);
   }
@@ -1903,6 +1913,12 @@
   }
   .bg-indigo-50 {
     background-color: var(--color-indigo-50);
+  }
+  .bg-indigo-50\/20 {
+    background-color: color-mix(in srgb, oklch(96.2% 0.018 272.314) 20%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-indigo-50) 20%, transparent);
+    }
   }
   .bg-indigo-50\/30 {
     background-color: color-mix(in srgb, oklch(96.2% 0.018 272.314) 30%, transparent);
@@ -2607,6 +2623,9 @@
   }
   .px-8 {
     padding-inline: calc(var(--spacing) * 8);
+  }
+  .px-10 {
+    padding-inline: calc(var(--spacing) * 10);
   }
   .py-0\.5 {
     padding-block: calc(var(--spacing) * 0.5);
@@ -5060,6 +5079,16 @@
       }
     }
   }
+  .hover\:shadow-indigo-500\/5 {
+    &:hover {
+      @media (hover: hover) {
+        --tw-shadow-color: color-mix(in srgb, oklch(58.5% 0.233 277.117) 5%, transparent);
+        @supports (color: color-mix(in lab, red, red)) {
+          --tw-shadow-color: color-mix(in oklab, color-mix(in oklab, var(--color-indigo-500) 5%, transparent) var(--tw-shadow-alpha), transparent);
+        }
+      }
+    }
+  }
   .hover\:shadow-indigo-500\/20 {
     &:hover {
       @media (hover: hover) {
@@ -5332,6 +5361,11 @@
   .active\:scale-\[0\.99\] {
     &:active {
       scale: 0.99;
+    }
+  }
+  .disabled\:cursor-default {
+    &:disabled {
+      cursor: default;
     }
   }
   .disabled\:cursor-not-allowed {

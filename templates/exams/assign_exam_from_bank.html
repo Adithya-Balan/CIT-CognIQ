@@ -4,72 +4,116 @@
 {% block title %}Assign Exam - {{ exam.title }}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-slate-50 py-8">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        <!-- Header -->
-        <div class="mb-8 flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">Assign Exam to Classes</h1>
-                <p class="mt-2 text-sm text-gray-500">Select which of your classes should take the exam <span class="font-bold text-gray-700">"{{ exam.title }}"</span>.</p>
-            </div>
-            <a href="{% url 'exam_bank' %}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
-                &larr; Back to Bank
-            </a>
-        </div>
+<div class="min-h-screen bg-slate-50 pb-20">
+    <!-- Premium Header -->
+    <div class="bg-[#0f172b] pt-8 pb-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        <!-- Abstract Decoration -->
+        <div class="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 -mb-20 -ml-20 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-        <form method="POST" class="space-y-6">
+        <div class="max-w-4xl mx-auto relative z-10">
+            <!-- Breadcrumbs -->
+            <nav class="flex items-center gap-2 text-xs font-medium text-slate-500 mb-8 tracking-wider uppercase">
+                <a href="{% url 'teacher_dashboard' %}" class="hover:text-white transition-colors">Dashboard</a>
+                <span class="text-slate-700">/</span>
+                <a href="{% url 'exam_bank' %}" class="hover:text-white transition-colors">Exam Bank</a>
+                <span class="text-slate-700">/</span>
+                <span class="text-slate-300">Assign</span>
+            </nav>
+
+            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+                <div>
+                    <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight mb-4 leading-tight">
+                        Assign Exam to Classes
+                    </h1>
+                    <p class="text-slate-400 text-sm md:text-base max-w-2xl leading-relaxed">
+                        Select the classes you want to assign <span class="text-indigo-400 font-bold">"{{ exam.title }}"</span> to.
+                    </p>
+                </div>
+                <a href="{% url 'exam_bank' %}" class="flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-slate-800 text-slate-300 rounded-xl font-bold text-xs border border-slate-700/50 transition-all shadow-sm shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Back to Bank
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-20">
+        <form method="POST" class="space-y-8">
             {% csrf_token %}
             
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-5 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-                    <h3 class="text-lg font-medium text-gray-900">Your Classes</h3>
+            <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden">
+                <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-10V4a1 1 0 011-1h2a1 1 0 011 1v3M12 21v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3"></path></svg>
+                        </div>
+                        <h3 class="text-lg font-black text-slate-900 tracking-tight">Available Classes</h3>
+                    </div>
+                    <span class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full uppercase tracking-widest">
+                        {{ teacher_classes|length }} Total
+                    </span>
                 </div>
                 
-                <div class="p-6">
+                <div class="p-8">
                     {% if teacher_classes %}
-                        <div class="space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {% for student_class in teacher_classes %}
-                                <label class="flex items-center p-4 rounded-lg border {% if student_class.id in already_assigned %}border-indigo-200 bg-indigo-50/30{% else %}border-gray-200 hover:bg-gray-50 cursor-pointer{% endif %} transition-colors">
-                                    <div class="flex-shrink-0 mr-4">
-                                        <input type="checkbox" name="classes" value="{{ student_class.id }}" class="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" 
-                                            {% if student_class.id in already_assigned %}checked disabled{% endif %}>
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="flex justify-between">
-                                            <h4 class="text-sm font-medium text-gray-900">{{ student_class.name }}</h4>
-                                            {% if student_class.id in already_assigned %}
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">Already Assigned</span>
-                                            {% endif %}
+                                <label class="relative flex flex-col p-5 rounded-2xl border-2 transition-all duration-200 cursor-pointer group {% if student_class.id in already_assigned %}border-indigo-100 bg-indigo-50/20 cursor-default opacity-80{% else %}border-slate-100 hover:border-indigo-200 hover:bg-slate-50 hover:shadow-md hover:shadow-indigo-500/5{% endif %}">
+                                    <div class="flex items-start justify-between mb-4">
+                                        <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                                            <span class="text-lg font-black">{{ student_class.name|slice:":1"|upper }}</span>
                                         </div>
-                                        <p class="text-sm text-gray-500">{{ student_class.students.count }} Students Enrolled</p>
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="classes" value="{{ student_class.id }}" 
+                                                class="h-6 w-6 text-indigo-600 border-slate-300 rounded-lg focus:ring-indigo-500 transition-all cursor-pointer disabled:cursor-default" 
+                                                {% if student_class.id in already_assigned %}checked disabled{% endif %}>
+                                        </div>
                                     </div>
+
+                                    <div>
+                                        <h4 class="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors mb-1">{{ student_class.name }}</h4>
+                                        <div class="flex items-center gap-2 text-sm text-slate-500 font-medium">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                            {{ student_class.students.count }} Students
+                                        </div>
+                                    </div>
+
+                                    {% if student_class.id in already_assigned %}
+                                        <div class="absolute top-4 right-12">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-sm">
+                                                Active
+                                            </span>
+                                        </div>
+                                    {% endif %}
                                 </label>
                             {% endfor %}
                         </div>
                     {% else %}
-                        <div class="text-center py-8">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            <h3 class="mt-2 text-sm font-medium text-gray-900">No classes found</h3>
-                            <p class="mt-1 text-sm text-gray-500">You need to create a class before you can assign exams.</p>
-                            <div class="mt-4">
-                                <a href="{% url 'class_create' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                                    Create a Class
-                                </a>
+                        <div class="text-center py-12 px-4">
+                            <div class="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                                <svg class="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
                             </div>
+                            <h3 class="text-xl font-black text-slate-900 tracking-tight mb-2">No Classes Found</h3>
+                            <p class="text-slate-500 max-w-sm mx-auto mb-8">You need to create a class before you can assign exams to students.</p>
+                            <a href="{% url 'class_create' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-indigo-500/20 transition-all">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                Create Your First Class
+                            </a>
                         </div>
                     {% endif %}
                 </div>
             </div>
 
-            <div class="flex justify-end space-x-4">
-                <a href="{% url 'exam_bank' %}" class="px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <div class="flex flex-col sm:flex-row items-center justify-end gap-4">
+                <a href="{% url 'exam_bank' %}" class="w-full sm:w-auto text-center px-8 py-4 text-slate-600 hover:text-slate-900 font-bold text-sm transition-colors">
                     Cancel
                 </a>
-                <button type="submit" class="px-6 py-3 border border-transparent rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    Assign Exam
+                <button type="submit" class="w-full sm:w-auto px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-sm shadow-xl shadow-indigo-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Confirm Assignment
                 </button>
             </div>
         </form>
