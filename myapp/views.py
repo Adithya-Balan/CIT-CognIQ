@@ -294,30 +294,86 @@ class TeacherRequiredMixin(UserPassesTestMixin):
 class ExamListView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
     """
     List all exams created by the logged-in teacher (school-scoped)
+    with filtering by subject, grade, chapter and text search,
+    plus server-side pagination for scalability.
     """
     model = Exam
     template_name = 'exams/exam_list.html'
     context_object_name = 'exams'
-    paginate_by = None
+    paginate_by = 18
 
     def get_queryset(self):
         # School-scoped: only exams belonging to the teacher's school
-        return Exam.objects.filter(
+        qs = Exam.objects.filter(
             created_by=self.request.user,
             school=self.request.user.school
-        ).order_by('-created_at')
+        )
+
+        # Text search
+        search = self.request.GET.get('search', '').strip()
+        if search:
+            qs = qs.filter(
+                Q(title__icontains=search) |
+                Q(description__icontains=search)
+            )
+
+        # Subject filter
+        subject = self.request.GET.get('subject', '').strip()
+        if subject:
+            qs = qs.filter(subject=subject)
+
+        # Grade filter
+        grade = self.request.GET.get('grade', '').strip()
+        if grade:
+            qs = qs.filter(grade=grade)
+
+        # Chapter/category filter
+        chapter = self.request.GET.get('chapter', '').strip()
+        if chapter:
+            qs = qs.filter(chapter__icontains=chapter)
+
+        return qs.order_by('-created_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'My Exams'
-        all_exams = self.get_queryset()
+
+        # Full (unfiltered) queryset for stats and filter options
+        all_exams = Exam.objects.filter(
+            created_by=self.request.user,
+            school=self.request.user.school
+        )
         context['total_exams'] = all_exams.count()
         context['assigned_exams'] = all_exams.filter(assigned_classes__isnull=False).distinct().count()
+
+        # Filter options (from all exams, not just filtered ones)
+        context['subjects'] = sorted(
+            all_exams.exclude(subject='').values_list('subject', flat=True).distinct()
+        )
+        context['grades'] = sorted(
+            all_exams.exclude(grade='').values_list('grade', flat=True).distinct()
+        )
+
+        # Current filter values
+        context['search_query'] = self.request.GET.get('search', '')
+        context['current_subject'] = self.request.GET.get('subject', '')
+        context['current_grade'] = self.request.GET.get('grade', '')
+        context['current_chapter'] = self.request.GET.get('chapter', '')
+        context['has_filters'] = any([
+            context['search_query'], context['current_subject'],
+            context['current_grade'], context['current_chapter']
+        ])
+
+        # Group the current page's exams by subject for display
         from collections import defaultdict
         exams_by_subject = defaultdict(list)
-        for exam in all_exams:
+        for exam in context['exams']:
             exams_by_subject[exam.subject].append(exam)
         context['exams_by_subject'] = sorted(exams_by_subject.items(), key=lambda x: x[0])
+
+        # Filtered count (for display)
+        context['filtered_count'] = self.get_queryset().count()
+
         return context
 
 
