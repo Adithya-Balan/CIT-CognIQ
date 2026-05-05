@@ -431,6 +431,9 @@
   .top-2\.5 {
     top: calc(var(--spacing) * 2.5);
   }
+  .top-3 {
+    top: calc(var(--spacing) * 3);
+  }
   .top-6 {
     top: calc(var(--spacing) * 6);
   }
@@ -4042,6 +4045,13 @@
       }
     }
   }
+  .group-hover\/card\:opacity-100 {
+    &:is(:where(.group\/card):hover *) {
+      @media (hover: hover) {
+        opacity: 100%;
+      }
+    }
+  }
   .group-aria-expanded\/btn\:rotate-180 {
     &:is(:where(.group\/btn)[aria-expanded="true"] *) {
       rotate: 180deg;
@@ -4443,6 +4453,13 @@
       }
     }
   }
+  .hover\:bg-emerald-200 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-emerald-200);
+      }
+    }
+  }
   .hover\:bg-emerald-500 {
     &:hover {
       @media (hover: hover) {
@@ -4727,6 +4744,13 @@
     &:hover {
       @media (hover: hover) {
         background-color: var(--color-violet-700);
+      }
+    }
+  }
+  .hover\:bg-white {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-white);
       }
     }
   }

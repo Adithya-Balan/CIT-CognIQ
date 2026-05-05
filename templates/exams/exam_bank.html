@@ -114,7 +114,15 @@
         <!-- Exams List -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for exam in page_obj %}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md hover:border-indigo-300 transition-all duration-200 flex flex-col h-full">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md hover:border-indigo-300 transition-all duration-200 flex flex-col h-full relative group/card">
+                    <!-- Quick Actions (Top Right) -->
+                    {% if exam.created_by == request.user %}
+                    <div class="absolute top-3 right-3 z-20">
+                        <a href="{% url 'exam_update' exam.pk %}" class="flex items-center justify-center p-2 bg-white/90 backdrop-blur-sm border border-gray-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 hover:bg-white rounded-lg shadow-sm transition-all duration-200" title="Edit Original">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </a>
+                    </div>
+                    {% endif %}
                     <div class="p-6 flex-grow">
                         <div class="flex items-center space-x-2 mb-3 flex-wrap gap-y-2">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">{{ exam.subject }}</span>
@@ -149,39 +157,31 @@
                         </div>
                     </div>
                     
-                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex flex-wrap items-center gap-2">
+                    <div class="px-4 py-4 bg-gray-50 border-t border-gray-200 flex items-center gap-3">
                         <!-- View Action (Primary) -->
-                        <a href="{% url 'exam_detail' exam.pk %}" class="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 py-2 px-4 rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/10 transition-all duration-200">
+                        <a href="{% url 'exam_detail' exam.pk %}" class="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white hover:bg-indigo-700 py-2.5 px-2.5 rounded-xl text-xs font-bold shadow-lg shadow-indigo-500/10 transition-all duration-200">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                             </svg>
-                            View
+                            View Details
                         </a>
-                        
+
                         <!-- Assign Action (Secondary) -->
-                        <a href="{% url 'assign_exam_from_bank' exam.pk %}" class="flex-1 flex items-center justify-center gap-2 bg-emerald-100 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 py-2 px-4 rounded-xl text-sm font-bold transition-all duration-200" title="Assign to Class">
+                        <a href="{% url 'assign_exam_from_bank' exam.pk %}" class="flex-1 flex items-center justify-center gap-2 bg-emerald-100 text-emerald-700 border border-emerald-200 hover:bg-emerald-200 py-2.5 px-2.5 rounded-xl text-xs font-bold transition-all duration-200" title="Assign to Class">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                             Assign
                         </a>
 
-                        <div class="flex items-center gap-2">
-                            <!-- Clone Form -->
-                            {% if exam.created_by != request.user %}
-                            <form method="POST" action="{% url 'clone_exam' exam.pk %}" class="inline">
-                                {% csrf_token %}
-                                <button type="submit" class="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 rounded-xl transition-all duration-200" title="Clone to Edit">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                                </button>
-                            </form>
-                            {% endif %}
-                            
-                            {% if exam.created_by == request.user %}
-                            <a href="{% url 'exam_update' exam.pk %}" class="flex items-center justify-center p-2.5 bg-white border border-gray-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 rounded-xl transition-all duration-200" title="Edit Original">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                            </a>
-                            {% endif %}
-                        </div>
+                        <!-- Clone Action (Fixed in Footer) -->
+                        {% if exam.created_by != request.user %}
+                        <form method="POST" action="{% url 'clone_exam' exam.pk %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="flex items-center justify-center p-2.5 bg-white border border-gray-300 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 hover:bg-indigo-50 rounded-xl transition-all duration-200 shadow-sm" title="Clone to Edit">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            </button>
+                        </form>
+                        {% endif %}
                     </div>
                 </div>
             {% empty %}
