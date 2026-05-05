@@ -2017,6 +2017,12 @@
   .bg-slate-400 {
     background-color: var(--color-slate-400);
   }
+  .bg-slate-400\/10 {
+    background-color: color-mix(in srgb, oklch(70.4% 0.04 256.788) 10%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-slate-400) 10%, transparent);
+    }
+  }
   .bg-slate-600 {
     background-color: var(--color-slate-600);
   }
@@ -3463,6 +3469,12 @@
   }
   .ring-slate-50 {
     --tw-ring-color: var(--color-slate-50);
+  }
+  .ring-slate-400\/30 {
+    --tw-ring-color: color-mix(in srgb, oklch(70.4% 0.04 256.788) 30%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      --tw-ring-color: color-mix(in oklab, var(--color-slate-400) 30%, transparent);
+    }
   }
   .ring-violet-400\/30 {
     --tw-ring-color: color-mix(in srgb, oklch(70.2% 0.183 293.541) 30%, transparent);
