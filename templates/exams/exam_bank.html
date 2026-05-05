@@ -63,7 +63,7 @@
                         <select name="grade" id="grade" class="block w-full pl-3 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-colors text-gray-900 appearance-none cursor-pointer">
                             <option value="">All Grades</option>
                             {% for gr in grades %}
-                                <option value="{{ gr }}" {% if current_grade == gr %}selected{% endif %}>{{ gr }}</option>
+                                <option value="{{ gr }}" {% if current_grade == gr %}selected{% endif %}>Grade {{ gr }}</option>
                             {% endfor %}
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">

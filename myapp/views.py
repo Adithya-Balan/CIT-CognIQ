@@ -346,13 +346,20 @@ class ExamListView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
         context['total_exams'] = all_exams.count()
         context['assigned_exams'] = all_exams.filter(assigned_classes__isnull=False).distinct().count()
 
-        # Filter options (from all exams, not just filtered ones)
-        context['subjects'] = sorted(
-            all_exams.exclude(subject='').values_list('subject', flat=True).distinct()
-        )
-        context['grades'] = sorted(
-            all_exams.exclude(grade='').values_list('grade', flat=True).distinct()
-        )
+        # Filter options — use set() to guarantee uniqueness at the Python level
+        context['subjects'] = sorted(set(
+            all_exams.exclude(subject='').values_list('subject', flat=True)
+        ))
+        
+        # Robust sorting for grades: extract digits to sort numerically
+        import re
+        def extract_grade_num(g):
+            match = re.search(r'\d+', str(g))
+            return int(match.group()) if match else 0
+
+        context['grades'] = sorted(set(
+            all_exams.exclude(grade='').values_list('grade', flat=True)
+        ), key=extract_grade_num)
 
         # Current filter values
         context['search_query'] = self.request.GET.get('search', '')

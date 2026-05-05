@@ -34,10 +34,15 @@ def exam_bank(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    # Get unique values for filters
-    subjects = Exam.objects.filter(school=request.user.school, is_cloned=False).values_list('subject', flat=True).distinct()
-    grades = Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(grade='').values_list('grade', flat=True).distinct()
-    chapters = Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(chapter='').values_list('chapter', flat=True).distinct()
+    # Get unique values for filters using set() for absolute deduplication
+    import re
+    def extract_grade_num(g):
+        match = re.search(r'\d+', str(g))
+        return int(match.group()) if match else 0
+
+    subjects = sorted(set(Exam.objects.filter(school=request.user.school, is_cloned=False).values_list('subject', flat=True)))
+    grades = sorted(set(Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(grade='').values_list('grade', flat=True)), key=extract_grade_num)
+    chapters = sorted(set(Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(chapter='').values_list('chapter', flat=True)))
     
     context = {
         'page_obj': page_obj,
