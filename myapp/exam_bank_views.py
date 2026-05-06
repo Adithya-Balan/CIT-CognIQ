@@ -30,7 +30,7 @@ def exam_bank(request):
         exams = exams.filter(title__icontains=search)
         
     # Group by subject and page them
-    paginator = Paginator(exams.order_by('-created_at'), 20)
+    paginator = Paginator(exams.order_by('-created_at', '-id'), 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     

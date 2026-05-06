@@ -332,7 +332,7 @@ class ExamListView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
         if chapter:
             qs = qs.filter(chapter__icontains=chapter)
 
-        return qs.order_by('-created_at')
+        return qs.order_by('-created_at', '-id')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
