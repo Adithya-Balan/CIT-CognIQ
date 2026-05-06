@@ -44,11 +44,14 @@ class School(models.Model):
         help_text='Full official name of the school'
     )
     
+    from django.core.validators import MinLengthValidator
+    
     code = models.CharField(
-        max_length=20,
+        max_length=6,
+        validators=[MinLengthValidator(6)],
         unique=True,
         verbose_name='School Code',
-        help_text='Short unique code used in username generation (e.g., SPHS, STMH). Uppercase letters only.'
+        help_text='Short globally unique 6-character code used in username generation (e.g., SPHS12). Uppercase letters and numbers only.'
     )
     
     slug = models.SlugField(
@@ -238,9 +241,17 @@ class User(AbstractUser):
         return f"{self.get_full_name()} ({self.get_role_display()})"
     
     def clean(self):
-        """Validate that role is provided"""
+        """Validate that role is provided and enforce strict school-level isolation"""
         if not self.role:
             raise ValidationError({'role': 'User role is required'})
+            
+        # STRICT ISOLATION: Every non-superuser MUST belong to a school
+        if not self.is_superuser and not self.school:
+            raise ValidationError({'school': 'Every non-superuser account must be strictly scoped to a specific school.'})
+            
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
     
     @property
     def is_teacher(self):
