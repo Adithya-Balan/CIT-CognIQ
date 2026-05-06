@@ -44,16 +44,31 @@
                             placeholder="Optional details about this class...">{% if student_class %}{{ student_class.description }}{% endif %}</textarea>
                     </div>
 
-                    <!-- Academic Year & Active Status -->
+                    <!-- Academic Year, Grade & Active Status -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label for="year" class="block text-sm font-bold text-gray-700 mb-2">Academic Year <span class="text-red-500">*</span></label>
                             <input type="number" id="year" name="year" value="{% if student_class %}{{ student_class.year }}{% else %}{{ current_year }}{% endif %}" required min="2020" max="2030"
                                 class="block w-full rounded-xl border border-gray-300 bg-white shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm py-3 px-4 transition-colors">
                         </div>
+
+                        <div>
+                            <label for="grade" class="block text-sm font-bold text-gray-700 mb-2">Grade <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <select id="grade" name="grade" required class="block w-full rounded-xl border border-gray-300 bg-white shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm py-3 pl-4 pr-10 transition-colors appearance-none cursor-pointer">
+                                    <option value="" disabled {% if not student_class %}selected{% endif %}>Select Grade</option>
+                                    {% for value, label in grades %}
+                                        <option value="{{ value }}" {% if student_class and student_class.grade == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </div>
+                        </div>
                         
                         {% if student_class %}
-                        <div class="flex items-end">
+                        <div class="flex items-end md:col-span-2">
                             <div class="w-full bg-gray-50 rounded-xl p-3.5 border border-gray-200 flex items-center">
                                 <div class="flex h-5 items-center">
                                     <input id="is_active" name="is_active" type="checkbox" {% if student_class.is_active %}checked{% endif %} class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">

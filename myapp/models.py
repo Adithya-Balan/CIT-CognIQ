@@ -299,6 +299,29 @@ class StudentClass(models.Model):
         help_text='Year this class is active (e.g., 2025)'
     )
     
+    GRADE_CHOICES = [
+        ('Grade 1', 'Grade 1'),
+        ('Grade 2', 'Grade 2'),
+        ('Grade 3', 'Grade 3'),
+        ('Grade 4', 'Grade 4'),
+        ('Grade 5', 'Grade 5'),
+        ('Grade 6', 'Grade 6'),
+        ('Grade 7', 'Grade 7'),
+        ('Grade 8', 'Grade 8'),
+        ('Grade 9', 'Grade 9'),
+        ('Grade 10', 'Grade 10'),
+        ('Grade 11', 'Grade 11'),
+        ('Grade 12', 'Grade 12'),
+    ]
+    
+    grade = models.CharField(
+        max_length=20,
+        choices=GRADE_CHOICES,
+        verbose_name='Grade',
+        help_text='Select the grade level for this class',
+        default='Grade 10'
+    )
+    
     # School FK — classes are strictly scoped to one school
     school = models.ForeignKey(
         'School',

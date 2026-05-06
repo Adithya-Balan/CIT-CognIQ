@@ -2405,9 +2405,16 @@ def class_create(request):
         name = request.POST.get('name')
         description = request.POST.get('description', '')
         year = request.POST.get('year')
+        grade = request.POST.get('grade')
         
-        if not name or not year:
-            messages.error(request, 'Class name and year are required.')
+        if not name or not year or not grade:
+            messages.error(request, 'Class name, year, and grade are required.')
+            return redirect('class_create')
+            
+        # Validate grade against choices
+        valid_grades = [choice[0] for choice in StudentClass.GRADE_CHOICES]
+        if grade not in valid_grades:
+            messages.error(request, 'Invalid grade selected.')
             return redirect('class_create')
         
         try:
@@ -2415,6 +2422,7 @@ def class_create(request):
                 name=name,
                 description=description,
                 year=int(year),
+                grade=grade,
                 created_by=request.user,
                 school=request.user.school   # SCHOOL-SCOPED
             )
@@ -2429,6 +2437,7 @@ def class_create(request):
     
     context = {
         'current_year': current_year,
+        'grades': StudentClass.GRADE_CHOICES,
         'page_title': 'Create Class'
     }
     return render(request, 'classes/class_form.html', context)
@@ -2635,6 +2644,16 @@ def class_update(request, class_pk):
         student_class.name = request.POST.get('name', student_class.name)
         student_class.description = request.POST.get('description', '')
         student_class.year = int(request.POST.get('year', student_class.year))
+        
+        grade = request.POST.get('grade')
+        if grade:
+            valid_grades = [choice[0] for choice in StudentClass.GRADE_CHOICES]
+            if grade in valid_grades:
+                student_class.grade = grade
+            else:
+                messages.error(request, 'Invalid grade selected.')
+                return redirect('class_update', class_pk=student_class.pk)
+        
         student_class.is_active = request.POST.get('is_active') == 'on'
         student_class.save()
         
@@ -2643,6 +2662,7 @@ def class_update(request, class_pk):
     
     context = {
         'student_class': student_class,
+        'grades': StudentClass.GRADE_CHOICES,
         'page_title': f'Edit {student_class.name}'
     }
     return render(request, 'classes/class_form.html', context)
