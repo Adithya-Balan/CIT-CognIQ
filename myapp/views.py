@@ -371,13 +371,6 @@ class ExamListView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
             context['current_grade'], context['current_chapter']
         ])
 
-        # Group the current page's exams by subject for display
-        from collections import defaultdict
-        exams_by_subject = defaultdict(list)
-        for exam in context['exams']:
-            exams_by_subject[exam.subject].append(exam)
-        context['exams_by_subject'] = sorted(exams_by_subject.items(), key=lambda x: x[0])
-
         # Filtered count (for display)
         context['filtered_count'] = self.get_queryset().count()
 
