@@ -1,5 +1,5 @@
 """
-WSGI config for Amutha MindSpark project.
+WSGI config for Evalora project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

@@ -1,5 +1,5 @@
 """
-ASGI config for Amutha MindSpark project.
+ASGI config for Evalora project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
