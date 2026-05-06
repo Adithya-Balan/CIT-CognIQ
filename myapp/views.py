@@ -4161,17 +4161,26 @@ def school_admin_manage_students(request):
             Q(username__icontains=search)
         )
 
+    grade_filter = request.GET.get('grade', '').strip()
+    if grade_filter:
+        students = students.filter(student_classes__grade=grade_filter).distinct()
+
     # Pagination
     from django.core.paginator import Paginator
     paginator = Paginator(students, 30)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    # Generate grade choices for the filter dropdown
+    grades = [f'Grade {i}' for i in range(1, 13)]
 
     context = {
         'school': school,
         'page_obj': page_obj,
         'total_students': students.count(),
         'search': search,
+        'current_grade': grade_filter,
+        'grades': grades,
         'page_title': 'Manage Students',
     }
     return render(request, 'school_admin/manage_students.html', context)
