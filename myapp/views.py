@@ -2022,7 +2022,7 @@ def exam_analytics(request, exam_pk):
     from django.db.models import Avg, Count, Q
     from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
     
-    exam = get_object_or_404(Exam, pk=exam_pk, created_by=request.user)
+    exam = get_object_or_404(Exam, pk=exam_pk, school=request.user.school)
     
     # Get all completed attempts for analytics (no pagination needed for stats)
     all_attempts = ExamAttempt.objects.filter(
