@@ -12,7 +12,7 @@ def exam_bank(request):
         messages.error(request, 'Access denied. Teachers only.')
         return redirect('dashboard')
         
-    exams = Exam.objects.filter(school=request.user.school, is_cloned=False).select_related('created_by').prefetch_related('questions')
+    exams = Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(created_by=request.user).select_related('created_by').prefetch_related('questions')
     
     # Filtering
     subject = request.GET.get('subject')
@@ -40,9 +40,9 @@ def exam_bank(request):
         match = re.search(r'\d+', str(g))
         return int(match.group()) if match else 0
 
-    subjects = sorted(set(Exam.objects.filter(school=request.user.school, is_cloned=False).values_list('subject', flat=True)))
-    grades = sorted(set(Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(grade='').values_list('grade', flat=True)), key=extract_grade_num)
-    chapters = sorted(set(Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(chapter='').values_list('chapter', flat=True)))
+    subjects = sorted(set(Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(created_by=request.user).values_list('subject', flat=True)))
+    grades = sorted(set(Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(created_by=request.user).exclude(grade='').values_list('grade', flat=True)), key=extract_grade_num)
+    chapters = sorted(set(Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(created_by=request.user).exclude(chapter='').values_list('chapter', flat=True)))
     
     context = {
         'page_obj': page_obj,
