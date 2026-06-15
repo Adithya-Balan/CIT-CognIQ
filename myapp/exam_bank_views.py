@@ -72,7 +72,8 @@ def assign_exam_from_bank(request, exam_pk):
             messages.warning(request, 'No classes selected.')
             return redirect('assign_exam_from_bank', exam_pk=exam.pk)
             
-        classes = StudentClass.objects.filter(id__in=class_ids, created_by=request.user)
+        class_grade_val = f"Grade {exam.grade}" if exam.grade else ''
+        classes = StudentClass.objects.filter(id__in=class_ids, created_by=request.user, grade=class_grade_val)
         assigned_count = 0
         for student_class in classes:
             if not exam.assigned_classes.filter(id=student_class.id).exists():
@@ -86,8 +87,9 @@ def assign_exam_from_bank(request, exam_pk):
             
         return redirect('exam_bank')
         
-    # GET request - show form to pick classes
-    teacher_classes = StudentClass.objects.filter(created_by=request.user).order_by('name')
+    # GET request - show form to pick classes matching the exam's grade
+    class_grade_val = f"Grade {exam.grade}" if exam.grade else ''
+    teacher_classes = StudentClass.objects.filter(created_by=request.user, grade=class_grade_val).order_by('name')
     already_assigned = exam.assigned_classes.filter(created_by=request.user).values_list('id', flat=True)
     
     context = {

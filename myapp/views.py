@@ -2577,10 +2577,15 @@ def search_exams_for_class(request, class_pk):
     # Get IDs of already-assigned exams
     assigned_ids = student_class.assigned_exams.values_list('id', flat=True)
     
-    # Base queryset: teacher's own exams from the same school, not yet assigned
+    # Base queryset: exams from the same school, not yet assigned, matching class grade
+    import re
+    class_grade_str = str(student_class.grade) if student_class.grade else ''
+    match = re.search(r'\d+', class_grade_str)
+    exam_grade_val = match.group() if match else ''
+    
     available = Exam.objects.filter(
-        created_by=request.user,
-        school=student_class.school
+        school=student_class.school,
+        grade=exam_grade_val
     ).exclude(
         id__in=assigned_ids
     )
@@ -2777,11 +2782,16 @@ def class_assign_exam(request, class_pk):
     if request.method == 'POST':
         exam_ids = request.POST.getlist('exams')
         if exam_ids:
-            # SCHOOL-SCOPED: only exams from same school can be assigned
+            # SCHOOL-SCOPED & GRADE-SCOPED: only exams from same school matching class grade
+            import re
+            class_grade_str = str(student_class.grade) if student_class.grade else ''
+            match = re.search(r'\d+', class_grade_str)
+            exam_grade_val = match.group() if match else ''
+            
             exams = Exam.objects.filter(
                 id__in=exam_ids,
-                created_by=request.user,
-                school=student_class.school
+                school=student_class.school,
+                grade=exam_grade_val
             )
             for exam in exams:
                 exam.assigned_classes.add(student_class)
