@@ -2806,7 +2806,7 @@ def class_unassign_exam(request, class_pk, exam_pk):
     )
     
     if request.method == 'POST':
-        exam = get_object_or_404(Exam, pk=exam_pk, created_by=request.user)
+        exam = get_object_or_404(Exam, pk=exam_pk, school=request.user.school)
         exam.assigned_classes.remove(student_class)
         messages.success(request, f'{exam.title} unassigned from {student_class.name}')
     
