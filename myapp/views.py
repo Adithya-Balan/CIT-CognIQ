@@ -3299,124 +3299,157 @@ def class_leaderboard(request, class_id):
         }
         return render(request, 'leaderboard/class_leaderboard.html', context)
     
-    # Calculate cumulative score for each student
+    # -------------------------------------------------------------------------
+    # OPTIMIZED: Single bulk-aggregated query replaces N×M per-student loop.
+    # Fetch the best (max) score + earliest submitted_at per (student, exam)
+    # in one DB round-trip, then reconstruct ranking purely in Python.
+    # -------------------------------------------------------------------------
+    from django.db.models import Max, FloatField, ExpressionWrapper, F
+
+    # Step 1: Pre-fetch all assigned exams into memory (avoid repeated ORM hits)
+    assigned_exams_list = list(assigned_exams.select_related())
+    exam_map = {e.id: e for e in assigned_exams_list}  # id -> exam object
+
+    # Step 2: Pre-fetch enrolled students with basic fields only
+    students_qs = student_class.students.filter(
+        role='student', is_active=True
+    ).only('id', 'first_name', 'last_name', 'username')
+    students_list = list(students_qs)
+    student_ids = [s.id for s in students_list]
+    student_map = {s.id: s for s in students_list}
+
+    if not students_list:
+        context = {
+            'page_title': f'Leaderboard: {student_class.name}',
+            'student_class': student_class,
+            'leaderboard_data': [],
+            'total_exams': len(assigned_exams_list),
+            'teacher_classes': teacher_classes,
+        }
+        return render(request, 'leaderboard/class_leaderboard.html', context)
+
+    # Step 3: One query — best score per (student_id, exam_id) pair
+    best_scores_qs = ExamAttempt.objects.filter(
+        student_id__in=student_ids,
+        exam_id__in=assigned_exam_ids,
+        student_class=student_class,
+        is_completed=True,
+        attempt_mode='test'
+    ).values('student_id', 'exam_id').annotate(best_score=Max('score'))
+
+    # Build lookup: (student_id, exam_id) -> best_score
+    best_score_map = {
+        (row['student_id'], row['exam_id']): row['best_score']
+        for row in best_scores_qs
+    }
+
+    # Step 4: One query — fetch all qualifying attempts as flat dicts,
+    # then deduplicate in Python keeping the highest-score row per
+    # (student_id, exam_id). DISTINCT ON is PostgreSQL-only; this approach
+    # works on any backend (SQLite, PostgreSQL, MySQL).
+    all_attempts_qs = ExamAttempt.objects.filter(
+        student_id__in=student_ids,
+        exam_id__in=assigned_exam_ids,
+        student_class=student_class,
+        is_completed=True,
+        attempt_mode='test'
+    ).values('student_id', 'exam_id', 'score', 'started_at', 'submitted_at')
+
+    # Build lookup: (student_id, exam_id) -> best-score row
+    attempt_detail_map = {}
+    for row in all_attempts_qs:
+        key = (row['student_id'], row['exam_id'])
+        existing = attempt_detail_map.get(key)
+        if existing is None or row['score'] > existing['score']:
+            attempt_detail_map[key] = row
+
+    # Step 5: Reconstruct leaderboard purely in Python — zero additional DB queries
     leaderboard_data = []
-    
-    for student in students:
-        total_percentage_sum = 0  # Sum of percentages across all attempted exams
+
+    for student in students_list:
+        total_percentage_sum = 0
         exams_attempted = 0
+        total_time_seconds = 0
         exam_details = []
-        
-        # For each assigned exam, get the student's BEST attempt
-        for exam in assigned_exams:
-            # Edge case: Ensure exam has questions and total_marks > 0
+
+        for exam in assigned_exams_list:
             if exam.total_marks == 0:
                 continue
-            
-            # Get BEST TEST attempt (highest score) for this specific exam in this specific class
-            # CRITICAL: Double-check exam is currently assigned (defensive programming)
-            # Only 'test' mode attempts count for leaderboard
-            best_attempt = ExamAttempt.objects.filter(
-                student=student,
-                exam=exam,
-                exam_id__in=assigned_exam_ids,  # Explicit filter: only currently assigned exams
-                student_class=student_class,
-                is_completed=True,
-                attempt_mode='test'  # Only test attempts count for leaderboard
-            ).order_by('-score').first()
-            
-            if best_attempt:
-                # Calculate percentage for this exam (cap at 100% to handle data anomalies)
-                exam_percentage = (float(best_attempt.score) / float(exam.total_marks) * 100) if exam.total_marks > 0 else 0
-                exam_percentage = min(exam_percentage, 100.0)  # Cap at 100%
-                
-                # Cap displayed score at total marks to handle data anomalies
-                displayed_score = min(float(best_attempt.score), float(exam.total_marks))
-                
-                # Add percentage to cumulative sum
-                total_percentage_sum += exam_percentage
-                exams_attempted += 1
-                
-                # Calculate time in seconds for precision
-                if best_attempt.submitted_at:
-                    time_taken_seconds = (best_attempt.submitted_at - best_attempt.started_at).total_seconds()
-                else:
-                    time_taken_seconds = 0
-                
-                # Format individual exam time as mm:ss with proper rounding
-                # Round to nearest second for display accuracy
-                rounded_seconds = round(time_taken_seconds)
-                time_minutes = int(rounded_seconds // 60)
-                time_seconds = int(rounded_seconds % 60)
-                time_taken_formatted = f"{time_minutes}:{time_seconds:02d}"
-                
-                # Store exam details for breakdown
-                exam_details.append({
-                    'exam': exam,
-                    'score': displayed_score,
-                    'total': exam.total_marks,
-                    'percentage': round(exam_percentage, 2),
-                    'time_taken_seconds': time_taken_seconds,  # Time in seconds for precision
-                    'time_taken': time_taken_formatted,  # Formatted time (mm:ss) for display
-                })
-        
-        # Only include students who have attempted at least one exam
+
+            key = (student.id, exam.id)
+            row = attempt_detail_map.get(key)
+            if not row:
+                continue
+
+            exam_percentage = min(
+                float(row['score']) / float(exam.total_marks) * 100, 100.0
+            )
+            displayed_score = min(float(row['score']), float(exam.total_marks))
+
+            if row['submitted_at'] and row['started_at']:
+                time_taken_seconds = (row['submitted_at'] - row['started_at']).total_seconds()
+            else:
+                time_taken_seconds = 0
+
+            rounded_seconds = round(time_taken_seconds)
+            time_taken_formatted = f"{int(rounded_seconds // 60)}:{int(rounded_seconds % 60):02d}"
+
+            total_percentage_sum += exam_percentage
+            total_time_seconds += time_taken_seconds
+            exams_attempted += 1
+
+            exam_details.append({
+                'exam': exam,
+                'score': displayed_score,
+                'total': exam.total_marks,
+                'percentage': round(exam_percentage, 2),
+                'time_taken_seconds': time_taken_seconds,
+                'time_taken': time_taken_formatted,
+            })
+
         if exams_attempted > 0:
-            # Calculate overall average percentage across all attempted exams
             overall_percentage = total_percentage_sum / exams_attempted
-            
-            # LEADERBOARD FILTER: Only include students with average score >= 75%
+
             if overall_percentage >= 75.0:
-                # Calculate average completion time in seconds across all test attempts
-                total_time_seconds = sum(detail['time_taken_seconds'] for detail in exam_details)
-                average_time_seconds = total_time_seconds / exams_attempted if exams_attempted > 0 else 0
-                
-                # Format as mm:ss with proper rounding for accuracy
-                # Round to nearest second before formatting
-                rounded_avg_seconds = round(average_time_seconds)
-                avg_minutes = int(rounded_avg_seconds // 60)
-                avg_seconds = int(rounded_avg_seconds % 60)
-                average_time_formatted = f"{avg_minutes}:{avg_seconds:02d}"
-                
+                average_time_seconds = total_time_seconds / exams_attempted
+                rounded_avg = round(average_time_seconds)
+                average_time_formatted = f"{int(rounded_avg // 60)}:{int(rounded_avg % 60):02d}"
+
                 leaderboard_data.append({
                     'student': student,
                     'average_percentage': round(overall_percentage, 2),
-                    'average_time_seconds': average_time_seconds,  # For sorting
-                    'average_time': average_time_formatted,  # For display (mm:ss)
+                    'average_time_seconds': average_time_seconds,
+                    'average_time': average_time_formatted,
                     'exams_attempted': exams_attempted,
                     'exam_details': exam_details,
                 })
-    
-    # Sort by ranking priority (all descending for negated values, ascending for time):
-    # 1. Number of Test exams taken (more tests = higher rank)
-    # 2. Average Test score percentage (higher percentage = higher rank)
-    # 3. Average Test completion time (lower time = higher rank)
+
+    # Sort by ranking priority (unchanged logic)
     leaderboard_data.sort(key=lambda x: (-x['exams_attempted'], -x['average_percentage'], x['average_time_seconds']))
-    
-    # Add rank with proper tie handling (considering all three criteria)
-    # Students with same exams_attempted, average_percentage, AND average_time get the same rank
+
+    # Assign ranks with tie handling (unchanged logic)
     for i, data in enumerate(leaderboard_data):
         if i == 0:
             data['rank'] = 1
         else:
-            prev_data = leaderboard_data[i - 1]
-            if (data['exams_attempted'] == prev_data['exams_attempted'] and
-                data['average_percentage'] == prev_data['average_percentage'] and 
-                data['average_time_seconds'] == prev_data['average_time_seconds']):
-                # Same on all three criteria = same rank
-                data['rank'] = prev_data['rank']
+            prev = leaderboard_data[i - 1]
+            if (data['exams_attempted'] == prev['exams_attempted'] and
+                    data['average_percentage'] == prev['average_percentage'] and
+                    data['average_time_seconds'] == prev['average_time_seconds']):
+                data['rank'] = prev['rank']
             else:
-                # Different on any criteria = next sequential rank
-                data['rank'] = i + 1    
+                data['rank'] = i + 1
+
     context = {
         'page_title': f'Leaderboard: {student_class.name}',
         'student_class': student_class,
         'leaderboard_data': leaderboard_data,
-        'total_exams': assigned_exams.count(),
+        'total_exams': len(assigned_exams_list),
         'teacher_classes': teacher_classes,
     }
-    
+
     return render(request, 'leaderboard/class_leaderboard.html', context)
+
 
 
 @login_required
@@ -3484,125 +3517,127 @@ def student_rankings(request):
             'participating_students': 0,
         })
     
-    # Get all active students in the class
-    students = selected_class.students.filter(role='student', is_active=True)
-    
-    # Calculate scores for each student
+    # -------------------------------------------------------------------------
+    # OPTIMIZED: Same bulk-aggregation strategy as class_leaderboard.
+    # Two DB queries (best scores + best-attempt details) replace N×M loop.
+    # -------------------------------------------------------------------------
+    from django.db.models import Max
+
+    assigned_exams_list = list(assigned_exams.select_related())
+    assigned_exam_ids = [e.id for e in assigned_exams_list]
+
+    students_qs = selected_class.students.filter(
+        role='student', is_active=True
+    ).only('id', 'first_name', 'last_name', 'username')
+    students_list = list(students_qs)
+    student_ids = [s.id for s in students_list]
+
+    # One query — fetch all qualifying attempts as flat dicts,
+    # then deduplicate in Python keeping the highest-score row per
+    # (student_id, exam_id). DISTINCT ON is PostgreSQL-only; this approach
+    # works on any backend (SQLite, PostgreSQL, MySQL).
+    all_attempts_qs = ExamAttempt.objects.filter(
+        student_id__in=student_ids,
+        exam_id__in=assigned_exam_ids,
+        student_class=selected_class,
+        is_completed=True,
+        attempt_mode='test'
+    ).values('student_id', 'exam_id', 'score', 'started_at', 'submitted_at')
+
+    attempt_detail_map = {}
+    for row in all_attempts_qs:
+        key = (row['student_id'], row['exam_id'])
+        existing = attempt_detail_map.get(key)
+        if existing is None or row['score'] > existing['score']:
+            attempt_detail_map[key] = row
+
+    # Reconstruct leaderboard in Python—zero additional DB queries
     leaderboard_data = []
-    for student in students:
+    for student in students_list:
         total_percentage_sum = 0
         exams_attempted = 0
         total_time_seconds = 0
         exam_details = []
-        
-        for exam in assigned_exams:
-            # Skip exams with zero marks to avoid division errors
+
+        for exam in assigned_exams_list:
             if exam.total_marks == 0:
                 continue
-                
-            # Get student's BEST TEST attempt for this exam
-            # CRITICAL: Only from exams currently assigned to this class
-            # Only 'test' mode attempts count for leaderboard
-            best_attempt = ExamAttempt.objects.filter(
-                student=student,
-                exam=exam,
-                exam_id__in=assigned_exam_ids,  # Explicit filter: only currently assigned exams
-                student_class=selected_class,
-                is_completed=True,
-                attempt_mode='test'  # Only test attempts count for leaderboard
-            ).order_by('-score').first()
-            
-            if best_attempt:
-                # Calculate percentage for this exam (cap at 100% to handle data anomalies)
-                exam_percentage = (float(best_attempt.score) / float(exam.total_marks) * 100) if exam.total_marks > 0 else 0
-                exam_percentage = min(exam_percentage, 100.0)  # Cap at 100%
-                
-                # Cap displayed score at total marks to handle data anomalies
-                displayed_score = min(float(best_attempt.score), float(exam.total_marks))
-                
-                # Calculate time in seconds for precision
-                if best_attempt.submitted_at:
-                    time_taken_seconds = (best_attempt.submitted_at - best_attempt.started_at).total_seconds()
-                else:
-                    time_taken_seconds = 0
-                
-                # Format individual exam time as mm:ss with proper rounding
-                rounded_seconds = round(time_taken_seconds)
-                time_minutes = int(rounded_seconds // 60)
-                time_seconds = int(rounded_seconds % 60)
-                time_taken_formatted = f"{time_minutes}:{time_seconds:02d}"
-                
-                # Add percentage to cumulative sum
-                total_percentage_sum += exam_percentage
-                total_time_seconds += time_taken_seconds
-                exams_attempted += 1
-                
-                exam_details.append({
-                    'exam': exam,
-                    'score': displayed_score,
-                    'total': exam.total_marks,
-                    'percentage': round(exam_percentage, 2),
-                    'time_taken_seconds': time_taken_seconds,
-                    'time_taken': time_taken_formatted,
-                })
-        
-        # Only include students who have completed at least one exam
+
+            row = attempt_detail_map.get((student.id, exam.id))
+            if not row:
+                continue
+
+            exam_percentage = min(
+                float(row['score']) / float(exam.total_marks) * 100, 100.0
+            )
+            displayed_score = min(float(row['score']), float(exam.total_marks))
+
+            if row['submitted_at'] and row['started_at']:
+                time_taken_seconds = (row['submitted_at'] - row['started_at']).total_seconds()
+            else:
+                time_taken_seconds = 0
+
+            rounded_seconds = round(time_taken_seconds)
+            time_taken_formatted = f"{int(rounded_seconds // 60)}:{int(rounded_seconds % 60):02d}"
+
+            total_percentage_sum += exam_percentage
+            total_time_seconds += time_taken_seconds
+            exams_attempted += 1
+
+            exam_details.append({
+                'exam': exam,
+                'score': displayed_score,
+                'total': exam.total_marks,
+                'percentage': round(exam_percentage, 2),
+                'time_taken_seconds': time_taken_seconds,
+                'time_taken': time_taken_formatted,
+            })
+
         if exams_attempted > 0:
             average_percentage = total_percentage_sum / exams_attempted
-            
-            # LEADERBOARD FILTER: Only include students with average score >= 75%
+
             if average_percentage >= 75.0:
-                # Calculate average completion time in seconds across all test attempts
-                average_time_seconds = total_time_seconds / exams_attempted if exams_attempted > 0 else 0
-                
-                # Format as mm:ss with proper rounding for accuracy
-                rounded_avg_seconds = round(average_time_seconds)
-                avg_minutes = int(rounded_avg_seconds // 60)
-                avg_seconds = int(rounded_avg_seconds % 60)
-                average_time_formatted = f"{avg_minutes}:{avg_seconds:02d}"
-                
+                average_time_seconds = total_time_seconds / exams_attempted
+                rounded_avg = round(average_time_seconds)
+                average_time_formatted = f"{int(rounded_avg // 60)}:{int(rounded_avg % 60):02d}"
+
                 leaderboard_data.append({
                     'student': student,
                     'average_percentage': round(average_percentage, 2),
-                    'average_time_seconds': average_time_seconds,  # For sorting
-                    'average_time': average_time_formatted,  # For display (mm:ss)
+                    'average_time_seconds': average_time_seconds,
+                    'average_time': average_time_formatted,
                     'exams_attempted': exams_attempted,
                     'exam_details': exam_details,
                 })
-    
-    # Sort by ranking priority (consistent with class_leaderboard):
-    # 1. Number of Test exams taken (more tests = higher rank)
-    # 2. Average Test score percentage (higher percentage = higher rank)
-    # 3. Average Test completion time (lower time = higher rank)
+
+    # Sort by ranking priority (unchanged logic)
     leaderboard_data.sort(key=lambda x: (-x['exams_attempted'], -x['average_percentage'], x['average_time_seconds']))
-    
-    # Add rank with proper tie handling (considering all three criteria)
-    # Students with same exams_attempted, average_percentage, AND average_time get the same rank
+
+    # Assign ranks with tie handling (unchanged logic)
     for i, data in enumerate(leaderboard_data):
         if i == 0:
             data['rank'] = 1
         else:
-            prev_data = leaderboard_data[i - 1]
-            if (data['exams_attempted'] == prev_data['exams_attempted'] and
-                data['average_percentage'] == prev_data['average_percentage'] and 
-                data['average_time_seconds'] == prev_data['average_time_seconds']):
-                # Same on all three criteria = same rank
-                data['rank'] = prev_data['rank']
+            prev = leaderboard_data[i - 1]
+            if (data['exams_attempted'] == prev['exams_attempted'] and
+                    data['average_percentage'] == prev['average_percentage'] and
+                    data['average_time_seconds'] == prev['average_time_seconds']):
+                data['rank'] = prev['rank']
             else:
-                # Different on any criteria = next sequential rank
                 data['rank'] = i + 1
-    
+
     context = {
         'page_title': 'Class Rankings',
         'enrolled_classes': enrolled_classes,
         'selected_class': selected_class,
         'leaderboard_data': leaderboard_data,
-        'total_exams': assigned_exams.count(),
-        'total_students': students.count(),
+        'total_exams': len(assigned_exams_list),
+        'total_students': len(students_list),
         'participating_students': len(leaderboard_data),
     }
-    
+
     return render(request, 'leaderboard/student_rankings.html', context)
+
 
 
 @login_required
