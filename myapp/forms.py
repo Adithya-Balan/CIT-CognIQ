@@ -468,3 +468,15 @@ class ProfileUpdateForm(forms.ModelForm):
         if email and User.objects.exclude(pk=self.instance.pk).filter(email=email).exists():
             raise forms.ValidationError('This email address is already in use.')
         return email
+
+class SchoolSettingsForm(forms.ModelForm):
+    class Meta:
+        model = School
+        fields = ['name', 'address', 'phone', 'email', 'logo']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500', 'placeholder': 'School Name'}),
+            'address': forms.Textarea(attrs={'class': 'w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500', 'rows': 3, 'placeholder': 'School Address'}),
+            'phone': forms.TextInput(attrs={'class': 'w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500', 'placeholder': 'Phone Number'}),
+            'email': forms.EmailInput(attrs={'class': 'w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500', 'placeholder': 'Contact Email'}),
+            'logo': forms.FileInput(attrs={'class': 'w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500'}),
+        }

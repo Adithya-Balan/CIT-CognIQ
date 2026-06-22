@@ -19,6 +19,7 @@ urlpatterns = [
     # SCHOOL ADMIN PANEL (role='admin', school-scoped)
     # =====================================================
     path('school-admin/', views.school_admin_dashboard, name='school_admin_dashboard'),
+    path('school-admin/settings/', views.school_admin_settings, name='school_admin_settings'),
     path('school-admin/teachers/', views.school_admin_manage_teachers, name='school_admin_manage_teachers'),
     path('school-admin/teachers/create/', views.school_admin_create_teacher, name='school_admin_create_teacher'),
     path('school-admin/teachers/bulk-create/', views.school_admin_bulk_create_teachers, name='school_admin_bulk_create_teachers'),

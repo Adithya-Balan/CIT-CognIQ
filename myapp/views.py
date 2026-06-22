@@ -4514,3 +4514,38 @@ def school_admin_reset_user_password(request, user_id):
         'page_title': f'Reset Password — {target_user.get_full_name()}',
     }
     return render(request, 'school_admin/reset_user_password.html', context)
+
+
+@login_required
+def school_admin_settings(request):
+    """
+    School Admin Settings: View and edit school profile.
+    Only the admin of the specific school can view/edit.
+    """
+    if not request.user.is_school_admin:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+        
+    school = request.user.school
+    
+    # Import the form here to avoid circular imports if needed, 
+    # but we will import it at the top or just use it if already imported.
+    from .forms import SchoolSettingsForm
+    
+    if request.method == 'POST':
+        form = SchoolSettingsForm(request.POST, request.FILES, instance=school)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'School settings updated successfully.')
+            return redirect('school_admin_settings')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = SchoolSettingsForm(instance=school)
+        
+    context = {
+        'school': school,
+        'form': form,
+        'page_title': 'School Settings',
+    }
+    return render(request, 'school_admin/settings.html', context)
