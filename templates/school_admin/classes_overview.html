@@ -18,9 +18,9 @@
   </div>
 
   <div class="max-w-7xl mx-auto px-6 py-8">
-    {% if classes %}
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-      {% for class in classes %}
+    {% if page_obj %}
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      {% for class in page_obj %}
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden">
         <!-- Card Header -->
         <div class="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
@@ -28,8 +28,8 @@
             <h3 class="font-bold text-gray-900">{{ class.name }}</h3>
             <p class="text-xs text-gray-400 mt-0.5">Year {{ class.year }}</p>
           </div>
-          <span class="text-xs font-semibold px-2.5 py-1 rounded-full
-            {% if class.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-full border
+            {% if class.is_active %}bg-green-50 text-green-700 border-green-200{% else %}bg-gray-50 text-gray-600 border-gray-200{% endif %} shadow-sm">
             {% if class.is_active %}Active{% else %}Archived{% endif %}
           </span>
         </div>
@@ -62,6 +62,38 @@
         </div>
       </div>
       {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    <div class="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="text-sm text-gray-500">
+        Showing <span class="font-bold text-gray-900">{{ page_obj.start_index }}</span> to <span class="font-bold text-gray-900">{{ page_obj.end_index }}</span> of <span class="font-bold text-gray-900">{{ total_classes }}</span> classes
+      </div>
+      <div class="flex items-center gap-2">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-indigo-600 transition-colors shadow-sm">
+            Previous
+          </a>
+        {% else %}
+          <span class="px-3 py-1.5 text-sm font-medium border border-gray-100 bg-gray-50 rounded-lg text-gray-400 cursor-not-allowed">
+            Previous
+          </span>
+        {% endif %}
+        
+        <span class="px-3 py-1.5 text-sm font-medium text-gray-700">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+        
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-indigo-600 transition-colors shadow-sm">
+            Next
+          </a>
+        {% else %}
+          <span class="px-3 py-1.5 text-sm font-medium border border-gray-100 bg-gray-50 rounded-lg text-gray-400 cursor-not-allowed">
+            Next
+          </span>
+        {% endif %}
+      </div>
     </div>
     {% else %}
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm py-20 text-center">

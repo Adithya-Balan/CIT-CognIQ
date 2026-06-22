@@ -4463,15 +4463,23 @@ def school_admin_classes_overview(request):
         return redirect('dashboard')
 
     school = request.user.school
-    classes = StudentClass.objects.filter(
+    classes_qs = StudentClass.objects.filter(
         school=school
     ).select_related('created_by').prefetch_related('students', 'assigned_exams').order_by('-year', '-created_at')
 
+    total_classes = classes_qs.count()
+    active_classes = classes_qs.filter(is_active=True).count()
+
+    from django.core.paginator import Paginator
+    paginator = Paginator(classes_qs, 20)  # Show 20 classes per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
         'school': school,
-        'classes': classes,
-        'total_classes': classes.count(),
-        'active_classes': classes.filter(is_active=True).count(),
+        'page_obj': page_obj,
+        'total_classes': total_classes,
+        'active_classes': active_classes,
         'page_title': 'All Classes',
     }
     return render(request, 'school_admin/classes_overview.html', context)
