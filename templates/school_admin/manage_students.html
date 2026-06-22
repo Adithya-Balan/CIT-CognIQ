@@ -100,7 +100,7 @@
                      class="text-xs px-3 py-1.5 border border-gray-200 text-gray-600 rounded-lg hover:border-indigo-400 hover:text-indigo-600 transition-all font-medium">
                     Reset PW
                   </a>
-                  <form method="post" action="{% url 'school_admin_toggle_student' student.id %}">
+                  <form method="post" action="{% url 'school_admin_toggle_student' student.id %}" {% if student.is_active %}onsubmit="return confirm('Are you sure you want to deactivate this student?');"{% endif %}>
                     {% csrf_token %}
                     <button type="submit"
                       class="text-xs px-3 py-1.5 rounded-lg font-medium transition-all

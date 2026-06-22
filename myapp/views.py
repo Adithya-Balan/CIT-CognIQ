@@ -1639,22 +1639,30 @@ def teacher_exam_responses(request):
     # Build exam-first hierarchy: Exam → Class → Student → Attempts
     exam_hierarchy = []
     
-    for exam in exams_with_responses:
-        exam_attempts = attempts.filter(exam=exam)
-        
-        # Get unique classes that have taken this exam
-        classes_for_exam = teacher_classes.filter(
-            id__in=exam_attempts.values_list('student_class_id', flat=True).distinct()
-        )
+    # Fetch all relevant attempts into memory ONCE
+    all_attempts_list = list(attempts)
+    
+    # Pre-fetch and map exams and classes to avoid repeated lookups
+    all_exams_map = {e.id: e for e in exams_with_responses}
+    all_classes_map = {c.id: c for c in teacher_classes}
+    
+    # Hierarchy: exam_id -> class_id -> student -> [attempts]
+    hierarchy_map = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+    
+    for attempt in all_attempts_list:
+        hierarchy_map[attempt.exam_id][attempt.student_class_id][attempt.student].append(attempt)
+    
+    for exam_id, classes_dict in hierarchy_map.items():
+        exam = all_exams_map.get(exam_id)
+        if not exam:
+            continue
         
         class_data = []
-        for student_class in classes_for_exam:
-            class_attempts = exam_attempts.filter(student_class=student_class)
+        for class_id, students_dict in classes_dict.items():
+            student_class = all_classes_map.get(class_id)
+            if not student_class:
+                continue
             
-            # Group by student within this class
-            students_dict = defaultdict(list)
-            for attempt in class_attempts:
-                students_dict[attempt.student].append(attempt)
             
             student_responses = []
             for student, student_attempts in students_dict.items():
@@ -1920,22 +1928,27 @@ def analytics_dashboard(request):
     
     total_attempts = class_attempts.count()
     
-    # Calculate class-level statistics with 100% accuracy
+    # Calculate class-level statistics with 100% accuracy using fast flat rows
     if total_attempts > 0:
-        # Calculate average percentage accurately
+        flat_attempts = class_attempts.values('score', 'exam__total_marks', 'exam__pass_percentage')
+        
         total_percentage = 0
         passed_count = 0
         
-        for attempt in class_attempts:
-            # Get percentage (which is calculated from score/total_marks)
-            attempt_percentage = attempt.percentage
-            total_percentage += attempt_percentage
+        for row in flat_attempts:
+            score = row['score']
+            total_marks = row['exam__total_marks']
+            pass_percentage_threshold = row['exam__pass_percentage']
             
-            # Check if passed (percentage >= exam.pass_percentage)
-            if attempt.passed:
+            if total_marks > 0:
+                attempt_percentage = min((float(score) / float(total_marks)) * 100, 100.0)
+            else:
+                attempt_percentage = 0
+                
+            total_percentage += attempt_percentage
+            if attempt_percentage >= pass_percentage_threshold:
                 passed_count += 1
         
-        # Calculate accurate averages
         avg_percentage = total_percentage / total_attempts
         pass_rate = (passed_count / total_attempts) * 100
         passed_attempts = passed_count
@@ -1953,29 +1966,36 @@ def analytics_dashboard(request):
     
     # Top performing students in THIS CLASS (using BEST attempt per exam only)
     from collections import defaultdict
+    
+    # Pre-fetch enrolled students with basic fields only
+    students_qs = selected_class.students.filter(
+        role='student', is_active=True
+    ).only('id', 'first_name', 'last_name', 'username')
+    
+    student_map = {s.id: s for s in students_qs}
+    
+    # Fast flat query to get best score per student per exam
+    best_attempts_qs = class_attempts.values(
+        'student_id', 'exam_id', 'exam__total_marks'
+    ).annotate(
+        best_score=Max('score')
+    )
+    
     student_performance = defaultdict(lambda: {'exam_percentages': [], 'student': None})
     
-    # Get best attempt per student per exam
-    for student in class_students:
-        for exam in class_exams:
-            if exam.total_marks == 0:
-                continue
+    for row in best_attempts_qs:
+        student_id = row['student_id']
+        total_marks = row['exam__total_marks']
+        best_score = row['best_score']
+        
+        student = student_map.get(student_id)
+        if not student or total_marks == 0:
+            continue
             
-            # Get BEST attempt (highest score) for this student on this exam
-            # Only from exams currently assigned to this class
-            best_attempt = class_attempts.filter(
-                student=student,
-                exam=exam,
-                exam_id__in=class_exam_ids  # Explicit filter: only currently assigned exams
-            ).order_by('-score').first()
-            
-            if best_attempt:
-                # Calculate percentage for this exam (cap at 100%)
-                exam_percentage = (float(best_attempt.score) / float(exam.total_marks) * 100) if exam.total_marks > 0 else 0
-                exam_percentage = min(exam_percentage, 100.0)
-                
-                student_performance[student.id]['exam_percentages'].append(exam_percentage)
-                student_performance[student.id]['student'] = student
+        exam_percentage = min((float(best_score) / float(total_marks)) * 100, 100.0)
+        
+        student_performance[student_id]['exam_percentages'].append(exam_percentage)
+        student_performance[student_id]['student'] = student
     
     top_students = []
     for student_id, data in student_performance.items():
@@ -2057,8 +2077,14 @@ def exam_analytics(request, exam_pk):
             '0-39': 0,
         }
         
-        for attempt in all_attempts:
-            pct = attempt.percentage
+        flat_attempts = all_attempts.values('score', 'started_at', 'submitted_at')
+        total_duration = 0
+        duration_count = 0
+        
+        for row in flat_attempts:
+            score = row['score']
+            pct = (float(score) / float(exam.total_marks) * 100) if exam.total_marks > 0 else 0
+            
             if pct >= 90:
                 score_ranges['90-100'] += 1
             elif pct >= 80:
@@ -2073,9 +2099,14 @@ def exam_analytics(request, exam_pk):
                 score_ranges['40-49'] += 1
             else:
                 score_ranges['0-39'] += 1
+                
+            if row['submitted_at'] and row['started_at']:
+                duration_mins = (row['submitted_at'] - row['started_at']).total_seconds() / 60.0
+                total_duration += duration_mins
+                duration_count += 1
         
         # Average time taken (duration_taken is already in minutes)
-        avg_duration = sum([a.duration_taken for a in all_attempts if a.duration_taken]) / total_attempts if total_attempts > 0 else 0
+        avg_duration = total_duration / duration_count if duration_count > 0 else 0
         
     else:
         avg_score = highest_score = lowest_score = pass_rate = avg_duration = 0
@@ -2083,18 +2114,20 @@ def exam_analytics(request, exam_pk):
         score_ranges = {}
     
     # Question-wise analysis
-    questions = exam.questions.all()
+    questions = list(exam.questions.all())
     question_stats = []
     
+    # 1 query for all questions
+    answers_stats = StudentAnswer.objects.filter(question__in=questions).values('question_id').annotate(
+        total=Count('id'),
+        correct=Count('id', filter=Q(is_correct=True))
+    )
+    stats_map = {item['question_id']: item for item in answers_stats}
+    
     for question in questions:
-        correct_answers = StudentAnswer.objects.filter(
-            question=question,
-            is_correct=True
-        ).count()
-        
-        total_answers = StudentAnswer.objects.filter(
-            question=question
-        ).count()
+        stat = stats_map.get(question.id, {'total': 0, 'correct': 0})
+        correct_answers = stat['correct']
+        total_answers = stat['total']
         
         accuracy = (correct_answers / total_answers * 100) if total_answers > 0 else 0
         
@@ -2218,34 +2251,59 @@ def student_analytics(request, student_id):
     
     total_attempts = attempts.count()
     
-    # Statistics
+    # Statistics & Subject-wise performance
+    subject_performance = {}
+    
     if total_attempts > 0:
-        # Calculate manually since percentage is a property
-        total_percentage = sum((a.score / a.total_marks * 100) for a in attempts if a.total_marks > 0)
-        avg_percentage = total_percentage / total_attempts if total_attempts > 0 else 0
+        flat_attempts = attempts.values('score', 'total_marks', 'exam__pass_percentage', 'exam__subject')
         
-        highest_score = max((a.percentage for a in attempts), default=0)
-        lowest_score = min((a.percentage for a in attempts), default=0)
-        passed = sum(1 for a in attempts if a.passed)
+        total_percentage = 0
+        highest_score = 0
+        lowest_score = 100
+        passed = 0
+        
+        for row in flat_attempts:
+            score = row['score']
+            total_marks = row['total_marks']
+            pass_threshold = row['exam__pass_percentage']
+            subject = row['exam__subject']
+            
+            if total_marks > 0:
+                pct = min((float(score) / float(total_marks)) * 100, 100.0)
+            else:
+                pct = 0
+                
+            total_percentage += pct
+            if pct > highest_score:
+                highest_score = pct
+            if pct < lowest_score:
+                lowest_score = pct
+                
+            is_passed = pct >= pass_threshold
+            if is_passed:
+                passed += 1
+                
+            # Subject-wise performance (grouped summary)
+            if subject not in subject_performance:
+                subject_performance[subject] = {
+                    'total': 0,
+                    'sum': 0,
+                    'passed': 0
+                }
+            subject_performance[subject]['total'] += 1
+            subject_performance[subject]['sum'] += pct
+            if is_passed:
+                subject_performance[subject]['passed'] += 1
+                
+        avg_percentage = total_percentage / total_attempts if total_attempts > 0 else 0
         pass_rate = (passed / total_attempts * 100) if total_attempts > 0 else 0
+        
+        if lowest_score == 100 and total_attempts > 0:
+            # Handle edge case where no lower scores were found (all 100)
+            pass
     else:
         avg_percentage = highest_score = lowest_score = pass_rate = 0
         passed = 0
-    
-    # Subject-wise performance (grouped summary)
-    subject_performance = {}
-    for attempt in attempts:
-        subject = attempt.exam.subject
-        if subject not in subject_performance:
-            subject_performance[subject] = {
-                'total': 0,
-                'sum': 0,
-                'passed': 0
-            }
-        subject_performance[subject]['total'] += 1
-        subject_performance[subject]['sum'] += attempt.percentage
-        if attempt.passed:
-            subject_performance[subject]['passed'] += 1
     
     # Calculate averages
     for subject, data in subject_performance.items():
