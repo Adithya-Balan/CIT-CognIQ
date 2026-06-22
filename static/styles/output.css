@@ -840,6 +840,9 @@
   .max-h-\[600px\] {
     max-height: 600px;
   }
+  .min-h-\[2rem\] {
+    min-height: 2rem;
+  }
   .min-h-\[70px\] {
     min-height: 70px;
   }
@@ -962,6 +965,9 @@
   }
   .max-w-\[100px\] {
     max-width: 100px;
+  }
+  .max-w-\[120px\] {
+    max-width: 120px;
   }
   .max-w-\[140px\] {
     max-width: 140px;
@@ -1615,6 +1621,9 @@
   }
   .border-purple-100 {
     border-color: var(--color-purple-100);
+  }
+  .border-purple-200 {
+    border-color: var(--color-purple-200);
   }
   .border-purple-300 {
     border-color: var(--color-purple-300);
@@ -4015,6 +4024,13 @@
     &:is(:where(.group\/btn):hover *) {
       @media (hover: hover) {
         color: var(--color-indigo-700);
+      }
+    }
+  }
+  .group-hover\/card\:text-indigo-600 {
+    &:is(:where(.group\/card):hover *) {
+      @media (hover: hover) {
+        color: var(--color-indigo-600);
       }
     }
   }
