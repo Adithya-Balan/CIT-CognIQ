@@ -1635,6 +1635,7 @@ def teacher_exam_responses(request):
     
     # Filtering parameters
     selected_exam_id = request.GET.get('exam_id')
+    exam_search = request.GET.get('exam_search', '').strip()
     selected_class_id = request.GET.get('class_id')
     student_search = request.GET.get('student_search', '').strip()
     pass_filter = request.GET.get('pass_filter')  # 'passed', 'failed', or None
@@ -1654,6 +1655,11 @@ def teacher_exam_responses(request):
         selected_exam = Exam.objects.filter(id=selected_exam_id).first()
     else:
         selected_exam = None
+        if exam_search:
+            attempts = attempts.filter(
+                Q(exam__title__icontains=exam_search) |
+                Q(exam__subject__icontains=exam_search)
+            )
     
     if selected_class_id:
         attempts = attempts.filter(student_class_id=selected_class_id)
@@ -1822,6 +1828,7 @@ def teacher_exam_responses(request):
         'teacher_classes': teacher_classes,
         'all_class_exams': all_class_exams,
         'selected_exam': selected_exam,
+        'exam_search': exam_search,
         'selected_class': selected_class,
         'student_search': student_search,
         'pass_filter': pass_filter,
