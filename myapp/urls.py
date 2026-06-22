@@ -77,6 +77,7 @@ urlpatterns = [
     # Teacher Response Management (Google Forms Style)
     path('teacher/responses/', views.teacher_exam_responses, name='teacher_exam_responses'),
     path('teacher/responses/attempt/<int:attempt_pk>/', views.teacher_view_attempt, name='teacher_view_attempt'),
+    path('teacher/responses/api/search-exams/', views.api_search_exams, name='api_search_exams'),
 
     # =====================================================
     # CLASS MANAGEMENT (Teacher)

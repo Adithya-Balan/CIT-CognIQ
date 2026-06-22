@@ -54,17 +54,35 @@
                     <div class="px-5 sm:px-6 pb-6 border-t border-slate-100">
                         <form method="GET" class="space-y-6 pt-6">
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                                <!-- Exam Filter -->
-                                <div class="space-y-1.5">
+                                <!-- Exam Filter (Searchable) -->
+                                <div class="space-y-1.5 relative" id="exam-search-container">
                                     <label class="text-xs font-bold text-slate-500 uppercase tracking-wide">Exam</label>
-                                    <select name="exam_id" class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
-                                        <option value="">All Exams</option>
-                                        {% for exam in all_class_exams %}
-                                        <option value="{{ exam.id }}" {% if selected_exam and selected_exam.id == exam.id %}selected{% endif %}>
-                                            {{ exam.title }}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
+                                    <input type="hidden" name="exam_id" id="hidden_exam_id" value="{% if selected_exam %}{{ selected_exam.id }}{% endif %}">
+                                    <div class="relative">
+                                        <input type="text" id="exam_search_input" 
+                                               value="{% if selected_exam %}{{ selected_exam.title }}{% endif %}" 
+                                               placeholder="Search exams..." autocomplete="off"
+                                               class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+                                        <!-- Search Icon -->
+                                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                        </div>
+                                        <!-- Clear Button -->
+                                        <button type="button" id="clear_exam_search" class="absolute inset-y-0 right-8 flex items-center px-1 text-slate-400 hover:text-slate-600 hidden">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    </div>
+                                    <!-- Dropdown Results -->
+                                    <div id="exam_search_dropdown" class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg hidden max-h-60 overflow-y-auto">
+                                        <ul id="exam_search_results" class="py-1"></ul>
+                                        <div id="exam_search_loading" class="px-4 py-3 text-sm text-slate-500 hidden flex items-center gap-2">
+                                            <svg class="animate-spin h-4 w-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                            Searching...
+                                        </div>
+                                        <div id="exam_search_empty" class="px-4 py-3 text-sm text-slate-500 hidden">
+                                            No exams found.
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <!-- Class Filter -->
@@ -471,4 +489,136 @@
         
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('exam_search_input');
+    const hiddenInput = document.getElementById('hidden_exam_id');
+    const dropdown = document.getElementById('exam_search_dropdown');
+    const resultsList = document.getElementById('exam_search_results');
+    const loadingState = document.getElementById('exam_search_loading');
+    const emptyState = document.getElementById('exam_search_empty');
+    const clearBtn = document.getElementById('clear_exam_search');
+    
+    // Only run if the elements actually exist (in case of 'no classes' state)
+    if (!searchInput) return;
+    
+    let debounceTimer;
+
+    function toggleClearButton() {
+        if (searchInput.value.trim() !== '') {
+            clearBtn.classList.remove('hidden');
+        } else {
+            clearBtn.classList.add('hidden');
+        }
+    }
+    
+    toggleClearButton();
+
+    clearBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        searchInput.value = '';
+        hiddenInput.value = '';
+        toggleClearButton();
+        dropdown.classList.add('hidden');
+        searchInput.focus();
+    });
+
+    searchInput.addEventListener('input', function(e) {
+        toggleClearButton();
+        // If user manually clears input text, also clear hidden ID
+        if (e.target.value.trim() === '') {
+            hiddenInput.value = '';
+        }
+        
+        const query = e.target.value.trim();
+        
+        // Always show dropdown if focused
+        dropdown.classList.remove('hidden');
+        resultsList.innerHTML = '';
+        emptyState.classList.add('hidden');
+        
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            fetchExams(query);
+        }, 300);
+    });
+
+    searchInput.addEventListener('focus', function() {
+        dropdown.classList.remove('hidden');
+        if (resultsList.children.length === 0 && searchInput.value.trim() === '') {
+            fetchExams(''); // fetch recent exams
+        } else if (searchInput.value.trim() !== '') {
+            fetchExams(searchInput.value.trim());
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        const container = document.getElementById('exam-search-container');
+        if (container && !container.contains(e.target)) {
+            dropdown.classList.add('hidden');
+            // Revert search input text if no valid exam selected
+            if (!hiddenInput.value) {
+                searchInput.value = '';
+                toggleClearButton();
+            }
+        }
+    });
+
+    async function fetchExams(query) {
+        loadingState.classList.remove('hidden');
+        resultsList.innerHTML = '';
+        emptyState.classList.add('hidden');
+
+        try {
+            const response = await fetch(`/teacher/responses/api/search-exams/?q=${encodeURIComponent(query)}`);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+            
+            loadingState.classList.add('hidden');
+            
+            // "All Exams" option
+            if (query === '') {
+                const allLi = document.createElement('li');
+                allLi.className = 'px-4 py-2.5 hover:bg-slate-50 cursor-pointer border-b border-slate-50';
+                allLi.innerHTML = `<span class="text-sm font-bold text-slate-600">All Exams</span>`;
+                allLi.addEventListener('click', () => {
+                    searchInput.value = '';
+                    hiddenInput.value = '';
+                    dropdown.classList.add('hidden');
+                    toggleClearButton();
+                });
+                resultsList.appendChild(allLi);
+            }
+            
+            if (data.results && data.results.length > 0) {
+                data.results.forEach(exam => {
+                    const li = document.createElement('li');
+                    li.className = 'px-4 py-2.5 hover:bg-slate-50 cursor-pointer flex flex-col border-b border-slate-50 last:border-0';
+                    li.innerHTML = `
+                        <span class="text-sm font-bold text-slate-800">${exam.title}</span>
+                        <span class="text-[10px] font-bold text-indigo-500 uppercase tracking-wide mt-0.5">${exam.subject}</span>
+                    `;
+                    li.addEventListener('click', () => {
+                        searchInput.value = exam.title;
+                        hiddenInput.value = exam.id;
+                        dropdown.classList.add('hidden');
+                        toggleClearButton();
+                    });
+                    resultsList.appendChild(li);
+                });
+            } else {
+                if (query !== '') {
+                    emptyState.classList.remove('hidden');
+                }
+            }
+        } catch (error) {
+            loadingState.classList.add('hidden');
+            console.error('Error fetching exams:', error);
+            emptyState.textContent = 'Error loading exams.';
+            emptyState.classList.remove('hidden');
+        }
+    }
+});
+</script>
 {% endblock %}

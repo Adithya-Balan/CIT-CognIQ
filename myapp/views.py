@@ -1559,6 +1559,48 @@ def attempt_history(request):
 # TEACHER RESPONSE MANAGEMENT VIEWS (Google Forms Style)
 # ============================================================================
 
+from django.http import JsonResponse
+
+@login_required
+def api_search_exams(request):
+    """
+    Async endpoint for searching exams assigned to teacher's classes.
+    """
+    if not request.user.is_teacher:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+        
+    query = request.GET.get('q', '').strip()
+    
+    teacher_classes = StudentClass.objects.filter(
+        created_by=request.user,
+        is_active=True
+    )
+    
+    exams = Exam.objects.filter(
+        assigned_classes__in=teacher_classes
+    ).distinct()
+    
+    if query:
+        from django.db.models import Q
+        exams = exams.filter(
+            Q(title__icontains=query) |
+            Q(subject__icontains=query)
+        )
+        
+    # Limit results for performance
+    exams = exams.order_by('title')[:20]
+    
+    results = [
+        {
+            'id': exam.id,
+            'title': exam.title,
+            'subject': exam.subject
+        }
+        for exam in exams
+    ]
+    
+    return JsonResponse({'results': results})
+
 @login_required
 def teacher_exam_responses(request):
     """
