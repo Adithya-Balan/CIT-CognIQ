@@ -29,13 +29,23 @@
 
   <div class="max-w-7xl mx-auto px-6 py-8">
 
-    <!-- Search -->
+    <!-- Search & Filter -->
     <form method="get" class="mb-6">
-      <div class="flex gap-3">
+      <div class="flex flex-wrap gap-3">
         <input type="text" name="q" value="{{ search }}" placeholder="Search by name or username…"
-          class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm">
-        <button type="submit" class="px-5 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-500 transition-all">Search</button>
-        {% if search %}<a href="{% url 'school_admin_manage_teachers' %}" class="px-5 py-3 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition-all">Clear</a>{% endif %}
+          class="flex-1 min-w-[200px] px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm">
+        
+        <select name="status" class="px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm text-gray-700 font-medium">
+          <option value="all" {% if status_filter == 'all' or not status_filter %}selected{% endif %}>All Statuses</option>
+          <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Only</option>
+          <option value="deactivated" {% if status_filter == 'deactivated' %}selected{% endif %}>Deactivated Only</option>
+        </select>
+        
+        <button type="submit" class="px-5 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-500 transition-all shadow-sm">Search & Filter</button>
+        
+        {% if search or status_filter != 'all' %}
+        <a href="{% url 'school_admin_manage_teachers' %}" class="px-5 py-3 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition-all flex items-center justify-center">Clear</a>
+        {% endif %}
       </div>
     </form>
 
@@ -115,7 +125,7 @@
         </div>
         <div class="flex items-center gap-2">
           {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-indigo-600 transition-colors shadow-sm">
+            <a href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-indigo-600 transition-colors shadow-sm">
               Previous
             </a>
           {% else %}
@@ -127,7 +137,7 @@
           </span>
           
           {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-indigo-600 transition-colors shadow-sm">
+            <a href="?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-indigo-600 transition-colors shadow-sm">
               Next
             </a>
           {% else %}

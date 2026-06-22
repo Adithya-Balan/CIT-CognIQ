@@ -41,8 +41,15 @@
             <option value="{{ grade }}" {% if current_grade == grade %}selected{% endif %}>{{ grade }}</option>
           {% endfor %}
         </select>
+        
+        <!-- Status Filter -->
+        <select name="status" onchange="this.form.submit()" class="px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm appearance-none cursor-pointer">
+          <option value="all" {% if status_filter == 'all' or not status_filter %}selected{% endif %}>All Statuses</option>
+          <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Only</option>
+          <option value="deactivated" {% if status_filter == 'deactivated' %}selected{% endif %}>Deactivated Only</option>
+        </select>
 
-        {% if search or current_grade %}<a href="{% url 'school_admin_manage_students' %}" class="px-5 py-3 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition-all text-center">Clear</a>{% endif %}
+        {% if search or current_grade or status_filter != 'all' %}<a href="{% url 'school_admin_manage_students' %}" class="px-5 py-3 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition-all text-center flex items-center justify-center">Clear</a>{% endif %}
       </div>
     </form>
 
@@ -132,7 +139,7 @@
         </div>
         <div class="flex items-center gap-2">
           {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if current_grade %}&grade={{ current_grade|urlencode }}{% endif %}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-emerald-600 transition-colors shadow-sm">
+            <a href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if current_grade %}&grade={{ current_grade|urlencode }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-emerald-600 transition-colors shadow-sm">
               Previous
             </a>
           {% else %}
@@ -144,7 +151,7 @@
           </span>
           
           {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}{% if current_grade %}&grade={{ current_grade|urlencode }}{% endif %}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-emerald-600 transition-colors shadow-sm">
+            <a href="?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}{% if current_grade %}&grade={{ current_grade|urlencode }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-emerald-600 transition-colors shadow-sm">
               Next
             </a>
           {% else %}

@@ -4072,6 +4072,12 @@ def school_admin_manage_teachers(request):
             Q(username__icontains=search)
         )
 
+    status_filter = request.GET.get('status', 'all')
+    if status_filter == 'active':
+        teachers = teachers.filter(is_active=True)
+    elif status_filter == 'deactivated':
+        teachers = teachers.filter(is_active=False)
+
     # Implement pagination (20 items per page)
     from django.core.paginator import Paginator
     paginator = Paginator(teachers, 20)
@@ -4084,6 +4090,7 @@ def school_admin_manage_teachers(request):
         'page_obj': page_obj,
         'total_count': paginator.count,
         'search': search,
+        'status_filter': status_filter,
         'page_title': 'Manage Teachers',
     }
     return render(request, 'school_admin/manage_teachers.html', context)
@@ -4268,6 +4275,12 @@ def school_admin_manage_students(request):
     if grade_filter:
         students = students.filter(student_classes__grade=grade_filter).distinct()
 
+    status_filter = request.GET.get('status', 'all')
+    if status_filter == 'active':
+        students = students.filter(is_active=True)
+    elif status_filter == 'deactivated':
+        students = students.filter(is_active=False)
+
     # Pagination
     from django.core.paginator import Paginator
     paginator = Paginator(students, 30)
@@ -4282,6 +4295,7 @@ def school_admin_manage_students(request):
         'page_obj': page_obj,
         'total_students': students.count(),
         'search': search,
+        'status_filter': status_filter,
         'current_grade': grade_filter,
         'grades': grades,
         'page_title': 'Manage Students',
