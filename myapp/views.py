@@ -1964,52 +1964,11 @@ def analytics_dashboard(request):
         exam.attempt_count = exam_attempts.count()
         recent_exams.append(exam)
     
-    # Top performing students in THIS CLASS (using BEST attempt per exam only)
-    from collections import defaultdict
+    # Top performing students in THIS CLASS (using exact same logic as class leaderboard)
+    leaderboard_data, _ = calculate_leaderboard_data(selected_class)
     
-    # Pre-fetch enrolled students with basic fields only
-    students_qs = selected_class.students.filter(
-        role='student', is_active=True
-    ).only('id', 'first_name', 'last_name', 'username')
-    
-    student_map = {s.id: s for s in students_qs}
-    
-    # Fast flat query to get best score per student per exam
-    best_attempts_qs = class_attempts.values(
-        'student_id', 'exam_id', 'exam__total_marks'
-    ).annotate(
-        best_score=Max('score')
-    )
-    
-    student_performance = defaultdict(lambda: {'exam_percentages': [], 'student': None})
-    
-    for row in best_attempts_qs:
-        student_id = row['student_id']
-        total_marks = row['exam__total_marks']
-        best_score = row['best_score']
-        
-        student = student_map.get(student_id)
-        if not student or total_marks == 0:
-            continue
-            
-        exam_percentage = min((float(best_score) / float(total_marks)) * 100, 100.0)
-        
-        student_performance[student_id]['exam_percentages'].append(exam_percentage)
-        student_performance[student_id]['student'] = student
-    
-    top_students = []
-    for student_id, data in student_performance.items():
-        if data['exam_percentages']:
-            # Calculate average percentage across all attempted exams
-            avg_percentage = sum(data['exam_percentages']) / len(data['exam_percentages'])
-            top_students.append({
-                'student': data['student'],
-                'avg_score': round(avg_percentage, 1),
-                'total_attempts': len(data['exam_percentages'])
-            })
-    
-    top_students.sort(key=lambda x: x['avg_score'], reverse=True)
-    top_students = top_students[:5]
+    # We only need the top 5 students for the analytics overview dashboard
+    top_students = leaderboard_data[:5]
     
     context = {
         'teacher_classes': teacher_classes,
@@ -3285,10 +3244,9 @@ def subject_progress(request, subject):
     return render(request, 'progress/subject_progress.html', context)
 
 
-@login_required
-def class_leaderboard(request, class_id):
+def calculate_leaderboard_data(student_class):
     """
-    Class-Scoped Leaderboard
+    Core Leaderboard Calculation Logic.
     
     Ranks students based on cumulative performance across ALL exams assigned to this class.
     
@@ -3297,114 +3255,24 @@ def class_leaderboard(request, class_id):
     - Only completed attempts are considered
     - Each student appears once
     - Score = Sum of best attempts from all assigned exams
-    
-    Strict class-scoping: NEVER mixes students from different classes.
+    - Tie-breakers: exams_attempted (high to low), average_percentage (high to low), average_time_seconds (low to high)
+    - Minimum requirement: >= 75% average percentage to be on the leaderboard.
     """
-    student_class = get_object_or_404(StudentClass, pk=class_id)
+    from django.db.models import Max
     
-    # SCHOOL-SCOPED: block cross-school leaderboard access
-    if request.user.is_authenticated and not request.user.is_superuser:
-        if student_class.school != request.user.school:
-            messages.error(request, 'Access denied. You cannot view leaderboards from another school.')
-            return redirect('dashboard')
-    
-    # Verify access: Teachers can view any class in their school, students only their own class
-    if request.user.is_student:
-        if not student_class.students.filter(id=request.user.id).exists():
-            messages.error(request, 'You can only view the leaderboard for your own class.')
-            return redirect('dashboard')
-    elif not request.user.is_teacher:
-        messages.error(request, 'Access denied.')
-        return redirect('dashboard')
-    
-    # Get all teacher's classes for the dropdown (only for teachers)
-    teacher_classes = None
-    if request.user.is_teacher:
-        teacher_classes = StudentClass.objects.filter(
-            created_by=request.user,
-            is_active=True
-        ).order_by('name')
-    
-    # Get all ACTIVE exams CURRENTLY assigned to THIS class only
-    # CRITICAL: This automatically excludes any exams that were unassigned from the class
-    # Both 'test' and 'practice_test' types are included
-    # Only Test attempts count towards leaderboard (Practice attempts excluded)
     assigned_exams = student_class.assigned_exams.all()
-    
-    # Defensive check: Get list of currently assigned exam IDs for explicit filtering
     assigned_exam_ids = list(assigned_exams.values_list('id', flat=True))
-    
-    if not assigned_exams.exists():
-        context = {
-            'page_title': f'Leaderboard: {student_class.name}',
-            'student_class': student_class,
-            'leaderboard_data': [],
-            'total_exams': 0,
-            'teacher_classes': teacher_classes,
-        }
-        return render(request, 'leaderboard/class_leaderboard.html', context)
-    
-    # Get all ACTIVE students enrolled in this class
-    students = student_class.students.filter(role='student', is_active=True)
-    
-    if not students.exists():
-        context = {
-            'page_title': f'Leaderboard: {student_class.name}',
-            'student_class': student_class,
-            'leaderboard_data': [],
-            'total_exams': assigned_exams.count(),
-            'teacher_classes': teacher_classes,
-        }
-        return render(request, 'leaderboard/class_leaderboard.html', context)
-    
-    # -------------------------------------------------------------------------
-    # OPTIMIZED: Single bulk-aggregated query replaces N×M per-student loop.
-    # Fetch the best (max) score + earliest submitted_at per (student, exam)
-    # in one DB round-trip, then reconstruct ranking purely in Python.
-    # -------------------------------------------------------------------------
-    from django.db.models import Max, FloatField, ExpressionWrapper, F
-
-    # Step 1: Pre-fetch all assigned exams into memory (avoid repeated ORM hits)
     assigned_exams_list = list(assigned_exams.select_related())
-    exam_map = {e.id: e for e in assigned_exams_list}  # id -> exam object
-
-    # Step 2: Pre-fetch enrolled students with basic fields only
+    
     students_qs = student_class.students.filter(
         role='student', is_active=True
     ).only('id', 'first_name', 'last_name', 'username')
     students_list = list(students_qs)
     student_ids = [s.id for s in students_list]
-    student_map = {s.id: s for s in students_list}
-
-    if not students_list:
-        context = {
-            'page_title': f'Leaderboard: {student_class.name}',
-            'student_class': student_class,
-            'leaderboard_data': [],
-            'total_exams': len(assigned_exams_list),
-            'teacher_classes': teacher_classes,
-        }
-        return render(request, 'leaderboard/class_leaderboard.html', context)
-
-    # Step 3: One query — best score per (student_id, exam_id) pair
-    best_scores_qs = ExamAttempt.objects.filter(
-        student_id__in=student_ids,
-        exam_id__in=assigned_exam_ids,
-        student_class=student_class,
-        is_completed=True,
-        attempt_mode='test'
-    ).values('student_id', 'exam_id').annotate(best_score=Max('score'))
-
-    # Build lookup: (student_id, exam_id) -> best_score
-    best_score_map = {
-        (row['student_id'], row['exam_id']): row['best_score']
-        for row in best_scores_qs
-    }
-
-    # Step 4: One query — fetch all qualifying attempts as flat dicts,
-    # then deduplicate in Python keeping the highest-score row per
-    # (student_id, exam_id). DISTINCT ON is PostgreSQL-only; this approach
-    # works on any backend (SQLite, PostgreSQL, MySQL).
+    
+    if not assigned_exams_list or not students_list:
+        return [], len(assigned_exams_list)
+        
     all_attempts_qs = ExamAttempt.objects.filter(
         student_id__in=student_ids,
         exam_id__in=assigned_exam_ids,
@@ -3413,7 +3281,6 @@ def class_leaderboard(request, class_id):
         attempt_mode='test'
     ).values('student_id', 'exam_id', 'score', 'started_at', 'submitted_at')
 
-    # Build lookup: (student_id, exam_id) -> best-score row
     attempt_detail_map = {}
     for row in all_attempts_qs:
         key = (row['student_id'], row['exam_id'])
@@ -3421,7 +3288,6 @@ def class_leaderboard(request, class_id):
         if existing is None or row['score'] > existing['score']:
             attempt_detail_map[key] = row
 
-    # Step 5: Reconstruct leaderboard purely in Python — zero additional DB queries
     leaderboard_data = []
 
     for student in students_list:
@@ -3482,10 +3348,8 @@ def class_leaderboard(request, class_id):
                     'exam_details': exam_details,
                 })
 
-    # Sort by ranking priority (unchanged logic)
     leaderboard_data.sort(key=lambda x: (-x['exams_attempted'], -x['average_percentage'], x['average_time_seconds']))
 
-    # Assign ranks with tie handling (unchanged logic)
     for i, data in enumerate(leaderboard_data):
         if i == 0:
             data['rank'] = 1
@@ -3498,11 +3362,62 @@ def class_leaderboard(request, class_id):
             else:
                 data['rank'] = i + 1
 
+    return leaderboard_data, len(assigned_exams_list)
+
+
+@login_required
+def class_leaderboard(request, class_id):
+    """
+    Class-Scoped Leaderboard
+    
+    Ranks students based on cumulative performance across ALL exams assigned to this class.
+    
+    Rules:
+    - Only the BEST attempt per exam counts
+    - Only completed attempts are considered
+    - Each student appears once
+    - Score = Sum of best attempts from all assigned exams
+    
+    Strict class-scoping: NEVER mixes students from different classes.
+    """
+    student_class = get_object_or_404(StudentClass, pk=class_id)
+    
+    # SCHOOL-SCOPED: block cross-school leaderboard access
+    if request.user.is_authenticated and not request.user.is_superuser:
+        if student_class.school != request.user.school:
+            messages.error(request, 'Access denied. You cannot view leaderboards from another school.')
+            return redirect('dashboard')
+    
+    # Verify access: Teachers can view any class in their school, students only their own class
+    if request.user.is_student:
+        if not student_class.students.filter(id=request.user.id).exists():
+            messages.error(request, 'You can only view the leaderboard for your own class.')
+            return redirect('dashboard')
+    elif not request.user.is_teacher:
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+    
+    # Get all teacher's classes for the dropdown (only for teachers)
+    teacher_classes = None
+    if request.user.is_teacher:
+        teacher_classes = StudentClass.objects.filter(
+            created_by=request.user,
+            is_active=True
+        ).order_by('name')
+    
+    # Get all ACTIVE exams CURRENTLY assigned to THIS class only
+    # CRITICAL: This automatically excludes any exams that were unassigned from the class
+    # Both 'test' and 'practice_test' types are included
+    # Only Test attempts count towards leaderboard (Practice attempts excluded)
+    assigned_exams = student_class.assigned_exams.all()
+    
+    leaderboard_data, total_exams_count = calculate_leaderboard_data(student_class)
+
     context = {
         'page_title': f'Leaderboard: {student_class.name}',
         'student_class': student_class,
         'leaderboard_data': leaderboard_data,
-        'total_exams': len(assigned_exams_list),
+        'total_exams': total_exams_count,
         'teacher_classes': teacher_classes,
     }
 
@@ -3575,122 +3490,19 @@ def student_rankings(request):
             'participating_students': 0,
         })
     
-    # -------------------------------------------------------------------------
-    # OPTIMIZED: Same bulk-aggregation strategy as class_leaderboard.
-    # Two DB queries (best scores + best-attempt details) replace N×M loop.
-    # -------------------------------------------------------------------------
-    from django.db.models import Max
-
-    assigned_exams_list = list(assigned_exams.select_related())
-    assigned_exam_ids = [e.id for e in assigned_exams_list]
-
-    students_qs = selected_class.students.filter(
-        role='student', is_active=True
-    ).only('id', 'first_name', 'last_name', 'username')
-    students_list = list(students_qs)
-    student_ids = [s.id for s in students_list]
-
-    # One query — fetch all qualifying attempts as flat dicts,
-    # then deduplicate in Python keeping the highest-score row per
-    # (student_id, exam_id). DISTINCT ON is PostgreSQL-only; this approach
-    # works on any backend (SQLite, PostgreSQL, MySQL).
-    all_attempts_qs = ExamAttempt.objects.filter(
-        student_id__in=student_ids,
-        exam_id__in=assigned_exam_ids,
-        student_class=selected_class,
-        is_completed=True,
-        attempt_mode='test'
-    ).values('student_id', 'exam_id', 'score', 'started_at', 'submitted_at')
-
-    attempt_detail_map = {}
-    for row in all_attempts_qs:
-        key = (row['student_id'], row['exam_id'])
-        existing = attempt_detail_map.get(key)
-        if existing is None or row['score'] > existing['score']:
-            attempt_detail_map[key] = row
-
-    # Reconstruct leaderboard in Python—zero additional DB queries
-    leaderboard_data = []
-    for student in students_list:
-        total_percentage_sum = 0
-        exams_attempted = 0
-        total_time_seconds = 0
-        exam_details = []
-
-        for exam in assigned_exams_list:
-            if exam.total_marks == 0:
-                continue
-
-            row = attempt_detail_map.get((student.id, exam.id))
-            if not row:
-                continue
-
-            exam_percentage = min(
-                float(row['score']) / float(exam.total_marks) * 100, 100.0
-            )
-            displayed_score = min(float(row['score']), float(exam.total_marks))
-
-            if row['submitted_at'] and row['started_at']:
-                time_taken_seconds = (row['submitted_at'] - row['started_at']).total_seconds()
-            else:
-                time_taken_seconds = 0
-
-            rounded_seconds = round(time_taken_seconds)
-            time_taken_formatted = f"{int(rounded_seconds // 60)}:{int(rounded_seconds % 60):02d}"
-
-            total_percentage_sum += exam_percentage
-            total_time_seconds += time_taken_seconds
-            exams_attempted += 1
-
-            exam_details.append({
-                'exam': exam,
-                'score': displayed_score,
-                'total': exam.total_marks,
-                'percentage': round(exam_percentage, 2),
-                'time_taken_seconds': time_taken_seconds,
-                'time_taken': time_taken_formatted,
-            })
-
-        if exams_attempted > 0:
-            average_percentage = total_percentage_sum / exams_attempted
-
-            if average_percentage >= 75.0:
-                average_time_seconds = total_time_seconds / exams_attempted
-                rounded_avg = round(average_time_seconds)
-                average_time_formatted = f"{int(rounded_avg // 60)}:{int(rounded_avg % 60):02d}"
-
-                leaderboard_data.append({
-                    'student': student,
-                    'average_percentage': round(average_percentage, 2),
-                    'average_time_seconds': average_time_seconds,
-                    'average_time': average_time_formatted,
-                    'exams_attempted': exams_attempted,
-                    'exam_details': exam_details,
-                })
-
-    # Sort by ranking priority (unchanged logic)
-    leaderboard_data.sort(key=lambda x: (-x['exams_attempted'], -x['average_percentage'], x['average_time_seconds']))
-
-    # Assign ranks with tie handling (unchanged logic)
-    for i, data in enumerate(leaderboard_data):
-        if i == 0:
-            data['rank'] = 1
-        else:
-            prev = leaderboard_data[i - 1]
-            if (data['exams_attempted'] == prev['exams_attempted'] and
-                    data['average_percentage'] == prev['average_percentage'] and
-                    data['average_time_seconds'] == prev['average_time_seconds']):
-                data['rank'] = prev['rank']
-            else:
-                data['rank'] = i + 1
+    # Reuse the same leaderboard calculation logic
+    leaderboard_data, total_exams_count = calculate_leaderboard_data(selected_class)
+    
+    # Need to count total students in this class for the UI
+    students_count = selected_class.students.filter(role='student', is_active=True).count()
 
     context = {
         'page_title': 'Class Rankings',
         'enrolled_classes': enrolled_classes,
         'selected_class': selected_class,
         'leaderboard_data': leaderboard_data,
-        'total_exams': len(assigned_exams_list),
-        'total_students': len(students_list),
+        'total_exams': total_exams_count,
+        'total_students': students_count,
         'participating_students': len(leaderboard_data),
     }
 

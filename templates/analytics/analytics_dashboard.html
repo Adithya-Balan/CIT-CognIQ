@@ -207,11 +207,11 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-bold text-gray-900 group-hover:text-indigo-600 transition">{{ student_data.student.get_full_name|default:student_data.student.username }}</p>
-                                    <p class="text-xs text-gray-500">{{ student_data.total_attempts }} Exam{{ student_data.total_attempts|pluralize }}</p>
+                                    <p class="text-xs text-gray-500">{{ student_data.exams_attempted }} Exam{{ student_data.exams_attempted|pluralize }}</p>
                                 </div>
                             </div>
                             <div class="text-right">
-                                <span class="block text-lg font-bold text-indigo-600">{{ student_data.avg_score }}%</span>
+                                <span class="block text-lg font-bold text-indigo-600">{{ student_data.average_percentage }}%</span>
                                 <span class="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Avg Score</span>
                             </div>
                         </div>
