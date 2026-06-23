@@ -309,6 +309,24 @@ class ExamListView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
             school=self.request.user.school
         )
 
+        import re
+        def extract_grade_num(g):
+            match = re.search(r'\d+', str(g))
+            return int(match.group()) if match else 0
+
+        # Calculate all available grades before filtering
+        self.available_grades = sorted(set(
+            qs.exclude(grade='').values_list('grade', flat=True)
+        ), key=extract_grade_num)
+
+        # Default to first grade if none selected
+        self.current_grade = self.request.GET.get('grade', '').strip()
+        if not self.current_grade and self.available_grades:
+            self.current_grade = self.available_grades[0]
+
+        if self.current_grade:
+            qs = qs.filter(grade=self.current_grade)
+
         # Text search
         search = self.request.GET.get('search', '').strip()
         if search:
@@ -322,11 +340,6 @@ class ExamListView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
         if subject:
             qs = qs.filter(subject=subject)
 
-        # Grade filter
-        grade = self.request.GET.get('grade', '').strip()
-        if grade:
-            qs = qs.filter(grade=grade)
-
         # Chapter/category filter
         chapter = self.request.GET.get('chapter', '').strip()
         if chapter:
@@ -338,37 +351,32 @@ class ExamListView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'My Exams'
 
-        # Full (unfiltered) queryset for stats and filter options
+        # Full (unfiltered) queryset for stats
         all_exams = Exam.objects.filter(
             created_by=self.request.user,
             school=self.request.user.school
         )
+        
         context['total_exams'] = all_exams.count()
         context['assigned_exams'] = all_exams.filter(assigned_classes__isnull=False).distinct().count()
 
-        # Filter options — use set() to guarantee uniqueness at the Python level
-        context['subjects'] = sorted(set(
-            all_exams.exclude(subject='').values_list('subject', flat=True)
-        ))
-        
-        # Robust sorting for grades: extract digits to sort numerically
-        import re
-        def extract_grade_num(g):
-            match = re.search(r'\d+', str(g))
-            return int(match.group()) if match else 0
+        # Grade navigation state
+        context['grades'] = getattr(self, 'available_grades', [])
+        context['current_grade'] = getattr(self, 'current_grade', '')
 
-        context['grades'] = sorted(set(
-            all_exams.exclude(grade='').values_list('grade', flat=True)
-        ), key=extract_grade_num)
+        # Filter subjects specifically for the currently selected grade
+        grade_exams = all_exams.filter(grade=context['current_grade']) if context['current_grade'] else all_exams
+        context['subjects'] = sorted(set(
+            grade_exams.exclude(subject='').values_list('subject', flat=True)
+        ))
 
         # Current filter values
         context['search_query'] = self.request.GET.get('search', '')
         context['current_subject'] = self.request.GET.get('subject', '')
-        context['current_grade'] = self.request.GET.get('grade', '')
         context['current_chapter'] = self.request.GET.get('chapter', '')
         context['has_filters'] = any([
             context['search_query'], context['current_subject'],
-            context['current_grade'], context['current_chapter']
+            context['current_chapter']
         ])
 
         # Filtered count (for display)

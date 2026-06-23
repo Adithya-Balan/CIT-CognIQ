@@ -14,16 +14,27 @@ def exam_bank(request):
         
     exams = Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(created_by=request.user).select_related('created_by').prefetch_related('questions')
     
+    import re
+    def extract_grade_num(g):
+        match = re.search(r'\d+', str(g))
+        return int(match.group()) if match else 0
+
+    grades = sorted(set(Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(created_by=request.user).exclude(grade='').values_list('grade', flat=True)), key=extract_grade_num)
+
     # Filtering
+    grade = request.GET.get('grade', '').strip()
+    if not grade and grades:
+        grade = grades[0]
+
+    if grade:
+        exams = exams.filter(grade=grade)
+
     subject = request.GET.get('subject')
-    grade = request.GET.get('grade')
     chapter = request.GET.get('chapter')
     search = request.GET.get('search')
     
     if subject:
         exams = exams.filter(subject=subject)
-    if grade:
-        exams = exams.filter(grade__icontains=grade)
     if chapter:
         exams = exams.filter(chapter__icontains=chapter)
     if search:
@@ -35,14 +46,12 @@ def exam_bank(request):
     page_obj = paginator.get_page(page_number)
     
     # Get unique values for filters using set() for absolute deduplication
-    import re
-    def extract_grade_num(g):
-        match = re.search(r'\d+', str(g))
-        return int(match.group()) if match else 0
+    grade_all_exams = Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(created_by=request.user)
+    if grade:
+        grade_all_exams = grade_all_exams.filter(grade=grade)
 
-    subjects = sorted(set(Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(created_by=request.user).values_list('subject', flat=True)))
-    grades = sorted(set(Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(created_by=request.user).exclude(grade='').values_list('grade', flat=True)), key=extract_grade_num)
-    chapters = sorted(set(Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(created_by=request.user).exclude(chapter='').values_list('chapter', flat=True)))
+    subjects = sorted(set(grade_all_exams.exclude(subject='').values_list('subject', flat=True)))
+    chapters = sorted(set(grade_all_exams.exclude(chapter='').values_list('chapter', flat=True)))
     
     context = {
         'page_obj': page_obj,

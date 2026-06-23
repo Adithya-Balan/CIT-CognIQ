@@ -41,6 +41,20 @@
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-20 space-y-8 pb-20">
 
+        <!-- Grade Navigation -->
+        {% if grades %}
+        <div class="mb-6 overflow-x-auto hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div class="flex items-center gap-2 w-max pb-2">
+                {% for gr in grades %}
+                <a href="?grade={{ gr|urlencode }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_chapter %}&chapter={{ current_chapter }}{% endif %}" 
+                   class="px-4 py-2 text-sm font-bold transition-all duration-200 rounded-lg border {% if current_grade == gr %}bg-slate-800 text-white border-slate-800 shadow-md{% else %}bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300 hover:text-slate-900 shadow-sm{% endif %}">
+                    Grade {{ gr }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Subject Tabs (Tile Style) -->
         <div class="mb-8 overflow-x-auto hide-scrollbar pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
             <div class="flex items-stretch gap-3 w-max">
@@ -86,21 +100,7 @@
                     </div>
                 </div>
 
-                <!-- Grade -->
-                <div class="w-full lg:w-40 relative">
-                    <label for="grade" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Grade</label>
-                    <div class="relative">
-                        <select name="grade" id="grade" class="block w-full pl-3 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-colors text-gray-900 appearance-none cursor-pointer">
-                            <option value="">All Grades</option>
-                            {% for gr in grades %}
-                                <option value="{{ gr }}" {% if current_grade == gr %}selected{% endif %}>Grade {{ gr }}</option>
-                            {% endfor %}
-                        </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                        </div>
-                    </div>
-                </div>
+
 
                 <!-- Category -->
                 <div class="w-full lg:w-48">
@@ -140,9 +140,7 @@
             {% if current_subject %}
                 <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-100">{{ current_subject }}</span>
             {% endif %}
-            {% if current_grade %}
-                <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-100">Grade {{ current_grade }}</span>
-            {% endif %}
+
             {% if current_chapter %}
                 <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-semibold border border-purple-100">{{ current_chapter }}</span>
             {% endif %}
