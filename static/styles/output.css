@@ -1689,6 +1689,9 @@
       border-color: color-mix(in oklab, var(--color-indigo-900) 50%, transparent);
     }
   }
+  .border-orange-100 {
+    border-color: var(--color-orange-100);
+  }
   .border-orange-200 {
     border-color: var(--color-orange-200);
   }
@@ -1856,6 +1859,9 @@
   }
   .bg-amber-500 {
     background-color: var(--color-amber-500);
+  }
+  .bg-amber-600 {
+    background-color: var(--color-amber-600);
   }
   .bg-blue-50 {
     background-color: var(--color-blue-50);
@@ -3705,6 +3711,12 @@
   .ring-indigo-500 {
     --tw-ring-color: var(--color-indigo-500);
   }
+  .ring-orange-600\/10 {
+    --tw-ring-color: color-mix(in srgb, oklch(64.6% 0.222 41.116) 10%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      --tw-ring-color: color-mix(in oklab, var(--color-orange-600) 10%, transparent);
+    }
+  }
   .ring-pink-50 {
     --tw-ring-color: var(--color-pink-50);
   }
@@ -4601,6 +4613,13 @@
       }
     }
   }
+  .hover\:bg-amber-700 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-amber-700);
+      }
+    }
+  }
   .hover\:bg-blue-50 {
     &:hover {
       @media (hover: hover) {
@@ -5241,6 +5260,16 @@
       @media (hover: hover) {
         --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 8px 10px -6px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
         box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+      }
+    }
+  }
+  .hover\:shadow-amber-300 {
+    &:hover {
+      @media (hover: hover) {
+        --tw-shadow-color: oklch(87.9% 0.169 91.605);
+        @supports (color: color-mix(in lab, red, red)) {
+          --tw-shadow-color: color-mix(in oklab, var(--color-amber-300) var(--tw-shadow-alpha), transparent);
+        }
       }
     }
   }

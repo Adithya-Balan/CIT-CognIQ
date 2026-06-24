@@ -1135,57 +1135,7 @@ def student_exam_list(request):
         assigned_classes__in=student_classes
     ).distinct().prefetch_related('questions', 'assigned_classes')
     
-    # Get student's attempts (class-scoped)
-    student_attempts = ExamAttempt.objects.filter(
-        student=request.user,
-        is_completed=True,
-        student_class__in=student_classes  # Only show attempts from active classes
-    ).select_related('exam', 'student_class').order_by('exam_id', '-submitted_at')
-    
-    # Create dictionaries for exam data
-    exam_attempts = {}  # exam_id -> list of attempts
-    exam_test_attempts = {}  # exam_id -> list of test attempts
-    exam_practice_attempts = {}  # exam_id -> list of practice attempts
-    exam_best_score = {}  # exam_id -> best percentage (from test attempts)
-    exam_latest_attempt = {}  # exam_id -> latest attempt
-    exam_has_test_attempt = {}  # exam_id -> boolean (has taken test attempt)
-    
-    for attempt in student_attempts:
-        exam_id = attempt.exam_id
-        if exam_id not in exam_attempts:
-            exam_attempts[exam_id] = []
-        exam_attempts[exam_id].append(attempt)
-        
-        # Track test vs practice attempts
-        if attempt.attempt_mode == 'test':
-            if exam_id not in exam_test_attempts:
-                exam_test_attempts[exam_id] = []
-            exam_test_attempts[exam_id].append(attempt)
-            exam_has_test_attempt[exam_id] = True
-            
-            # Track best score from test attempts only
-            if exam_id not in exam_best_score or attempt.percentage > exam_best_score[exam_id]:
-                exam_best_score[exam_id] = attempt.percentage
-        else:  # practice mode
-            if exam_id not in exam_practice_attempts:
-                exam_practice_attempts[exam_id] = []
-            exam_practice_attempts[exam_id].append(attempt)
-        
-        # Track latest attempt (already ordered by -submitted_at)
-        if exam_id not in exam_latest_attempt:
-            exam_latest_attempt[exam_id] = attempt
-    
-    # Annotate exams with attempt info
-    for exam in available_exams:
-        exam.attempt_list = exam_attempts.get(exam.id, [])
-        exam.attempt_count = len(exam.attempt_list)
-        exam.test_attempts = exam_test_attempts.get(exam.id, [])
-        exam.practice_attempts = exam_practice_attempts.get(exam.id, [])
-        exam.has_test_attempt = exam_has_test_attempt.get(exam.id, False)
-        exam.best_score = exam_best_score.get(exam.id)
-        exam.latest_attempt = exam_latest_attempt.get(exam.id)
-    
-    # Search functionality
+    # Filter logic
     search_query = request.GET.get('search', '').strip()
     if search_query:
         available_exams = available_exams.filter(
@@ -1193,28 +1143,86 @@ def student_exam_list(request):
             Q(description__icontains=search_query) |
             Q(subject__icontains=search_query)
         )
+        
+    # Get subjects for tabs/filtering
+    subjects = sorted(set(Exam.objects.filter(assigned_classes__in=student_classes).exclude(subject='').values_list('subject', flat=True)))
     
-    # Group exams by subject for organized display
-    from collections import defaultdict
-    exams_by_subject = defaultdict(list)
-    for exam in available_exams:
-        exams_by_subject[exam.subject].append(exam)
+    current_subject = request.GET.get('subject', '').strip()
+    if current_subject:
+        available_exams = available_exams.filter(subject=current_subject)
+        
+    available_exams = available_exams.order_by('-created_at', '-id')
+    total_exam_count = available_exams.count()
     
-    # Sort subjects alphabetically and convert to list of tuples
-    exams_by_subject = sorted(exams_by_subject.items(), key=lambda x: x[0])
+    # Pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(available_exams, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     
-    # Calculate statistics for scalability
-    total_exam_count = sum(len(exams) for _, exams in exams_by_subject)
-    subject_stats = {subject: len(exams) for subject, exams in exams_by_subject}
+    # Convert paginated queryset to list to annotate it
+    paginated_exams = list(page_obj.object_list)
+    paginated_exam_ids = [e.id for e in paginated_exams]
+    
+    # Get student's attempts (class-scoped) ONLY for the paginated exams for scalability
+    student_attempts = ExamAttempt.objects.filter(
+        student=request.user,
+        is_completed=True,
+        student_class__in=student_classes,
+        exam_id__in=paginated_exam_ids
+    ).select_related('exam', 'student_class').order_by('exam_id', '-submitted_at')
+    
+    # Create dictionaries for exam data
+    exam_attempts = {}
+    exam_test_attempts = {}
+    exam_practice_attempts = {}
+    exam_best_score = {}
+    exam_latest_attempt = {}
+    exam_has_test_attempt = {}
+    
+    for attempt in student_attempts:
+        exam_id = attempt.exam_id
+        if exam_id not in exam_attempts:
+            exam_attempts[exam_id] = []
+        exam_attempts[exam_id].append(attempt)
+        
+        if attempt.attempt_mode == 'test':
+            if exam_id not in exam_test_attempts:
+                exam_test_attempts[exam_id] = []
+            exam_test_attempts[exam_id].append(attempt)
+            exam_has_test_attempt[exam_id] = True
+            
+            if exam_id not in exam_best_score or attempt.percentage > exam_best_score[exam_id]:
+                exam_best_score[exam_id] = attempt.percentage
+        else:
+            if exam_id not in exam_practice_attempts:
+                exam_practice_attempts[exam_id] = []
+            exam_practice_attempts[exam_id].append(attempt)
+        
+        if exam_id not in exam_latest_attempt:
+            exam_latest_attempt[exam_id] = attempt
+    
+    # Annotate ONLY the paginated exams
+    for exam in paginated_exams:
+        exam.attempt_list = exam_attempts.get(exam.id, [])
+        exam.attempt_count = len(exam.attempt_list)
+        exam.test_attempts = exam_test_attempts.get(exam.id, [])
+        exam.practice_attempts = exam_practice_attempts.get(exam.id, [])
+        exam.has_test_attempt = exam_has_test_attempt.get(exam.id, False)
+        exam.best_score = exam_best_score.get(exam.id)
+        exam.latest_attempt = exam_latest_attempt.get(exam.id)
+        
+    # Replace the object_list with the annotated list
+    page_obj.object_list = paginated_exams
     
     context = {
-        'available_exams': available_exams,
-        'exams_by_subject': exams_by_subject,  # Grouped exams for subject-wise display
+        'page_obj': page_obj,
         'student_classes': student_classes,
         'page_title': 'Available Exams',
         'search_query': search_query,
         'total_exam_count': total_exam_count,
-        'subject_stats': subject_stats,
+        'subjects': subjects,
+        'current_subject': current_subject,
     }
     return render(request, 'exams/student_exam_list.html', context)
 

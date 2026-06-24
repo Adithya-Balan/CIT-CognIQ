@@ -24,7 +24,7 @@
                         <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight">Available Exams</h1>
                     </div>
                     <p class="text-lg text-slate-400 font-medium ml-1">
-                        {% if total_exam_count %}{{ total_exam_count }} exam{{ total_exam_count|pluralize }} across {{ exams_by_subject|length }} subject{{ exams_by_subject|length|pluralize }}{% else %}Select an exam to test your knowledge and track your progress{% endif %}
+                        {% if total_exam_count %}{{ total_exam_count }} exam{{ total_exam_count|pluralize }} available{% else %}Select an exam to test your knowledge and track your progress{% endif %}
                     </p>
                 </div>
                  {% if attempted_exam_ids %}
@@ -71,117 +71,67 @@
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-20 space-y-8 pb-20">
 
-        <!-- Available Exams - Grouped by Subject -->
-        {% if exams_by_subject %}
-            {% for subject, subject_exams in exams_by_subject %}
-            <!-- Subject Section -->
-            <div class="mb-10 last:mb-0" data-subject-section="{{ subject|slugify }}">
-                <!-- Subject Header (Banner Style) -->
-                <button onclick="toggleSubject('{{ subject|slugify }}')" class="w-full relative overflow-hidden rounded-xl shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 group text-left outline-none focus:ring-4 focus:ring-slate-200">
-                    
-                    <!-- Dynamic Background (Professional & Consistent Palette) -->
-                    {% if subject == "Mathematics" %}
-                        <div class="absolute inset-0 bg-gradient-to-r from-slate-700 to-slate-800"></div>
-                        <div class="absolute right-0 top-0 h-full w-1/2 bg-white/5 skew-x-12 transform origin-bottom-right"></div>
-                        <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
-                    {% elif subject == "Science" %}
-                         <div class="absolute inset-0 bg-gradient-to-r from-emerald-800 to-teal-900"></div>
-                         <div class="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/5 blur-3xl"></div>
-                         <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
-                    {% elif subject == "English" %}
-                         <div class="absolute inset-0 bg-gradient-to-r from-indigo-800 to-blue-900"></div>
-                         <div class="absolute left-0 top-0 h-full w-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
-                         <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 to-blue-500"></div>
-                    {% elif subject == "Social Science" %}
-                         <div class="absolute inset-0 bg-gradient-to-r from-amber-900 to-orange-900"></div>
-                         <div class="absolute right-10 bottom-0 w-24 h-24 rounded-full bg-white/5"></div>
-                         <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-500"></div>
-                    {% elif subject == "தமிழ்" %}
-                         <div class="absolute inset-0 bg-gradient-to-r from-rose-900 to-pink-900"></div>
-                         <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 to-pink-500"></div>
-                    {% else %}
-                         <div class="absolute inset-0 bg-gradient-to-r from-slate-700 to-gray-800"></div>
-                         <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-slate-400 to-gray-500"></div>
+        <!-- Subject Tabs (Tile Style) -->
+        <div class="mb-8 overflow-x-auto hide-scrollbar pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div class="flex items-stretch gap-3 w-max">
+                <!-- All Subjects Tile -->
+                <a href="?{% if search_query %}search={{ search_query }}{% endif %}" 
+                   class="flex flex-col items-center justify-center min-w-[100px] p-3 rounded-2xl border-2 transition-all duration-200 {% if not current_subject %}border-indigo-600 bg-indigo-50 shadow-md shadow-indigo-500/10{% else %}border-slate-200 bg-white hover:border-indigo-300 hover:bg-slate-50 shadow-sm{% endif %}">
+                    <span class="text-xl mb-1">📚</span>
+                    <span class="text-xs font-black tracking-tight {% if not current_subject %}text-indigo-700{% else %}text-slate-600{% endif %}">ALL</span>
+                </a>
+                
+                {% for subj in subjects %}
+                <a href="?subject={{ subj|urlencode }}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                   class="flex flex-col items-center justify-center min-w-[100px] p-3 rounded-2xl border-2 transition-all duration-200 {% if current_subject == subj %}border-indigo-600 bg-indigo-50 shadow-md shadow-indigo-500/10{% else %}border-slate-200 bg-white hover:border-indigo-300 hover:bg-slate-50 shadow-sm{% endif %}">
+                    <!-- Icon logic based on subject -->
+                    {% if subj == "Mathematics" %}<span class="text-xl mb-1">∑</span>
+                    {% elif subj == "Science" %}<span class="text-xl mb-1">🔬</span>
+                    {% elif subj == "English" %}<span class="text-xl mb-1">📖</span>
+                    {% elif subj == "Social Science" %}<span class="text-xl mb-1">🌍</span>
+                    {% elif subj == "தமிழ்" %}<span class="text-xl font-bold mb-1">த</span>
+                    {% else %}<span class="text-xl mb-1">📝</span>
                     {% endif %}
+                    <span class="text-xs font-black tracking-tight truncate w-full text-center {% if current_subject == subj %}text-indigo-700{% else %}text-slate-600{% endif %}">{{ subj|truncatechars:15 }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
 
-                    <div class="relative p-4 sm:p-6 sm:px-8 flex items-center justify-between z-10">
-                        <div class="flex items-center gap-4 sm:gap-6">
-                            <!-- Icon Circle -->
-                             <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center shadow-inner text-white border border-white/10 group-hover:scale-105 transition-transform duration-300 shrink-0">
-                                {% if subject == "Mathematics" %}
-                                    <span class="text-xl sm:text-3xl font-bold">∑</span>
-                                {% elif subject == "Science" %}
-                                    <span class="text-xl sm:text-3xl">🔬</span>
-                                {% elif subject == "English" %}
-                                    <span class="text-xl sm:text-3xl">📖</span>
-                                {% elif subject == "Social Science" %}
-                                    <span class="text-xl sm:text-3xl">🌍</span>
-                                {% elif subject == "தமிழ்" %}
-                                    <span class="text-lg sm:text-2xl font-bold">த</span>
-                                {% else %}
-                                    <span class="text-xl sm:text-3xl">📚</span>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="min-w-0">
-                                <h2 class="text-lg sm:text-3xl font-bold text-white tracking-tight leading-tight mb-0.5 sm:mb-1 truncate pr-2">
-                                    {{ subject }}
-                                </h2>
-                                <div class="flex items-center gap-3">
-                                   <!-- Exam Count Pill -->
-                                    <span class="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-md bg-white/10 text-[10px] sm:text-xs font-semibold border border-white/10 backdrop-blur-sm tracking-wide uppercase text-white/90 group-hover:bg-white/20 transition-colors whitespace-nowrap">
-                                        {{ subject_exams|length }} Exam{{ subject_exams|length|pluralize }} <span class="hidden sm:inline ml-1">Available</span>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+        <!-- Available Exams Grid -->
+        {% if page_obj.object_list %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for exam in page_obj.object_list %}
+                    {% include 'exams/partials/exam_card.html' with exam=exam %}
+                {% endfor %}
+            </div>
 
-                        <!-- Chevron -->
-                        <div class="bg-white/10 rounded-full p-1.5 sm:p-2.5 backdrop-blur-md border border-white/10 group-hover:bg-white/20 transition-all shadow-sm shrink-0 ml-2">
-                            <svg class="w-4 h-4 sm:w-6 sm:h-6 text-white transform transition-transform duration-300" id="icon-{{ subject|slugify }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </div>
-                    </div>
-                </button>
-
-                <!-- Exams Container (Collapsible + Show More) -->
-                <div id="exams-{{ subject|slugify }}" class="mt-6 px-1 transition-all duration-300">
-                    <!-- Initial Exams (First 6) -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="initial-{{ subject|slugify }}">
-                        {% for exam in subject_exams|slice:":6" %}
-                        {% include 'exams/partials/exam_card.html' with exam=exam %}
-                        {% endfor %}
-                    </div>
-                    
-                    <!-- Additional Exams (Hidden by default) -->
-                    {% if subject_exams|length > 6 %}
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 hidden" id="more-{{ subject|slugify }}">
-                        {% for exam in subject_exams|slice:"6:" %}
-                        {% include 'exams/partials/exam_card.html' with exam=exam %}
-                        {% endfor %}
-                    </div>
-                    
-                    <!-- Show More Button -->
-                    <div class="mt-8 mb-4 text-center relative">
-                        <div class="absolute inset-0 flex items-center" aria-hidden="true">
-                            <div class="w-full border-t border-slate-200"></div>
-                        </div>
-                        <div class="relative flex justify-center">
-                            <button onclick="toggleMoreExams('{{ subject|slugify }}')" 
-                                    id="btn-{{ subject|slugify }}"
-                                    class="inline-flex items-center gap-2 px-6 py-2 bg-white border border-slate-200 text-slate-600 font-semibold rounded-full hover:border-indigo-300 hover:bg-slate-50 hover:text-indigo-700 transition-all shadow-sm">
-                                <span id="btn-text-{{ subject|slugify }}">Show {{ subject_exams|length|add:"-6" }} More</span>
-                                <svg class="w-4 h-4 transform transition-transform duration-200" id="btn-icon-{{ subject|slugify }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <div class="flex items-center justify-between bg-white rounded-2xl shadow-sm border border-gray-200 px-6 py-4 mt-8">
+                <div class="text-sm text-gray-500">
+                    Page <span class="font-bold text-gray-900">{{ page_obj.number }}</span> of <span class="font-bold text-gray-900">{{ page_obj.paginator.num_pages }}</span>
+                    <span class="hidden sm:inline ml-1">· {{ total_exam_count }} exam{{ total_exam_count|pluralize }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}" 
+                           class="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-indigo-300 transition-all shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                            Prev
+                        </a>
+                    {% endif %}
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}" 
+                           class="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 border border-indigo-600 rounded-xl hover:bg-indigo-700 transition-all shadow-sm">
+                            Next
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </a>
                     {% endif %}
                 </div>
             </div>
-            {% endfor %}
+            {% endif %}
+
         {% else %}
         <!-- Empty State -->
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-12 text-center text-slate-500">
@@ -190,8 +140,8 @@
             </div>
             <h3 class="text-xl font-bold text-slate-900 mb-2">No Exams Available</h3>
             <p class="max-w-md mx-auto mb-8">
-                {% if search_query %}
-                    No exams match your search criteria. Try different keywords or <a href="{% url 'student_exam_list' %}" class="text-indigo-600 hover:underline font-semibold">clear search</a>.
+                {% if search_query or current_subject %}
+                    No exams match your filters. Try different keywords or <a href="{% url 'student_exam_list' %}" class="text-indigo-600 hover:underline font-semibold">clear filters</a>.
                 {% else %}
                     There are no open exams available for you at the moment. Please check back later or contact your instructor.
                 {% endif %}
@@ -206,46 +156,6 @@
 </div>
 
 <script>
-// Toggle subject section collapse/expand
-function toggleSubject(subjectSlug) {
-    const examsContainer = document.getElementById('exams-' + subjectSlug);
-    const icon = document.getElementById('icon-' + subjectSlug);
-    
-    if (examsContainer.style.display === 'none') {
-        examsContainer.style.display = 'block';
-        icon.style.transform = 'rotate(0deg)';
-    } else {
-        examsContainer.style.display = 'none';
-        icon.style.transform = 'rotate(-90deg)';
-    }
-}
-
-// Toggle "Show More" exams within a subject
-function toggleMoreExams(subjectSlug) {
-    const moreExams = document.getElementById('more-' + subjectSlug);
-    const button = document.getElementById('btn-' + subjectSlug);
-    const buttonText = document.getElementById('btn-text-' + subjectSlug);
-    const buttonIcon = document.getElementById('btn-icon-' + subjectSlug);
-    
-    if (moreExams.classList.contains('hidden')) {
-        // Show more exams
-        moreExams.classList.remove('hidden');
-        buttonText.textContent = 'Show Less';
-        buttonIcon.style.transform = 'rotate(180deg)';
-    } else {
-        // Hide additional exams
-        moreExams.classList.add('hidden');
-        buttonText.textContent = buttonText.getAttribute('data-original') || 'Show More';
-        buttonIcon.style.transform = 'rotate(0deg)';
-        
-        // Scroll to subject header
-        const subjectSection = document.querySelector('[data-subject-section="' + subjectSlug + '"]');
-        if (subjectSection) {
-            subjectSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
-}
-
 // Auto-submit search form on input (with debounce for performance)
 let searchTimeout;
 const searchInput = document.querySelector('input[name="search"]');
@@ -254,17 +164,19 @@ if (searchInput) {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             if (this.value.length >= 3 || this.value.length === 0) {
-                this.form.submit();
+                // Preserve subject param if it exists
+                const urlParams = new URLSearchParams(window.location.search);
+                const subject = urlParams.get('subject');
+                
+                let newUrl = window.location.pathname + '?search=' + encodeURIComponent(this.value);
+                if (subject) {
+                    newUrl += '&subject=' + encodeURIComponent(subject);
+                }
+                
+                window.location.href = newUrl;
             }
         }, 500); // 500ms debounce
     });
 }
-
-// Store original button text for "Show More" buttons
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('[id^="btn-text-"]').forEach(function(el) {
-        el.setAttribute('data-original', el.textContent);
-    });
-});
 </script>
 {% endblock %}
