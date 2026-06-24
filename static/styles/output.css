@@ -470,6 +470,9 @@
   .right-3 {
     right: calc(var(--spacing) * 3);
   }
+  .right-4 {
+    right: calc(var(--spacing) * 4);
+  }
   .right-6 {
     right: calc(var(--spacing) * 6);
   }
@@ -5852,6 +5855,11 @@
       width: calc(var(--spacing) * 20);
     }
   }
+  .sm\:w-48 {
+    @media (width >= 40rem) {
+      width: calc(var(--spacing) * 48);
+    }
+  }
   .sm\:w-64 {
     @media (width >= 40rem) {
       width: calc(var(--spacing) * 64);
@@ -6946,6 +6954,11 @@
   .xl\:grid-cols-3 {
     @media (width >= 80rem) {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .\[\&\>option\]\:text-slate-900 {
+    &>option {
+      color: var(--color-slate-900);
     }
   }
 }

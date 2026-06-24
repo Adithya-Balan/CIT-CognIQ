@@ -1151,7 +1151,36 @@ def student_exam_list(request):
     if current_subject:
         available_exams = available_exams.filter(subject=current_subject)
         
-    available_exams = available_exams.order_by('-created_at', '-id')
+    # Date Filtering & Sorting
+    from django.db.models import Max
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    # Annotate with the class-scoped assigned date
+    available_exams = available_exams.annotate(
+        assigned_at=Max(
+            'assignment_dates__assigned_at', 
+            filter=Q(assignment_dates__student_class__in=student_classes)
+        )
+    )
+    
+    date_filter = request.GET.get('date', '').strip()
+    if date_filter:
+        now = timezone.now()
+        if date_filter == 'today':
+            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif date_filter == '7days':
+            start_date = now - timedelta(days=7)
+        elif date_filter == '30days':
+            start_date = now - timedelta(days=30)
+        else:
+            start_date = None
+            
+        if start_date:
+            available_exams = available_exams.filter(assigned_at__gte=start_date)
+            
+    # Default sort by assigned date descending
+    available_exams = available_exams.order_by('-assigned_at', '-id')
     total_exam_count = available_exams.count()
     
     # Pagination
@@ -1246,6 +1275,7 @@ def student_exam_list(request):
         'total_exam_count': total_exam_count,
         'subjects': subjects,
         'current_subject': current_subject,
+        'date_filter': date_filter,
     }
     return render(request, 'exams/student_exam_list.html', context)
 
