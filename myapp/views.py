@@ -1202,6 +1202,23 @@ def student_exam_list(request):
         if exam_id not in exam_latest_attempt:
             exam_latest_attempt[exam_id] = attempt
     
+    from django.utils import timezone
+    from datetime import timedelta
+    from .models import ExamAssignmentDate
+    
+    five_days_ago = timezone.now() - timedelta(days=5)
+
+    # Fetch ExamAssignmentDate for the paginated exams and the student's classes
+    assignment_dates = ExamAssignmentDate.objects.filter(
+        exam_id__in=paginated_exam_ids,
+        student_class__in=student_classes
+    ).values('exam_id', 'assigned_at')
+    
+    exam_assignment_map = {}
+    for ad in assignment_dates:
+        if ad['exam_id'] not in exam_assignment_map or ad['assigned_at'] < exam_assignment_map[ad['exam_id']]:
+            exam_assignment_map[ad['exam_id']] = ad['assigned_at']
+
     # Annotate ONLY the paginated exams
     for exam in paginated_exams:
         exam.attempt_list = exam_attempts.get(exam.id, [])
@@ -1211,6 +1228,12 @@ def student_exam_list(request):
         exam.has_test_attempt = exam_has_test_attempt.get(exam.id, False)
         exam.best_score = exam_best_score.get(exam.id)
         exam.latest_attempt = exam_latest_attempt.get(exam.id)
+        
+        assigned_at = exam_assignment_map.get(exam.id)
+        exam.student_assigned_at = assigned_at if assigned_at else exam.created_at
+        
+        # An exam is "New" if it was assigned within the last 5 days AND has no attempts
+        exam.is_new = exam.attempt_count == 0 and exam.student_assigned_at >= five_days_ago
         
     # Replace the object_list with the annotated list
     page_obj.object_list = paginated_exams
@@ -2875,8 +2898,10 @@ def class_assign_exam(request, class_pk):
                 school=student_class.school,
                 grade=exam_grade_val
             )
+            from .models import ExamAssignmentDate
             for exam in exams:
                 exam.assigned_classes.add(student_class)
+                ExamAssignmentDate.objects.get_or_create(exam=exam, student_class=student_class)
             messages.success(request, f'{exams.count()} exam(s) assigned to {student_class.name}')
         else:
             messages.warning(request, 'No exams selected.')
@@ -2900,6 +2925,8 @@ def class_unassign_exam(request, class_pk, exam_pk):
     if request.method == 'POST':
         exam = get_object_or_404(Exam, pk=exam_pk, school=request.user.school)
         exam.assigned_classes.remove(student_class)
+        from .models import ExamAssignmentDate
+        ExamAssignmentDate.objects.filter(exam=exam, student_class=student_class).delete()
         messages.success(request, f'{exam.title} unassigned from {student_class.name}')
     
     return redirect('class_detail', class_pk=class_pk)

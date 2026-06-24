@@ -878,3 +878,20 @@ class StudentAnswer(models.Model):
         self.is_correct = self.selected_choice.is_correct
         super().save(*args, **kwargs)
 
+class ExamAssignmentDate(models.Model):
+    """
+    Explicitly tracks when an exam was assigned to a specific class.
+    This provides class-level isolation so students see the date the exam was given to them,
+    rather than the date the exam was originally authored.
+    """
+    exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='assignment_dates')
+    student_class = models.ForeignKey(StudentClass, on_delete=models.CASCADE, related_name='exam_assignment_dates')
+    assigned_at = models.DateTimeField(auto_now_add=True, verbose_name='Assigned At')
+
+    class Meta:
+        verbose_name = 'Exam Assignment Date'
+        verbose_name_plural = 'Exam Assignment Dates'
+        unique_together = ['exam', 'student_class']
+
+    def __str__(self):
+        return f"{self.exam.title} -> {self.student_class.name} ({self.assigned_at.strftime('%Y-%m-%d')})"

@@ -8,7 +8,7 @@
                 {{ exam.subject }}
             </span>
             
-            {% if exam.attempt_count == 0 %}
+            {% if exam.is_new %}
             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm animate-pulse">
                 New
             </span>
@@ -37,10 +37,17 @@
         </h3>
         
         {% if exam.description %}
-        <p class="text-xs text-slate-500 line-clamp-2 mb-3 h-10 leading-relaxed">{{ exam.description|truncatewords:20 }}</p>
+        <p class="text-xs text-slate-500 line-clamp-2 mb-2 h-10 leading-relaxed">{{ exam.description|truncatewords:20 }}</p>
         {% else %}
-        <div class="h-10 mb-3"></div>
+        <div class="h-10 mb-2"></div>
         {% endif %}
+        
+        <div class="flex items-center text-[10px] text-slate-400 font-medium">
+            <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Assigned: {% if exam.student_assigned_at %}{{ exam.student_assigned_at|date:"M j, Y" }}{% else %}{{ exam.created_at|date:"M j, Y" }}{% endif %}
+        </div>
     </div>
 
     <!-- Card Stats -->
@@ -76,7 +83,7 @@
                 <div class="text-right {% if not exam.has_test_attempt %}ml-auto{% endif %}">
                     {% if exam.practice_attempts %}
                     <p class="text-xs font-bold {% if exam.practice_attempts.0.percentage >= exam.pass_percentage %}text-emerald-600{% else %}text-rose-600{% endif %}">
-                        {{ exam.practice_attempts.0.percentage|floatformat:0 }}% <span class="text-[9px] text-slate-400 font-medium">(Practice)</span>
+                        {{ exam.practice_attempts.0.percentage|floatformat:0 }}% <span class="text-[9px] text-slate-400 font-medium">(Last Practice)</span>
                     </p>
                     {% endif %}
                 </div>

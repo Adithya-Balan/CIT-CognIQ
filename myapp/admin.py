@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, Exam, Question, Choice, ExamAttempt, StudentAnswer, School
+from .models import User, Exam, Question, Choice, ExamAttempt, StudentAnswer, School, ExamAssignmentDate
 
 
 # ============================================================================
@@ -237,3 +237,18 @@ class StudentAnswerAdmin(admin.ModelAdmin):
     def selected_choice_short(self, obj):
         return obj.selected_choice.choice_text[:30] + '...' if len(obj.selected_choice.choice_text) > 30 else obj.selected_choice.choice_text
     selected_choice_short.short_description = 'Selected Answer'
+
+
+# ============================================================================
+# EXAM ASSIGNMENT DATE ADMIN
+# ============================================================================
+
+@admin.register(ExamAssignmentDate)
+class ExamAssignmentDateAdmin(admin.ModelAdmin):
+    """Tracks when exams were assigned to specific classes"""
+
+    list_display = ('exam', 'student_class', 'assigned_at')
+    list_filter = ('assigned_at', 'student_class')
+    search_fields = ('exam__title', 'student_class__name')
+    ordering = ('-assigned_at',)
+    readonly_fields = ('assigned_at',)

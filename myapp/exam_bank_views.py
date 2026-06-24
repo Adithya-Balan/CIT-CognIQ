@@ -84,9 +84,11 @@ def assign_exam_from_bank(request, exam_pk):
         class_grade_val = f"Grade {exam.grade}" if exam.grade else ''
         classes = StudentClass.objects.filter(id__in=class_ids, created_by=request.user, grade=class_grade_val)
         assigned_count = 0
+        from myapp.models import ExamAssignmentDate
         for student_class in classes:
             if not exam.assigned_classes.filter(id=student_class.id).exists():
                 exam.assigned_classes.add(student_class)
+                ExamAssignmentDate.objects.get_or_create(exam=exam, student_class=student_class)
                 assigned_count += 1
                 
         if assigned_count > 0:
