@@ -51,8 +51,11 @@ class TeacherCreationForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.school = kwargs.pop('school', None)
         super().__init__(*args, **kwargs)
         self.instance.role = 'teacher'
+        if self.school:
+            self.instance.school = self.school
 
     def save(self, school, commit=True):
         """Create teacher user with system-generated username scoped to school."""
@@ -125,8 +128,11 @@ class StudentCreationForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.school = kwargs.pop('school', None)
         super().__init__(*args, **kwargs)
         self.instance.role = 'student'
+        if self.school:
+            self.instance.school = self.school
 
     def clean_identifier(self):
         val = self.cleaned_data['identifier'].strip()

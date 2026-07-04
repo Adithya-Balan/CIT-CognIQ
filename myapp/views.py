@@ -4062,7 +4062,7 @@ def school_admin_create_teacher(request):
     school = request.user.school
 
     if request.method == 'POST':
-        form = TeacherCreationForm(request.POST)
+        form = TeacherCreationForm(request.POST, school=school)
         if form.is_valid():
             teacher = form.save(school=school)
             messages.success(
@@ -4072,7 +4072,7 @@ def school_admin_create_teacher(request):
             )
             return redirect('school_admin_manage_teachers')
     else:
-        form = TeacherCreationForm()
+        form = TeacherCreationForm(school=school)
 
     context = {
         'school': school,
@@ -4268,7 +4268,7 @@ def school_admin_create_student(request):
     school = request.user.school
 
     if request.method == 'POST':
-        form = StudentCreationForm(request.POST)
+        form = StudentCreationForm(request.POST, school=school)
         if form.is_valid():
             student = form.save(school=school)
             messages.success(
@@ -4278,7 +4278,7 @@ def school_admin_create_student(request):
             )
             return redirect('school_admin_manage_students')
     else:
-        form = StudentCreationForm()
+        form = StudentCreationForm(school=school)
 
     context = {
         'school': school,
