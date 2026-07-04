@@ -1593,16 +1593,34 @@ def attempt_history(request):
         return redirect('dashboard')
     
     from collections import defaultdict
+    from django.core.paginator import Paginator
     
-    # Get all completed attempts
-    all_attempts = ExamAttempt.objects.filter(
+    # 1. Base query for all completed attempts
+    base_attempts = ExamAttempt.objects.filter(
         student=request.user,
         is_completed=True
-    ).select_related('exam', 'student_class').order_by('exam', '-submitted_at')
+    ).select_related('exam')
+    
+    # Extract query params
+    search_query = request.GET.get('search', '').strip()
+    subject_filter = request.GET.get('subject', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+    
+    # Get available subjects for filters
+    available_subjects = sorted(set(base_attempts.exclude(exam__subject='').values_list('exam__subject', flat=True)))
+    
+    # Filter attempts
+    filtered_attempts = base_attempts
+    if search_query:
+        filtered_attempts = filtered_attempts.filter(exam__title__icontains=search_query)
+    if subject_filter:
+        filtered_attempts = filtered_attempts.filter(exam__subject=subject_filter)
+        
+    filtered_attempts = filtered_attempts.order_by('exam', '-submitted_at')
     
     # Group attempts by exam
     exam_groups = defaultdict(list)
-    for attempt in all_attempts:
+    for attempt in filtered_attempts:
         exam_groups[attempt.exam.id].append(attempt)
     
     # Build organized data structure
@@ -1614,6 +1632,12 @@ def attempt_history(request):
         total_attempts = len(attempts)
         passed = any(a.passed for a in attempts)
         
+        # Apply status filter at the exam group level
+        if status_filter == 'passed' and not passed:
+            continue
+        if status_filter == 'failed' and passed:
+            continue
+            
         organized_exams.append({
             'exam': exam,
             'attempts': attempts,
@@ -1626,19 +1650,39 @@ def attempt_history(request):
     # Sort by latest attempt date
     organized_exams.sort(key=lambda x: x['latest_attempt'].submitted_at, reverse=True)
     
-    # Overall statistics
-    total_attempts = all_attempts.count()
-    unique_exams = len(organized_exams)
-    passed_exams = sum(1 for exam_data in organized_exams if exam_data['passed'])
-    avg_score = sum(a.percentage for a in all_attempts) / total_attempts if total_attempts > 0 else 0
+    # Overall statistics (calculated from base attempts to reflect true total history)
+    total_base_attempts = 0
+    passed_exam_ids = set()
+    unique_exam_ids = set()
+    total_percentage = 0
+    
+    for attempt in base_attempts:
+        total_base_attempts += 1
+        unique_exam_ids.add(attempt.exam_id)
+        if attempt.passed:
+            passed_exam_ids.add(attempt.exam_id)
+        total_percentage += attempt.percentage
+        
+    unique_exams = len(unique_exam_ids)
+    passed_exams = len(passed_exam_ids)
+    avg_score = round(total_percentage / total_base_attempts, 1) if total_base_attempts > 0 else 0
+    
+    # Pagination
+    paginator = Paginator(organized_exams, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     
     context = {
-        'organized_exams': organized_exams,
-        'total_attempts': total_attempts,
+        'page_title': 'My Exam History',
+        'page_obj': page_obj,
+        'total_attempts': total_base_attempts,
         'unique_exams': unique_exams,
         'passed_exams': passed_exams,
-        'avg_score': round(avg_score, 1),
-        'page_title': 'My Exam History'
+        'avg_score': avg_score,
+        'available_subjects': available_subjects,
+        'search_query': search_query,
+        'current_subject': subject_filter,
+        'current_status': status_filter,
     }
     return render(request, 'exams/attempt_history.html', context)
 
