@@ -3166,29 +3166,48 @@ def class_enrollment_settings(request, class_pk):
 def student_progress_dashboard(request):
     """
     Student Progress Dashboard - Entry Point
-    
-    Shows two scoped categories (NO global metrics):
-    1. Track by Exam (exam-wise progress)
-    2. Track by Subject (subject-wise progress)
-    
-    This is NOT a summary view - it's a navigation hub to scoped progress.
+    Shows scoped categories with pagination, search, and filtering.
     """
     if not request.user.is_student:
         messages.error(request, 'Access denied. Students only.')
         return redirect('dashboard')
     
-    # Get all completed attempts for this student
-    completed_attempts = ExamAttempt.objects.filter(
+    # 1. Base query for all completed attempts
+    base_attempts = ExamAttempt.objects.filter(
         student=request.user,
         is_completed=True
-    ).select_related('exam', 'student_class').order_by('-submitted_at')
+    ).select_related('exam')
     
-    # Group exams by: 1) Exam (for retakes), 2) Subject
-    # Build structure for the two tracking categories
+    total_completed_attempts = base_attempts.count()
+    if total_completed_attempts == 0:
+        return render(request, 'progress/progress_dashboard.html', {
+            'page_title': 'My Progress Tracking',
+            'total_completed_attempts': 0
+        })
+
+    # Get available subjects for filters
+    available_subjects = sorted(set(base_attempts.exclude(exam__subject='').values_list('exam__subject', flat=True)))
     
-    # 1. EXAM-WISE: Group by specific exam (shows retakes)
+    # Extract query params
+    search_query = request.GET.get('search', '').strip()
+    subject_filter = request.GET.get('subject', '').strip()
+    type_filter = request.GET.get('type', '').strip()
+    active_tab = request.GET.get('tab', 'exams') # 'exams' or 'subjects'
+
+    # Filter attempts based on search and filters
+    filtered_attempts = base_attempts
+    if search_query:
+        filtered_attempts = filtered_attempts.filter(exam__title__icontains=search_query)
+    if subject_filter:
+        filtered_attempts = filtered_attempts.filter(exam__subject=subject_filter)
+    if type_filter in ['practice_test', 'test']:
+        filtered_attempts = filtered_attempts.filter(exam__exam_type=type_filter)
+        
+    filtered_attempts = filtered_attempts.order_by('-submitted_at')
+
+    # EXAM-WISE PROCESSING
     exam_data = {}
-    for attempt in completed_attempts:
+    for attempt in filtered_attempts:
         exam_id = attempt.exam.id
         if exam_id not in exam_data:
             exam_data[exam_id] = {
@@ -3200,28 +3219,38 @@ def student_progress_dashboard(request):
                 'latest_score': 0,
             }
         
-        exam_data[exam_id]['attempt_count'] += 1
-        exam_data[exam_id]['best_score'] = max(exam_data[exam_id]['best_score'], attempt.percentage)
+        data = exam_data[exam_id]
+        data['attempt_count'] += 1
+        data['best_score'] = max(data['best_score'], attempt.percentage)
         
-        if not exam_data[exam_id]['latest_attempt'] or attempt.submitted_at > exam_data[exam_id]['latest_attempt'].submitted_at:
-            exam_data[exam_id]['latest_attempt'] = attempt
-            exam_data[exam_id]['latest_score'] = attempt.percentage
+        if not data['latest_attempt'] or attempt.submitted_at > data['latest_attempt'].submitted_at:
+            data['latest_attempt'] = attempt
+            data['latest_score'] = attempt.percentage
         
-        if not exam_data[exam_id]['first_attempt'] or attempt.submitted_at < exam_data[exam_id]['first_attempt'].submitted_at:
-            exam_data[exam_id]['first_attempt'] = attempt
-    
-    # Calculate improvement for each exam
-    for exam_id, data in exam_data.items():
+        if not data['first_attempt'] or attempt.submitted_at < data['first_attempt'].submitted_at:
+            data['first_attempt'] = attempt
+            
+    for data in exam_data.values():
         if data['attempt_count'] > 1:
-            first_score = data['first_attempt'].percentage
-            latest_score = data['latest_score']
-            data['improvement'] = round(latest_score - first_score, 2)
+            data['improvement'] = round(data['latest_score'] - data['first_attempt'].percentage, 2)
         else:
             data['improvement'] = 0
+
+    exam_list = sorted(exam_data.values(), key=lambda x: x['latest_attempt'].submitted_at, reverse=True)
     
-    # 2. SUBJECT-WISE: Group by subject
+    # Pagination for Exam List
+    from django.core.paginator import Paginator
+    paginator = Paginator(exam_list, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # SUBJECT-WISE PROCESSING (Only calculated from base attempts to show overall subject insights, ignoring search/type filters unless subject filter is active)
+    subject_attempts = base_attempts
+    if subject_filter:
+        subject_attempts = subject_attempts.filter(exam__subject=subject_filter)
+        
     subject_data = {}
-    for attempt in completed_attempts:
+    for attempt in subject_attempts:
         subject = attempt.exam.subject
         if subject not in subject_data:
             subject_data[subject] = {
@@ -3231,21 +3260,29 @@ def student_progress_dashboard(request):
                 'latest_attempt': None,
             }
         
-        subject_data[subject]['exam_count'].add(attempt.exam.id)
-        subject_data[subject]['total_attempts'] += 1
+        s_data = subject_data[subject]
+        s_data['exam_count'].add(attempt.exam.id)
+        s_data['total_attempts'] += 1
         
-        if not subject_data[subject]['latest_attempt'] or attempt.submitted_at > subject_data[subject]['latest_attempt'].submitted_at:
-            subject_data[subject]['latest_attempt'] = attempt
-    
-    # Convert sets to counts
-    for subject, data in subject_data.items():
+        if not s_data['latest_attempt'] or attempt.submitted_at > s_data['latest_attempt'].submitted_at:
+            s_data['latest_attempt'] = attempt
+
+    for data in subject_data.values():
         data['exam_count'] = len(data['exam_count'])
-    
+        
+    subject_list = sorted(subject_data.values(), key=lambda x: x['subject'])
+
     context = {
         'page_title': 'My Progress Tracking',
-        'exam_data': sorted(exam_data.values(), key=lambda x: x['latest_attempt'].submitted_at, reverse=True),
-        'subject_data': sorted(subject_data.values(), key=lambda x: x['subject']),
-        'total_completed_attempts': completed_attempts.count(),
+        'total_completed_attempts': total_completed_attempts,
+        'page_obj': page_obj,
+        'subject_data': subject_list,
+        'available_subjects': available_subjects,
+        'search_query': search_query,
+        'current_subject': subject_filter,
+        'current_type': type_filter,
+        'active_tab': active_tab,
+        'total_filtered_exams': len(exam_list)
     }
     
     return render(request, 'progress/progress_dashboard.html', context)
