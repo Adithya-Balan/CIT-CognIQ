@@ -118,53 +118,50 @@ def student_dashboard(request):
                 students = first_class.students.filter(role='student')
                 
                 if students.exists():
-                    # Calculate average percentage for all students (consistent with leaderboard logic)
-                    student_scores = []
-                    for student in students:
-                        total_percentage_sum = 0
-                        exams_attempted = 0
-                        total_time_seconds = 0
-                        
-                        for exam in assigned_exams:
-                            if exam.total_marks == 0:
-                                continue
-                            # Get BEST TEST attempt (highest score) for this exam
-                            # CRITICAL: Only from exams currently assigned to this class
-                            # Only test mode attempts count for leaderboard
-                            best_attempt = ExamAttempt.objects.filter(
-                                student=student,
-                                exam=exam,
-                                exam_id__in=assigned_exam_ids,  # Explicit filter: only currently assigned exams
-                                student_class=first_class,
-                                is_completed=True,
-                                attempt_mode='test'  # Only test attempts count
-                            ).order_by('-score').first()
+                    # Optimized single query to fetch all test attempts for the class and its assigned exams
+                    attempts = ExamAttempt.objects.filter(
+                        student__in=students,
+                        exam_id__in=assigned_exam_ids,
+                        student_class=first_class,
+                        is_completed=True,
+                        attempt_mode='test'
+                    ).select_related('exam')
+                    
+                    # We need the BEST attempt per student per exam
+                    best_attempts_map = {}
+                    for attempt in attempts:
+                        if attempt.exam.total_marks == 0:
+                            continue
+                        key = (attempt.student_id, attempt.exam_id)
+                        if key not in best_attempts_map or attempt.score > best_attempts_map[key].score:
+                            best_attempts_map[key] = attempt
                             
-                            if best_attempt:
-                                # Calculate percentage for this exam (cap at 100%)
-                                exam_percentage = (float(best_attempt.score) / float(exam.total_marks) * 100) if exam.total_marks > 0 else 0
-                                exam_percentage = min(exam_percentage, 100.0)
-                                
-                                # Calculate time in seconds
-                                if best_attempt.submitted_at:
-                                    time_taken_seconds = (best_attempt.submitted_at - best_attempt.started_at).total_seconds()
-                                else:
-                                    time_taken_seconds = 0
-                                
-                                total_percentage_sum += exam_percentage
-                                total_time_seconds += time_taken_seconds
-                                exams_attempted += 1
+                    # Initialize student stats
+                    student_stats = {student.id: {
+                        'student_id': student.id,
+                        'exams_attempted': 0,
+                        'total_percentage_sum': 0,
+                        'total_time_seconds': 0
+                    } for student in students}
+                    
+                    # Aggregate the best attempts
+                    for attempt in best_attempts_map.values():
+                        stats = student_stats[attempt.student_id]
+                        exam_percentage = (float(attempt.score) / float(attempt.exam.total_marks) * 100)
+                        exam_percentage = min(exam_percentage, 100.0)
+                        time_taken_seconds = (attempt.submitted_at - attempt.started_at).total_seconds() if attempt.submitted_at else 0
                         
-                        # Only include students with at least one completed attempt
-                        if exams_attempted > 0:
-                            average_percentage = total_percentage_sum / exams_attempted
-                            average_time_seconds = total_time_seconds / exams_attempted
-                            student_scores.append({
-                                'student_id': student.id,
-                                'exams_attempted': exams_attempted,
-                                'average_percentage': average_percentage,
-                                'average_time_seconds': average_time_seconds,
-                            })
+                        stats['exams_attempted'] += 1
+                        stats['total_percentage_sum'] += exam_percentage
+                        stats['total_time_seconds'] += time_taken_seconds
+
+                    # Calculate averages
+                    student_scores = []
+                    for stats in student_stats.values():
+                        if stats['exams_attempted'] > 0:
+                            stats['average_percentage'] = stats['total_percentage_sum'] / stats['exams_attempted']
+                            stats['average_time_seconds'] = stats['total_time_seconds'] / stats['exams_attempted']
+                            student_scores.append(stats)
                     
                     if student_scores:
                         # Sort by ranking priority (consistent with class_leaderboard):
