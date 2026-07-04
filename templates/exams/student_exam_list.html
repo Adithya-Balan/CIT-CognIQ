@@ -40,40 +40,56 @@
             <!-- Search & Filters -->
             {% if total_exam_count > 0 or search_query or date_filter or current_subject %}
             <div class="mt-6">
-                <form method="get" action="{% url 'student_exam_list' %}" class="flex flex-col sm:flex-row gap-3 max-w-3xl">
+                <form method="get" action="{% url 'student_exam_list' %}" class="flex flex-col gap-3 max-w-3xl">
                     {% if current_subject %}
                     <input type="hidden" name="subject" value="{{ current_subject }}">
                     {% endif %}
                     
-                    <div class="relative flex-grow">
-                        <input type="text" 
-                               name="search" 
-                               value="{{ search_query|default:'' }}"
-                               placeholder="Search exams by title, description, or subject..." 
-                               class="w-full px-5 py-3 pl-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent transition-all"
-                               autocomplete="off">
-                        <svg class="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                        {% if search_query %}
-                        <a href="?{% if date_filter %}date={{ date_filter }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-lg transition-colors">
-                            <svg class="w-5 h-5 text-slate-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <div class="relative flex-grow">
+                            <input type="text" 
+                                   name="search" 
+                                   value="{{ search_query|default:'' }}"
+                                   placeholder="Search exams by title, description, or subject..." 
+                                   class="w-full px-5 py-3 pl-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent transition-all"
+                                   autocomplete="off">
+                            <svg class="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
-                        </a>
-                        {% endif %}
+                            {% if search_query %}
+                            <a href="?{% if date_filter %}date={{ date_filter }}{% endif %}{% if date_start %}&date_start={{ date_start }}{% endif %}{% if date_end %}&date_end={{ date_end }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-lg transition-colors">
+                                <svg class="w-5 h-5 text-slate-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </a>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="w-full sm:w-48 relative shrink-0">
+                            <select name="date" onchange="handleDateChange(this)" class="w-full appearance-none px-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all [&>option]:text-slate-900 cursor-pointer">
+                                <option value="" {% if not date_filter %}selected{% endif %}>Any Time</option>
+                                <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Assigned Today</option>
+                                <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
+                                <option value="30days" {% if date_filter == '30days' %}selected{% endif %}>Last 30 Days</option>
+                                <option value="custom" {% if date_filter == 'custom' %}selected{% endif %}>Custom Range...</option>
+                            </select>
+                            <svg class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
                     </div>
                     
-                    <div class="w-full sm:w-48 relative shrink-0">
-                        <select name="date" onchange="this.form.submit()" class="w-full appearance-none px-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all [&>option]:text-slate-900 cursor-pointer">
-                            <option value="" {% if not date_filter %}selected{% endif %}>Any Time</option>
-                            <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Assigned Today</option>
-                            <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
-                            <option value="30days" {% if date_filter == '30days' %}selected{% endif %}>Last 30 Days</option>
-                        </select>
-                        <svg class="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                        </svg>
+                    <!-- Custom Date Container -->
+                    <div id="customDateContainer" class="flex flex-col sm:flex-row items-center gap-3 {% if date_filter != 'custom' %}hidden{% endif %}">
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <span class="text-slate-300 text-sm font-medium whitespace-nowrap">From:</span>
+                            <input type="date" name="date_start" value="{{ date_start|default:'' }}" class="w-full sm:w-auto px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert cursor-pointer">
+                        </div>
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <span class="text-slate-300 text-sm font-medium whitespace-nowrap">To:</span>
+                            <input type="date" name="date_end" value="{{ date_end|default:'' }}" class="w-full sm:w-auto px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert cursor-pointer">
+                        </div>
+                        <button type="submit" class="w-full sm:w-auto px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-md shadow-indigo-500/20">Apply Range</button>
                     </div>
                 </form>
                 {% if search_query %}
@@ -93,14 +109,14 @@
         <div class="mb-8 overflow-x-auto hide-scrollbar pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
             <div class="flex items-stretch gap-3 w-max">
                 <!-- All Subjects Tile -->
-                <a href="?{% if search_query %}search={{ search_query }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}" 
+                <a href="?{% if search_query %}search={{ search_query }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if date_start %}&date_start={{ date_start }}{% endif %}{% if date_end %}&date_end={{ date_end }}{% endif %}" 
                    class="flex flex-col items-center justify-center min-w-[100px] p-3 rounded-2xl border-2 transition-all duration-200 {% if not current_subject %}border-indigo-600 bg-indigo-50 shadow-md shadow-indigo-500/10{% else %}border-slate-200 bg-white hover:border-indigo-300 hover:bg-slate-50 shadow-sm{% endif %}">
                     <span class="text-xl mb-1">📚</span>
                     <span class="text-xs font-black tracking-tight {% if not current_subject %}text-indigo-700{% else %}text-slate-600{% endif %}">ALL</span>
                 </a>
                 
                 {% for subj in subjects %}
-                <a href="?subject={{ subj|urlencode }}{% if search_query %}&search={{ search_query }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}" 
+                <a href="?subject={{ subj|urlencode }}{% if search_query %}&search={{ search_query }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if date_start %}&date_start={{ date_start }}{% endif %}{% if date_end %}&date_end={{ date_end }}{% endif %}" 
                    class="flex flex-col items-center justify-center min-w-[100px] p-3 rounded-2xl border-2 transition-all duration-200 {% if current_subject == subj %}border-indigo-600 bg-indigo-50 shadow-md shadow-indigo-500/10{% else %}border-slate-200 bg-white hover:border-indigo-300 hover:bg-slate-50 shadow-sm{% endif %}">
                     <!-- Icon logic based on subject -->
                     {% if subj == "Mathematics" %}<span class="text-xl mb-1">∑</span>
@@ -133,14 +149,14 @@
                 </div>
                 <div class="flex items-center gap-2">
                     {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}" 
+                        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if date_start %}&date_start={{ date_start }}{% endif %}{% if date_end %}&date_end={{ date_end }}{% endif %}" 
                            class="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-indigo-300 transition-all shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                             Prev
                         </a>
                     {% endif %}
                     {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}" 
+                        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if date_filter %}&date={{ date_filter }}{% endif %}{% if date_start %}&date_start={{ date_start }}{% endif %}{% if date_end %}&date_end={{ date_end }}{% endif %}" 
                            class="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 border border-indigo-600 rounded-xl hover:bg-indigo-700 transition-all shadow-sm">
                             Next
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
@@ -174,6 +190,15 @@
 </div>
 
 <script>
+function handleDateChange(select) {
+    if (select.value === 'custom') {
+        document.getElementById('customDateContainer').classList.remove('hidden');
+    } else {
+        document.getElementById('customDateContainer').classList.add('hidden');
+        select.form.submit();
+    }
+}
+
 // Auto-submit search form on input (with debounce for performance)
 let searchTimeout;
 const searchInput = document.querySelector('input[name="search"]');
@@ -186,6 +211,8 @@ if (searchInput) {
                 const urlParams = new URLSearchParams(window.location.search);
                 const subject = urlParams.get('subject');
                 const date = urlParams.get('date');
+                const dateStart = urlParams.get('date_start');
+                const dateEnd = urlParams.get('date_end');
                 
                 let newUrl = window.location.pathname + '?search=' + encodeURIComponent(this.value);
                 if (subject) {
@@ -193,6 +220,12 @@ if (searchInput) {
                 }
                 if (date) {
                     newUrl += '&date=' + encodeURIComponent(date);
+                }
+                if (dateStart) {
+                    newUrl += '&date_start=' + encodeURIComponent(dateStart);
+                }
+                if (dateEnd) {
+                    newUrl += '&date_end=' + encodeURIComponent(dateEnd);
                 }
                 
                 window.location.href = newUrl;

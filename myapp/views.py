@@ -1165,7 +1165,27 @@ def student_exam_list(request):
     )
     
     date_filter = request.GET.get('date', '').strip()
-    if date_filter:
+    date_start_str = request.GET.get('date_start', '').strip()
+    date_end_str = request.GET.get('date_end', '').strip()
+    
+    if date_filter == 'custom' and (date_start_str or date_end_str):
+        from datetime import datetime
+        if date_start_str:
+            try:
+                start_dt = datetime.strptime(date_start_str, '%Y-%m-%d')
+                start_dt = timezone.make_aware(start_dt)
+                available_exams = available_exams.filter(assigned_at__gte=start_dt)
+            except ValueError:
+                pass
+        if date_end_str:
+            try:
+                end_dt = datetime.strptime(date_end_str, '%Y-%m-%d')
+                end_dt = end_dt.replace(hour=23, minute=59, second=59)
+                end_dt = timezone.make_aware(end_dt)
+                available_exams = available_exams.filter(assigned_at__lte=end_dt)
+            except ValueError:
+                pass
+    elif date_filter:
         now = timezone.now()
         if date_filter == 'today':
             start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -1276,6 +1296,8 @@ def student_exam_list(request):
         'subjects': subjects,
         'current_subject': current_subject,
         'date_filter': date_filter,
+        'date_start': date_start_str,
+        'date_end': date_end_str,
     }
     return render(request, 'exams/student_exam_list.html', context)
 
