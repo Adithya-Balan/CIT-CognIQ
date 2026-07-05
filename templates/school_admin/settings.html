@@ -54,16 +54,19 @@
             {% endif %}
           </div>
           
-          <!-- <div class="space-y-2">
+          <div class="space-y-2">
             <label class="block text-sm font-semibold text-gray-700">School Logo</label>
             {{ form.logo }}
             {% if form.logo.errors %}
               <p class="text-red-500 text-xs mt-1">{{ form.logo.errors.0 }}</p>
             {% endif %}
             {% if school.logo %}
-              <p class="text-xs text-gray-500 mt-2">Current logo: <a href="{{ school.logo.url }}" target="_blank" class="text-indigo-600 hover:underline">View</a></p>
+              <div class="mt-3 flex items-center gap-4">
+                  <img src="{{ school.logo.url }}" alt="Current Logo" class="h-16 w-auto object-contain border border-gray-200 rounded-lg shadow-sm bg-white p-1">
+                  <p class="text-xs text-gray-500">Current active logo</p>
+              </div>
             {% endif %}
-          </div> -->
+          </div>
         </div>
 
         <div class="space-y-2">

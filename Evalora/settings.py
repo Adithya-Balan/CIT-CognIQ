@@ -29,6 +29,7 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+USE_CLOUDFLARE = config('USE_CLOUDFLARE', cast=bool, default=False)
 
 
 # Application definition
@@ -49,6 +50,8 @@ INSTALLED_APPS = [
     
     # Local apps
     'myapp',
+    
+    'storages',
 ]
 
 SITE_ID = 1
@@ -180,9 +183,48 @@ if not DEBUG and config('REQUIRE_HTTPS', cast=bool):
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
 
-# WhiteNoise configuration for efficient static file serving
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+#CloudFlare R2 Intefration
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024 # 5 MB limit for uploads
 
-# Media files (User uploaded content)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+if USE_CLOUDFLARE:
+    print("Using Cloudflare Bucket")
+    CLOUDFLARE_R2_BUCKET= config("CLOUDFLARE_R2_BUCKET", cast=str, default='evalora')
+    CLOUDFLARE_R2_ACCESS_KEY= config("CLOUDFLARE_R2_ACCESS_KEY")
+    CLOUDFLARE_R2_BUCKET_ENDPOINT= config("CLOUDFLARE_R2_BUCKET_ENDPOINT")
+    CLOUDFLARE_R2_SECRET_KEY= config("CLOUDFLARE_R2_SECRET_KEY")
+    CLOUDFLARE_R2_PUBLIC_URL = config('CLOUDFLARE_R2_PUBLIC_URL')
+    R2_PUBLIC_DOMAIN = CLOUDFLARE_R2_PUBLIC_URL.replace('https://', '')
+    
+    # Media Files Config (private)
+    MEDIA_R2_CONFIG = {
+        'bucket_name': CLOUDFLARE_R2_BUCKET,
+        'endpoint_url': CLOUDFLARE_R2_BUCKET_ENDPOINT,
+        'access_key': CLOUDFLARE_R2_ACCESS_KEY,
+        'secret_key': CLOUDFLARE_R2_SECRET_KEY,
+        'signature_version': 's3v4',
+        'default_acl': 'public-read',
+        'querystring_auth': False,  # Presigned URLs
+        'file_overwrite': False,
+        'custom_domain': R2_PUBLIC_DOMAIN,
+    }
+
+    # Storage Configuration
+    STORAGES = {
+        'default': {
+            'BACKEND': 'helpers.cloudflare.storages.MediaFileStorage',
+            'OPTIONS': MEDIA_R2_CONFIG,
+        },
+        'staticfiles': {
+            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',  # Local storage on Render
+        },
+    }
+    MEDIA_URL = f'{CLOUDFLARE_R2_PUBLIC_URL}/media/'  # Presigned URLs handled by storage backend
+
+else:
+    # Local Storage Fallback (for development)
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
