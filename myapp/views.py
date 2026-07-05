@@ -3669,20 +3669,15 @@ def profile_settings(request):
 
 
 @login_required
-def teacher_change_password(request):
+def user_change_password(request):
     """
-    Teacher Password Change - Allow teachers to change their own password
+    User Password Change - Allow any user to change their own password
     
     Security:
     - Requires current password verification
     - Validates new password requirements
-    - Only accessible by teachers
     - User can only change their own password
     """
-    # Verify user is a teacher
-    if not request.user.is_teacher:
-        messages.error(request, 'Access denied. This feature is only available for teachers.')
-        return redirect('profile_settings')
     
     if request.method == 'POST':
         current_password = request.POST.get('current_password')
@@ -3692,27 +3687,27 @@ def teacher_change_password(request):
         # Validation
         if not current_password or not new_password or not confirm_password:
             messages.error(request, 'All password fields are required.')
-            return redirect('teacher_change_password')
+            return redirect('user_change_password')
         
         # Verify current password
         if not request.user.check_password(current_password):
             messages.error(request, 'Current password is incorrect.')
-            return redirect('teacher_change_password')
+            return redirect('user_change_password')
         
         # Check new password and confirmation match
         if new_password != confirm_password:
             messages.error(request, 'New password and confirmation do not match.')
-            return redirect('teacher_change_password')
+            return redirect('user_change_password')
         
         # Validate new password length
         if len(new_password) < 8:
             messages.error(request, 'New password must be at least 8 characters long.')
-            return redirect('teacher_change_password')
+            return redirect('user_change_password')
         
         # Check that new password is different from current
         if current_password == new_password:
             messages.error(request, 'New password must be different from your current password.')
-            return redirect('teacher_change_password')
+            return redirect('user_change_password')
         
         # Change the password
         request.user.set_password(new_password)

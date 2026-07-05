@@ -119,7 +119,7 @@ urlpatterns = [
     # PROFILE / SETTINGS
     # =====================================================
     path('settings/profile/', views.profile_settings, name='profile_settings'),
-    path('settings/change-password/', views.teacher_change_password, name='teacher_change_password'),
+    path('settings/change-password/', views.user_change_password, name='user_change_password'),
 
     # Teacher Password Reset for Students (Class-scoped)
     path('teacher/reset-password/<int:student_id>/', views.teacher_reset_student_password, name='teacher_reset_student_password'),

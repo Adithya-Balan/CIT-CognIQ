@@ -122,8 +122,7 @@
 
         <!-- Security & Account Info Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Password Change Section (Teachers Only) -->
-            {% if user.is_teacher %}
+            <!-- Password Change Section -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden h-full">
                 <div class="p-6">
                     <div class="h-10 w-10 bg-amber-50 rounded-xl flex items-center justify-center mb-4 border border-amber-100/50">
@@ -133,12 +132,11 @@
                     </div>
                     <h3 class="text-base font-bold text-slate-900 mb-1">Sign-in & Security</h3>
                     <p class="text-slate-400 text-xs mb-6">Manage your password to keep your account secure.</p>
-                    <a href="{% url 'teacher_change_password' %}" class="inline-flex justify-center items-center px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 hover:text-indigo-600 hover:border-indigo-200 transition-all text-sm w-full shadow-sm">
+                    <a href="{% url 'user_change_password' %}" class="inline-flex justify-center items-center px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-50 hover:text-indigo-600 hover:border-indigo-200 transition-all text-sm w-full shadow-sm">
                         Change Password
                     </a>
                 </div>
             </div>
-            {% endif %}
 
             <!-- Account Meta -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden h-full">
