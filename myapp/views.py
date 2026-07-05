@@ -4488,6 +4488,14 @@ def school_admin_settings(request):
     from .forms import SchoolSettingsForm
     
     if request.method == 'POST':
+        if 'remove_logo' in request.POST:
+            if school.logo:
+                school.logo.delete(save=False)
+                school.logo = None
+                school.save()
+            messages.success(request, 'School logo removed successfully.')
+            return redirect('school_admin_settings')
+
         form = SchoolSettingsForm(request.POST, request.FILES, instance=school)
         if form.is_valid():
             form.save()

@@ -416,6 +416,9 @@
   .inset-y-0 {
     inset-block: calc(var(--spacing) * 0);
   }
+  .-top-2 {
+    top: calc(var(--spacing) * -2);
+  }
   .-top-8 {
     top: calc(var(--spacing) * -8);
   }
@@ -445,6 +448,9 @@
   }
   .top-24 {
     top: calc(var(--spacing) * 24);
+  }
+  .-right-2 {
+    right: calc(var(--spacing) * -2);
   }
   .right-0 {
     right: calc(var(--spacing) * 0);
@@ -4441,6 +4447,13 @@
         @supports (color: color-mix(in lab, red, red)) {
           background-color: color-mix(in oklab, var(--color-red-500) 20%, transparent);
         }
+      }
+    }
+  }
+  .hover\:bg-red-600 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-red-600);
       }
     }
   }

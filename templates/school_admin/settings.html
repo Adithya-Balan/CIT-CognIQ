@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}School Settings — {{ school.name }} | Evalora{% endblock %}
 
 {% block content %}
@@ -58,10 +59,18 @@
             <label class="block text-sm font-semibold text-gray-700">School Logo</label>
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 p-4 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
               {% if school.logo %}
-                <img src="{{ school.logo.url }}" alt="Current Logo" class="h-16 w-16 object-contain border border-gray-100 rounded-xl shadow-sm bg-white p-1 shrink-0 mx-auto sm:mx-0">
+                <div class="relative group mx-auto sm:mx-0 shrink-0">
+                  <img src="{{ school.logo.url }}" alt="Current Logo" class="h-16 w-16 object-contain border border-gray-100 rounded-xl shadow-sm bg-white p-1">
+                  <button type="submit" name="remove_logo" value="true" class="absolute -top-2 -right-2 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded-full p-1 transition-colors shadow-sm" title="Remove Logo" onclick="return confirm('Remove custom school logo?');">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
               {% else %}
-                <div class="h-16 w-16 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0 mx-auto sm:mx-0">
-                  <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <div class="relative group mx-auto sm:mx-0 shrink-0">
+                  <img src="{% static 'assets/logo.png' %}" alt="Default Evalora Logo" class="h-16 w-16 object-contain border border-gray-100 rounded-xl shadow-sm bg-white p-1">
+                  <div class="absolute -bottom-2 -right-2 bg-slate-100 text-slate-500 rounded-full px-1.5 py-0.5 text-[10px] font-bold border border-slate-200">
+                    Default
+                  </div>
                 </div>
               {% endif %}
               <div class="flex-1 min-w-0 w-full text-center sm:text-left">
