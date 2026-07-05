@@ -5,19 +5,19 @@
 <div class="min-h-screen bg-gray-50">
 
   <!-- Header -->
-  <div class="bg-slate-900 text-white py-8 px-6">
+  <div class="bg-slate-900 text-white py-8 px-4 sm:px-6">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <a href="{% url 'school_admin_dashboard' %}" class="text-indigo-400 hover:text-indigo-300 text-sm font-medium inline-flex items-center gap-1 mb-2">← Dashboard</a>
         <h1 class="text-2xl font-extrabold">Manage Students</h1>
         <p class="text-slate-400 text-sm mt-1">{{ school.name }} — <span class="text-emerald-400 font-bold">{{ total_students }}</span> student{{ total_students|pluralize }}</p>
       </div>
-      <div class="flex flex-wrap gap-3">
-        <a href="{% url 'school_admin_bulk_create_students' %}" class="inline-flex items-center gap-2 px-4 py-2.5 border border-slate-600 hover:border-sky-500 text-sm font-semibold rounded-xl text-slate-200 hover:text-sky-300 transition-all">
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+        <a href="{% url 'school_admin_bulk_create_students' %}" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-600 hover:border-sky-500 text-sm font-semibold rounded-xl text-slate-200 hover:text-sky-300 transition-all flex-1 sm:flex-none whitespace-nowrap">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
           Bulk Upload
         </a>
-        <a href="{% url 'school_admin_create_student' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-emerald-900/40">
+        <a href="{% url 'school_admin_create_student' %}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-emerald-900/40 flex-1 sm:flex-none whitespace-nowrap">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
           Add Student
         </a>
@@ -25,42 +25,46 @@
     </div>
   </div>
 
-  <div class="max-w-7xl mx-auto px-6 py-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
 
     <!-- Filters -->
     <form method="get" class="mb-6">
-      <div class="flex flex-col sm:flex-row gap-3">
+      <div class="flex flex-col lg:flex-row gap-3">
         <!-- Search -->
         <input type="text" name="q" value="{{ search }}" placeholder="Search by name or username…"
-          class="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm">
+          class="w-full lg:flex-1 min-w-[200px] px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm">
           
-        <!-- Grade Filter -->
-        <select name="grade" onchange="this.form.submit()" class="px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm appearance-none cursor-pointer">
-          <option value="">All Grades</option>
-          {% for grade in grades %}
-            <option value="{{ grade }}" {% if current_grade == grade %}selected{% endif %}>{{ grade }}</option>
-          {% endfor %}
-        </select>
-        
-        <!-- Status Filter -->
-        <select name="status" onchange="this.form.submit()" class="px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm appearance-none cursor-pointer">
-          <option value="all" {% if status_filter == 'all' or not status_filter %}selected{% endif %}>All Statuses</option>
-          <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Only</option>
-          <option value="deactivated" {% if status_filter == 'deactivated' %}selected{% endif %}>Deactivated Only</option>
-        </select>
+        <div class="grid grid-cols-2 {% if search or current_grade or status_filter != 'all' %}sm:grid-cols-3{% else %}sm:grid-cols-2{% endif %} gap-3 w-full lg:w-auto">
+          <!-- Grade Filter -->
+          <select name="grade" onchange="this.form.submit()" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm cursor-pointer text-gray-700 font-medium">
+            <option value="">All Grades</option>
+            {% for grade in grades %}
+              <option value="{{ grade }}" {% if current_grade == grade %}selected{% endif %}>{{ grade }}</option>
+            {% endfor %}
+          </select>
+          
+          <!-- Status Filter -->
+          <select name="status" onchange="this.form.submit()" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm cursor-pointer text-gray-700 font-medium">
+            <option value="all" {% if status_filter == 'all' or not status_filter %}selected{% endif %}>All Statuses</option>
+            <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Only</option>
+            <option value="deactivated" {% if status_filter == 'deactivated' %}selected{% endif %}>Deactivated Only</option>
+          </select>
 
-        {% if search or current_grade or status_filter != 'all' %}<a href="{% url 'school_admin_manage_students' %}" class="px-5 py-3 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition-all text-center flex items-center justify-center">Clear</a>{% endif %}
+          {% if search or current_grade or status_filter != 'all' %}
+            <a href="{% url 'school_admin_manage_students' %}" class="col-span-2 sm:col-span-1 px-5 py-3 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition-all text-center flex items-center justify-center whitespace-nowrap">Clear</a>
+          {% endif %}
+        </div>
       </div>
     </form>
 
     <!-- Table -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div class="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+      <div class="px-4 sm:px-6 py-4 border-b border-gray-50 flex items-center justify-between">
         <h2 class="font-bold text-gray-900">All Students <span class="ml-2 text-sm font-normal text-gray-400">({{ total_students }})</span></h2>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+      <div class="overflow-x-auto w-full">
+        <table class="w-full text-sm min-w-[900px]">
           <thead class="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider">
             <tr>
               <th class="text-left px-6 py-3 font-semibold">Student</th>
@@ -75,7 +79,7 @@
           <tbody class="divide-y divide-gray-50">
             {% for student in page_obj %}
             <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4">
+              <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center gap-3">
                   <div class="h-9 w-9 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
                     <span class="font-bold text-emerald-700 text-xs">{{ student.first_name|first|upper }}{{ student.last_name|first|upper }}</span>
@@ -83,8 +87,8 @@
                   <span class="font-semibold text-gray-900">{{ student.get_full_name }}</span>
                 </div>
               </td>
-              <td class="px-6 py-4 font-mono text-gray-600 text-xs">@{{ student.username }}</td>
-              <td class="px-6 py-4">
+              <td class="px-6 py-4 font-mono text-gray-600 text-xs whitespace-nowrap">@{{ student.username }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
                 {% with student.student_classes.first as sc %}
                   {% if sc %}
                     <span class="text-xs bg-purple-100 text-purple-700 font-semibold px-2.5 py-1 rounded-full">{{ sc.name }}</span>
@@ -93,15 +97,15 @@
                   {% endif %}
                 {% endwith %}
               </td>
-              <td class="px-6 py-4 text-gray-500 text-xs">{{ student.email|default:"—" }}</td>
-              <td class="px-6 py-4 text-gray-400 text-xs">{{ student.date_joined|date:"M d, Y" }}</td>
-              <td class="px-6 py-4">
+              <td class="px-6 py-4 text-gray-500 text-xs whitespace-nowrap">{{ student.email|default:"—" }}</td>
+              <td class="px-6 py-4 text-gray-400 text-xs whitespace-nowrap">{{ student.date_joined|date:"M d, Y" }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
                   {% if student.is_active %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
                   {% if student.is_active %}● Active{% else %}● Inactive{% endif %}
                 </span>
               </td>
-              <td class="px-6 py-4">
+              <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center gap-2">
                   <a href="{% url 'school_admin_reset_user_password' student.id %}"
                      class="text-xs px-3 py-1.5 border border-gray-200 text-gray-600 rounded-lg hover:border-indigo-400 hover:text-indigo-600 transition-all font-medium">
@@ -133,11 +137,11 @@
 
       <!-- Pagination Controls -->
       {% if page_obj.has_other_pages %}
-      <div class="px-6 py-4 border-t border-gray-50 flex items-center justify-between bg-gray-50/50">
-        <div class="text-sm text-gray-500">
+      <div class="px-4 sm:px-6 py-4 border-t border-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/50">
+        <div class="text-sm text-gray-500 text-center sm:text-left">
           Showing <span class="font-medium text-gray-900">{{ page_obj.start_index }}</span> to <span class="font-medium text-gray-900">{{ page_obj.end_index }}</span> of <span class="font-medium text-gray-900">{{ total_students }}</span> students
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center justify-center gap-2">
           {% if page_obj.has_previous %}
             <a href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if current_grade %}&grade={{ current_grade|urlencode }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-emerald-600 transition-colors shadow-sm">
               Previous

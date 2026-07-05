@@ -5,7 +5,7 @@
 <div class="min-h-screen bg-gray-50">
 
   <!-- Header -->
-  <div class="bg-slate-900 text-white py-8 px-6">
+  <div class="bg-slate-900 text-white py-8 px-4 sm:px-6">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <a href="{% url 'school_admin_dashboard' %}" class="text-indigo-400 hover:text-indigo-300 text-sm font-medium inline-flex items-center gap-1 mb-2">
@@ -14,12 +14,12 @@
         <h1 class="text-2xl font-extrabold">Manage Teachers</h1>
         <p class="text-slate-400 text-sm mt-1">{{ school.name }} &mdash; <span class="font-mono text-indigo-300">{{ school.code }}</span></p>
       </div>
-      <div class="flex items-center gap-3">
-        <a href="{% url 'school_admin_bulk_create_teachers' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-bold rounded-xl transition-all shadow-sm">
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+        <a href="{% url 'school_admin_bulk_create_teachers' %}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-bold rounded-xl transition-all shadow-sm flex-1 sm:flex-none whitespace-nowrap">
           <svg class="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
           Bulk Upload
         </a>
-        <a href="{% url 'school_admin_create_teacher' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-indigo-900/40">
+        <a href="{% url 'school_admin_create_teacher' %}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-indigo-900/40 flex-1 sm:flex-none whitespace-nowrap">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
           Create Teacher
         </a>
@@ -27,36 +27,38 @@
     </div>
   </div>
 
-  <div class="max-w-7xl mx-auto px-6 py-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
 
     <!-- Search & Filter -->
     <form method="get" class="mb-6">
-      <div class="flex flex-wrap gap-3">
+      <div class="flex flex-col lg:flex-row gap-3">
         <input type="text" name="q" value="{{ search }}" placeholder="Search by name or username…"
-          class="flex-1 min-w-[200px] px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm">
+          class="w-full lg:flex-1 min-w-[200px] px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm">
         
-        <select name="status" class="px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm text-gray-700 font-medium">
-          <option value="all" {% if status_filter == 'all' or not status_filter %}selected{% endif %}>All Statuses</option>
-          <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Only</option>
-          <option value="deactivated" {% if status_filter == 'deactivated' %}selected{% endif %}>Deactivated Only</option>
-        </select>
-        
-        <button type="submit" class="px-5 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-500 transition-all shadow-sm">Search & Filter</button>
-        
-        {% if search or status_filter != 'all' %}
-        <a href="{% url 'school_admin_manage_teachers' %}" class="px-5 py-3 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition-all flex items-center justify-center">Clear</a>
-        {% endif %}
+        <div class="grid grid-cols-2 sm:flex sm:flex-row gap-3 w-full lg:w-auto">
+          <select name="status" class="w-full sm:w-48 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm text-gray-700 font-medium cursor-pointer">
+            <option value="all" {% if status_filter == 'all' or not status_filter %}selected{% endif %}>All Statuses</option>
+            <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Only</option>
+            <option value="deactivated" {% if status_filter == 'deactivated' %}selected{% endif %}>Deactivated Only</option>
+          </select>
+          
+          <button type="submit" class="w-full sm:w-auto px-5 py-3 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-500 transition-all shadow-sm whitespace-nowrap">Search & Filter</button>
+          
+          {% if search or status_filter != 'all' %}
+            <a href="{% url 'school_admin_manage_teachers' %}" class="col-span-2 sm:col-span-1 px-5 py-3 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition-all text-center flex items-center justify-center whitespace-nowrap">Clear</a>
+          {% endif %}
+        </div>
       </div>
     </form>
 
     <!-- Table -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div class="px-6 py-4 border-b border-gray-50 flex items-center justify-between">
+      <div class="px-4 sm:px-6 py-4 border-b border-gray-50 flex items-center justify-between">
         <h2 class="font-bold text-gray-900">All Teachers <span class="ml-2 text-sm font-normal text-gray-400">({{ total_count }})</span></h2>
       </div>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+      <div class="overflow-x-auto w-full">
+        <table class="w-full text-sm min-w-[800px]">
           <thead class="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider">
             <tr>
               <th class="text-left px-6 py-3 font-semibold">Teacher</th>
@@ -70,7 +72,7 @@
           <tbody class="divide-y divide-gray-50">
             {% for teacher in teachers %}
             <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4">
+              <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center gap-3">
                   <div class="h-9 w-9 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
                     <span class="font-bold text-indigo-700 text-xs">{{ teacher.first_name|first|upper }}{{ teacher.last_name|first|upper }}</span>
@@ -78,16 +80,16 @@
                   <span class="font-semibold text-gray-900">{{ teacher.get_full_name }}</span>
                 </div>
               </td>
-              <td class="px-6 py-4 font-mono text-gray-600 text-xs">@{{ teacher.username }}</td>
-              <td class="px-6 py-4 text-gray-500">{{ teacher.email|default:"—" }}</td>
-              <td class="px-6 py-4 text-gray-400 text-xs">{{ teacher.date_joined|date:"M d, Y" }}</td>
-              <td class="px-6 py-4">
+              <td class="px-6 py-4 font-mono text-gray-600 text-xs whitespace-nowrap">@{{ teacher.username }}</td>
+              <td class="px-6 py-4 text-gray-500 whitespace-nowrap">{{ teacher.email|default:"—" }}</td>
+              <td class="px-6 py-4 text-gray-400 text-xs whitespace-nowrap">{{ teacher.date_joined|date:"M d, Y" }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
                   {% if teacher.is_active %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
                   {% if teacher.is_active %}● Active{% else %}● Inactive{% endif %}
                 </span>
               </td>
-              <td class="px-6 py-4">
+              <td class="px-6 py-4 whitespace-nowrap">
                 <div class="flex items-center gap-2">
                   <a href="{% url 'school_admin_reset_user_password' teacher.id %}"
                      class="text-xs px-3 py-1.5 border border-gray-200 text-gray-600 rounded-lg hover:border-indigo-400 hover:text-indigo-600 transition-all font-medium">
@@ -119,11 +121,11 @@
 
       <!-- Pagination Controls -->
       {% if page_obj.has_other_pages %}
-      <div class="px-6 py-4 border-t border-gray-50 flex items-center justify-between bg-gray-50/50">
-        <div class="text-sm text-gray-500">
+      <div class="px-4 sm:px-6 py-4 border-t border-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/50">
+        <div class="text-sm text-gray-500 text-center sm:text-left">
           Showing <span class="font-medium text-gray-900">{{ page_obj.start_index }}</span> to <span class="font-medium text-gray-900">{{ page_obj.end_index }}</span> of <span class="font-medium text-gray-900">{{ total_count }}</span> teachers
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center justify-center gap-2">
           {% if page_obj.has_previous %}
             <a href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-indigo-600 transition-colors shadow-sm">
               Previous

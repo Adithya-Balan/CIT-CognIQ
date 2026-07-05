@@ -998,6 +998,12 @@
   .min-w-\[600px\] {
     min-width: 600px;
   }
+  .min-w-\[800px\] {
+    min-width: 800px;
+  }
+  .min-w-\[900px\] {
+    min-width: 900px;
+  }
   .min-w-full {
     min-width: 100%;
   }
@@ -6304,6 +6310,11 @@
   .lg\:w-auto {
     @media (width >= 64rem) {
       width: auto;
+    }
+  }
+  .lg\:flex-1 {
+    @media (width >= 64rem) {
+      flex: 1;
     }
   }
   .lg\:grid-cols-2 {
