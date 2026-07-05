@@ -99,7 +99,7 @@ urlpatterns = [
     # =====================================================
     path('student/progress/', views.student_progress_dashboard, name='student_progress_dashboard'),
     path('student/progress/exam/<int:exam_id>/', views.exam_progress, name='exam_progress'),
-    path('student/progress/subject/<str:subject>/', views.subject_progress, name='subject_progress'),
+
 
     # Leaderboard (Class-scoped only)
     path('leaderboard/class/<int:class_id>/', views.class_leaderboard, name='class_leaderboard'),

@@ -3236,7 +3236,6 @@ def student_progress_dashboard(request):
     search_query = request.GET.get('search', '').strip()
     subject_filter = request.GET.get('subject', '').strip()
     type_filter = request.GET.get('type', '').strip()
-    active_tab = request.GET.get('tab', 'exams') # 'exams' or 'subjects'
 
     # Filter attempts based on search and filters
     filtered_attempts = base_attempts
@@ -3288,44 +3287,14 @@ def student_progress_dashboard(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # SUBJECT-WISE PROCESSING (Only calculated from base attempts to show overall subject insights, ignoring search/type filters unless subject filter is active)
-    subject_attempts = base_attempts
-    if subject_filter:
-        subject_attempts = subject_attempts.filter(exam__subject=subject_filter)
-        
-    subject_data = {}
-    for attempt in subject_attempts:
-        subject = attempt.exam.subject
-        if subject not in subject_data:
-            subject_data[subject] = {
-                'subject': subject,
-                'exam_count': set(),
-                'total_attempts': 0,
-                'latest_attempt': None,
-            }
-        
-        s_data = subject_data[subject]
-        s_data['exam_count'].add(attempt.exam.id)
-        s_data['total_attempts'] += 1
-        
-        if not s_data['latest_attempt'] or attempt.submitted_at > s_data['latest_attempt'].submitted_at:
-            s_data['latest_attempt'] = attempt
-
-    for data in subject_data.values():
-        data['exam_count'] = len(data['exam_count'])
-        
-    subject_list = sorted(subject_data.values(), key=lambda x: x['subject'])
-
     context = {
         'page_title': 'My Progress Tracking',
         'total_completed_attempts': total_completed_attempts,
         'page_obj': page_obj,
-        'subject_data': subject_list,
         'available_subjects': available_subjects,
         'search_query': search_query,
         'current_subject': subject_filter,
         'current_type': type_filter,
-        'active_tab': active_tab,
         'total_filtered_exams': len(exam_list)
     }
     
@@ -3408,62 +3377,6 @@ def exam_progress(request, exam_id):
     return render(request, 'progress/exam_progress.html', context)
 
 
-@login_required
-def subject_progress(request, subject):
-    """
-    Subject-Specific Progress Tracking
-    
-    Shows ONLY exams within THIS subject.
-    Answers: "Am I improving in THIS subject over time?"
-    
-    NEVER mixes different subjects.
-    Shows chronological performance across all exams in this subject.
-    """
-    if not request.user.is_student:
-        messages.error(request, 'Access denied. Students only.')
-        return redirect('dashboard')
-    
-    # Get ALL attempts for exams in THIS subject only
-    attempts = ExamAttempt.objects.filter(
-        student=request.user,
-        exam__subject=subject,
-        is_completed=True
-    ).select_related('exam', 'student_class').order_by('submitted_at')
-    
-    if not attempts.exists():
-        messages.info(request, f'You have not completed any exams in {subject} yet.')
-        return redirect('student_progress_dashboard')
-    
-    # Group attempts by exam within this subject
-    exam_data = {}
-    for attempt in attempts:
-        exam_id = attempt.exam.id
-        if exam_id not in exam_data:
-            exam_data[exam_id] = {
-                'exam': attempt.exam,
-                'attempts': [],
-                'best_score': 0,
-                'latest_score': 0,
-                'attempt_count': 0,
-                'latest_attempt': None,
-            }
-        
-        exam_data[exam_id]['attempts'].append(attempt)
-        exam_data[exam_id]['best_score'] = max(exam_data[exam_id]['best_score'], attempt.percentage)
-        exam_data[exam_id]['latest_score'] = attempt.percentage
-        exam_data[exam_id]['attempt_count'] += 1
-        exam_data[exam_id]['latest_attempt'] = attempt  # Always update to the latest one
-    
-    context = {
-        'page_title': f'Progress: {subject}',
-        'subject': subject,
-        'exam_data': sorted(exam_data.values(), key=lambda x: x['attempts'][-1].submitted_at, reverse=True),
-        'total_attempts': attempts.count(),
-        'unique_exams': len(exam_data),
-        'attempts': list(attempts),
-    }
-    
-    return render(request, 'progress/subject_progress.html', context)
 
 
 def calculate_leaderboard_data(student_class):
