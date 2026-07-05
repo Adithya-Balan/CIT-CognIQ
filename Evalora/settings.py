@@ -192,7 +192,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 if USE_CLOUDFLARE:
     print("Using Cloudflare Bucket")
-    CLOUDFLARE_R2_BUCKET= config("CLOUDFLARE_R2_BUCKET", cast=str, default='evalora')
+    CLOUDFLARE_R2_BUCKET= config("CLOUDFLARE_R2_BUCKET", cast=str, default='devmate')
     CLOUDFLARE_R2_ACCESS_KEY= config("CLOUDFLARE_R2_ACCESS_KEY")
     CLOUDFLARE_R2_BUCKET_ENDPOINT= config("CLOUDFLARE_R2_BUCKET_ENDPOINT")
     CLOUDFLARE_R2_SECRET_KEY= config("CLOUDFLARE_R2_SECRET_KEY")
