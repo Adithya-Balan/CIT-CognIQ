@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='school',
             name='code',
-            field=models.CharField(help_text='Short globally unique 6-character code used in username generation (e.g., SPHS12). Uppercase letters and numbers only.', max_length=6, unique=True, validators=[django.core.validators.MinLengthValidator(6)], verbose_name='School Code'),
+            field=models.CharField(help_text='Short globally unique 6-character code used in username generation (e.g., SPHS12). Uppercase letters and numbers only.', max_length=20, unique=True, verbose_name='School Code'),
         ),
     ]

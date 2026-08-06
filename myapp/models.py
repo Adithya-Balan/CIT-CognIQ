@@ -47,8 +47,7 @@ class School(models.Model):
     from django.core.validators import MinLengthValidator
     
     code = models.CharField(
-        max_length=6,
-        validators=[MinLengthValidator(6)],
+        max_length=20,
         unique=True,
         verbose_name='School Code',
         help_text='Short globally unique 6-character code used in username generation (e.g., SPHS12). Uppercase letters and numbers only.'
