@@ -3,10 +3,10 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-slate-50 pb-20">
+<div class="min-h-screen bg-slate-50/50 pb-20">
     <!-- Dark Header Section -->
     <div class="bg-slate-900 pt-8 pb-32 px-4 sm:px-6 lg:px-8 border-b border-slate-800 relative overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-slate-800/50 to-transparent pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-900/20 via-slate-800/50 to-transparent pointer-events-none"></div>
         <div class="max-w-7xl mx-auto relative z-10">
             <nav class="flex items-center gap-2 text-sm font-medium text-slate-400 mb-6">
                 <a href="{% url 'student_dashboard' %}" class="hover:text-white transition-colors">Dashboard</a>
@@ -14,97 +14,108 @@
                 <span class="text-white">Progress Tracking</span>
             </nav>
             <div class="flex items-center gap-3 mb-2">
-                <span class="text-3xl">📈</span>
-                <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight">My Progress</h1>
+                <div class="p-2 bg-indigo-500/20 rounded-lg border border-indigo-500/30">
+                    <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                </div>
+                <p class="text-3xl sm:text-4xl font-bold text-white tracking-tight">My Progress</p>
             </div>
-            <p class="text-lg text-slate-400 font-medium ml-1 max-w-2xl">
+            <p class="text-slate-400 font-medium ml-1 max-w-2xl text-sm sm:text-base mt-2">
                 Track your performance across exams and subjects to identify areas for improvement.
             </p>
         </div>
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 relative z-20 space-y-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 relative z-20 space-y-6">
         {% if total_completed_attempts == 0 %}
-            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-12 text-center text-slate-500">
-                <div class="w-24 h-24 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-6 transform rotate-6">
-                    <span class="text-5xl grayscale opacity-50">📊</span>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center text-slate-500">
+                <div class="w-20 h-20 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-5 border border-indigo-100">
+                    <svg class="w-10 h-10 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                 </div>
-                <h3 class="text-xl font-bold text-slate-900 mb-2">No Progress Data Yet</h3>
-                <p class="max-w-md mx-auto mb-8">Complete some exams to start tracking your progress!</p>
-                <a href="{% url 'student_exam_list' %}" class="inline-flex px-6 py-2.5 bg-blue-600 border border-transparent text-white font-bold rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-900/20 transition-all">Browse Available Exams</a>
+                <h3 class="text-lg font-bold text-slate-900 mb-2">No Progress Data Yet</h3>
+                <p class="max-w-md mx-auto mb-8 text-sm">Complete some exams to start tracking your progress!</p>
+                <a href="{% url 'student_exam_list' %}" class="inline-flex px-6 py-2.5 bg-indigo-600 border border-transparent text-white font-bold rounded-xl hover:bg-indigo-700 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Browse Available Exams</a>
             </div>
         {% else %}
             <!-- Filters for Exams -->
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200">
                 <form method="get" class="flex flex-col sm:flex-row gap-4">
-                        <div class="flex-grow">
-                            <input type="text" name="search" value="{{ search_query }}" placeholder="Search exams by title..." class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
+                        <div class="flex-grow relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                            <input type="text" name="search" value="{{ search_query }}" placeholder="Search exams by title..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder-slate-400 text-slate-900">
                         </div>
-                        <div class="sm:w-48 shrink-0">
-                            <select name="subject" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <div class="sm:w-48 shrink-0 relative">
+                            <select name="subject" class="w-full appearance-none pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 cursor-pointer text-slate-900 transition-all">
                                 <option value="">All Subjects</option>
                                 {% for subj in available_subjects %}
                                 <option value="{{ subj }}" {% if current_subject == subj %}selected{% endif %}>{{ subj }}</option>
                                 {% endfor %}
                             </select>
+                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
                         </div>
-                        <div class="sm:w-48 shrink-0">
-                            <select name="type" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                        <div class="sm:w-48 shrink-0 relative">
+                            <select name="type" class="w-full appearance-none pl-4 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 cursor-pointer text-slate-900 transition-all">
                                 <option value="">All Types</option>
                                 <option value="practice_test" {% if current_type == 'practice_test' %}selected{% endif %}>Practice & Test</option>
                                 <option value="test" {% if current_type == 'test' %}selected{% endif %}>Test Only</option>
                             </select>
+                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
                         </div>
-                        <button type="submit" class="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shrink-0">Filter</button>
+                        <button type="submit" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-sm transition-colors shrink-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Filter</button>
                     </form>
                 </div>
 
                 <!-- Exam Grid -->
                 {% if page_obj %}
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-2">
                         {% for data in page_obj %}
-                        <a href="{% url 'exam_progress' data.exam.id %}" class="group block bg-white rounded-2xl shadow-sm border border-slate-200 hover:shadow-xl hover:border-blue-300 hover:-translate-y-1 transition-all duration-300 overflow-hidden relative flex flex-col h-full">
-                            <div class="absolute inset-0 bg-gradient-to-br from-blue-50/0 via-transparent to-transparent group-hover:from-blue-50/50 transition-all duration-300 pointer-events-none"></div>
+                        <a href="{% url 'exam_progress' data.exam.id %}" class="group block bg-white rounded-2xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 hover:-translate-y-1 transition-all duration-300 overflow-hidden relative flex flex-col h-full">
+                            <div class="absolute inset-0 bg-gradient-to-br from-indigo-50/0 via-transparent to-transparent group-hover:from-indigo-50/50 transition-all duration-300 pointer-events-none"></div>
                             
                             <div class="p-5 relative z-10 flex flex-col flex-grow">
                                 <div class="flex justify-between items-start mb-3">
-                                    <span class="inline-block px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase tracking-wide border border-indigo-100">
+                                    <span class="inline-block px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase tracking-wider border border-indigo-100/50">
                                         {{ data.exam.subject }}
                                     </span>
-                                    <span class="inline-block px-2 py-1 rounded text-[10px] font-bold uppercase border {% if data.exam.exam_type == 'practice_test' %}bg-amber-50 text-amber-700 border-amber-200{% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}">
+                                    <span class="inline-block px-2 py-1 rounded text-[10px] font-bold uppercase border {% if data.exam.exam_type == 'practice_test' %}bg-amber-50 text-amber-700 border-amber-200/60{% else %}bg-slate-50 text-slate-700 border-slate-200/60{% endif %}">
                                         {% if data.exam.exam_type == 'practice_test' %}Practice & Test{% else %}Test Exam{% endif %}
                                     </span>
                                 </div>
 
-                                <h3 class="text-lg font-black text-slate-900 leading-tight mb-4 line-clamp-2 group-hover:text-blue-700 transition-colors">
+                                <h3 class="text-base sm:text-lg font-bold text-slate-900 leading-snug mb-5 line-clamp-2 group-hover:text-indigo-600 transition-colors">
                                     {{ data.exam.title }}
                                 </h3>
                                 
-                                <div class="mt-auto">
-                                    <div class="grid grid-cols-2 gap-3 mb-4">
-                                        <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 text-center">
-                                            <p class="text-[10px] font-bold text-slate-500 uppercase leading-none mb-1">Latest</p>
-                                            <p class="text-xl font-black text-slate-900">{{ data.latest_score }}%</p>
+                                <div class="mt-auto space-y-4">
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div class="bg-slate-50 rounded-xl p-3 border border-slate-100 text-center flex flex-col justify-center">
+                                            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Latest</p>
+                                            <p class="text-lg font-black text-slate-900">{{ data.latest_score }}%</p>
                                         </div>
-                                        <div class="bg-indigo-50/50 rounded-xl p-3 border border-indigo-100/50 text-center">
-                                            <p class="text-[10px] font-bold text-indigo-500 uppercase leading-none mb-1">Best</p>
-                                            <p class="text-xl font-black text-indigo-700">{{ data.best_score }}%</p>
+                                        <div class="bg-indigo-50/50 rounded-xl p-3 border border-indigo-100/50 text-center flex flex-col justify-center">
+                                            <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-wider mb-1">Best</p>
+                                            <p class="text-lg font-black text-indigo-700">{{ data.best_score }}%</p>
                                         </div>
                                     </div>
     
                                     <div class="pt-4 border-t border-slate-100">
                                         {% if data.attempt_count > 1 %}
-                                        <div class="flex items-center justify-between mb-3 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                        <div class="flex items-center justify-between mb-3 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100/60">
                                             <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Improvement</span>
                                             {% if data.improvement > 0 %}
                                                 <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-600">
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                                                     +{{ data.improvement }}%
                                                 </span>
                                             {% elif data.improvement < 0 %}
                                                 <span class="inline-flex items-center gap-1 text-xs font-bold text-rose-600">
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
                                                     {{ data.improvement }}%
                                                 </span>
                                             {% else %}
@@ -117,7 +128,7 @@
                                             <div class="text-xs text-slate-500 font-medium">
                                                 {{ data.attempt_count }} Attempt{{ data.attempt_count|pluralize }}
                                             </div>
-                                            <div class="flex items-center text-xs font-bold text-blue-600 group-hover:translate-x-1 transition-transform">
+                                            <div class="flex items-center text-xs font-bold text-indigo-600 group-hover:translate-x-1 transition-transform">
                                                 View Details
                                                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                                             </div>
@@ -134,7 +145,7 @@
                     <div class="flex justify-center mt-8">
                         <nav class="flex items-center gap-2">
                             {% if page_obj.has_previous %}
-                                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}" class="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">Prev</a>
+                                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}" class="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1">Prev</a>
                             {% endif %}
                             
                             <span class="px-4 py-2 text-sm font-semibold text-slate-600 bg-white border border-slate-200 rounded-xl shadow-sm">
@@ -142,14 +153,14 @@
                             </span>
 
                             {% if page_obj.has_next %}
-                                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}" class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 border border-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm">Next</a>
+                                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}" class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 border border-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1">Next</a>
                             {% endif %}
                         </nav>
                     </div>
                     {% endif %}
                 {% else %}
-                    <div class="bg-white rounded-2xl p-12 text-center text-slate-500 border border-slate-200 mt-6">
-                        <p>No exams found matching your criteria.</p>
+                    <div class="bg-white rounded-2xl p-12 text-center text-slate-500 border border-slate-200 mt-6 shadow-sm">
+                        <p class="text-sm font-medium">No exams found matching your criteria.</p>
                     </div>
                 {% endif %}
             
