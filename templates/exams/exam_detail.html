@@ -103,29 +103,29 @@
         <!-- Stats Grid -->
         <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden mb-8">
             <div class="grid grid-cols-3 divide-x divide-gray-100"> <!-- Modified grid to 3 columns and removed responsive lg switch related to 4 cols -->
-                <div class="p-6 text-center group hover:bg-gray-50/50 transition-colors">
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Duration</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ exam.duration_minutes }}<span class="text-sm font-medium text-gray-400 ml-1">min</span></p>
+                <div class="p-3 sm:p-6 text-center group hover:bg-gray-50/50 transition-colors">
+                    <p class="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Duration</p>
+                    <p class="text-lg sm:text-2xl font-bold text-gray-900">{{ exam.duration_minutes }}<span class="text-xs sm:text-sm font-medium text-gray-400 ml-1">min</span></p>
                 </div>
-                <div class="p-6 text-center group hover:bg-gray-50/50 transition-colors">
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Questions</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ exam.question_count }}</p>
+                <div class="p-3 sm:p-6 text-center group hover:bg-gray-50/50 transition-colors">
+                    <p class="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Questions</p>
+                    <p class="text-lg sm:text-2xl font-bold text-gray-900">{{ exam.question_count }}</p>
                 </div>
-                <div class="p-6 text-center group hover:bg-gray-50/50 transition-colors">
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Total Marks</p>
-                    <p class="text-2xl font-bold text-gray-900">{{ exam.total_marks }}</p>
+                <div class="p-3 sm:p-6 text-center group hover:bg-gray-50/50 transition-colors">
+                    <p class="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Total Marks</p>
+                    <p class="text-lg sm:text-2xl font-bold text-gray-900">{{ exam.total_marks }}</p>
                 </div>
             </div>
         </div>
 
         <!-- Questions Section -->
         <div class="space-y-6">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-wrap items-center justify-between gap-3">
                 <h2 class="text-lg font-bold text-gray-900 flex items-center">
                     Questions
                     <span class="ml-2 bg-gray-100 text-gray-600 py-0.5 px-2.5 rounded-full text-xs font-bold">{{ questions|length }}</span>
                 </h2>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 flex-wrap">
                     {% if exam.created_by == request.user %}
                     <a href="{% url 'bulk_upload_questions' exam.pk %}" class="inline-flex items-center text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors group">
                         <svg class="w-4 h-4 mr-1.5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 111 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
@@ -158,7 +158,7 @@
                                     <p class="text-gray-900 font-semibold text-base leading-relaxed break-words">{{ question.question_text }}</p>
                                     
                                     <!-- Metadata & Actions Row -->
-                                    <div class="flex items-center justify-between mt-2">
+                                    <div class="flex flex-wrap items-center justify-between gap-2 mt-2">
                                         <!-- Marks -->
                                         <div class="text-xs font-bold text-gray-500 uppercase tracking-wide">
                                             {{ question.marks }} Mark{{ question.marks|pluralize }}
@@ -238,13 +238,13 @@
                     <h3 class="text-lg font-bold text-gray-900 mb-1">No questions added yet</h3>
                     <p class="text-gray-500 text-sm mb-6 max-w-sm mx-auto">Start building your assessment by adding questions with choices and explanations.</p>
                     {% if exam.created_by == request.user %}
-                    <div class="flex items-center justify-center gap-3">
-                        <a href="{% url 'bulk_upload_questions' exam.pk %}" class="inline-flex items-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 transition-all shadow-emerald-500/30">
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                        <a href="{% url 'bulk_upload_questions' exam.pk %}" class="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 transition-all shadow-emerald-500/30">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                             Bulk Upload from Excel
                         </a>
 
-                        <a href="{% url 'exam_add_questions' exam.pk %}" class="inline-flex items-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-indigo-500 transition-all shadow-indigo-500/30">
+                        <a href="{% url 'exam_add_questions' exam.pk %}" class="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-indigo-500 transition-all shadow-indigo-500/30">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             Create New
                         </a>
