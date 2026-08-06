@@ -6,18 +6,18 @@
 {% block content %}
 <div class="min-h-screen bg-slate-50/50 pb-20">
     <!-- Header Section -->
-    <div class="bg-white border-b border-slate-200">
+    <div class="bg-slate-900 text-white border-b border-slate-800">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-                        Authorize Retest
-                    </h1>
-                    <p class="text-slate-500 mt-1">
-                        Review details before allowing a retest attempt
-                    </p>
-                </div>
-            </div>
+            <a href="{% url 'teacher_view_attempt' attempt.pk %}" class="text-indigo-400 hover:text-indigo-300 text-sm font-medium inline-flex items-center gap-1.5 mb-3 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                Back to Attempt
+            </a>
+            <h1 class="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                Authorize Retest
+            </h1>
+            <p class="text-slate-400 mt-1 text-sm">
+                Review details before allowing a retest attempt
+            </p>
         </div>
     </div>
 
@@ -25,10 +25,10 @@
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
         
         <!-- Warning Card -->
-        <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 mb-8 shadow-sm">
+        <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 mb-6 shadow-sm">
             <div class="flex gap-3">
                 <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="h-5 w-5 text-amber-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                 </div>
@@ -43,48 +43,48 @@
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <!-- Student Header -->
-            <div class="px-6 py-6 border-b border-slate-100 bg-slate-50/50">
+            <div class="px-4 sm:px-6 py-5 border-b border-slate-100 bg-slate-50/50">
                 <div class="flex items-center gap-4">
-                    <div class="h-12 w-12 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg font-bold border border-indigo-200">
+                    <div class="h-12 w-12 shrink-0 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-lg font-bold border border-indigo-200">
                         {{ student.first_name|first|default:student.username|first|upper }}
                     </div>
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-900">{{ student.get_full_name|default:student.username }}</h2>
-                        <div class="flex items-center gap-2 text-sm text-slate-500">
-                            <span>@{{ student.username }}</span>
-                            <span>•</span>
-                            <span>{{ student_class.name }}</span>
+                    <div class="min-w-0 flex-1">
+                        <h2 class="text-base sm:text-lg font-bold text-slate-900 truncate">{{ student.get_full_name|default:student.username }}</h2>
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500 mt-0.5">
+                            <span class="truncate">@{{ student.username }}</span>
+                            <span class="hidden sm:inline">•</span>
+                            <span class="truncate">{{ student_class.name }}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="p-6 space-y-8">
+            <div class="p-4 sm:p-6 space-y-6">
                 <!-- Comparison Grid -->
-                <div class="grid md:grid-cols-2 gap-8">
+                <div class="grid md:grid-cols-2 gap-6">
                     <!-- Exam Details -->
                     <div>
                         <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Exam Details</h4>
                         <div class="space-y-4">
                             <div>
-                                <div class="text-sm font-medium text-slate-500 mb-1">Title</div>
-                                <div class="font-semibold text-slate-900">{{ exam.title }}</div>
+                                <div class="text-xs font-medium text-slate-500 mb-1">Title</div>
+                                <div class="font-semibold text-slate-900 text-sm break-words">{{ exam.title }}</div>
                             </div>
                             <div>
-                                <div class="text-sm font-medium text-slate-500 mb-1">Subject</div>
+                                <div class="text-xs font-medium text-slate-500 mb-1">Subject</div>
                                 <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
                                     {{ exam.subject }}
                                 </div>
                             </div>
                              <div>
-                                <div class="text-sm font-medium text-slate-500 mb-1">Type</div>
+                                <div class="text-xs font-medium text-slate-500 mb-1">Type</div>
                                 <div class="text-sm text-slate-900">{{ exam.get_exam_type_display }}</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Attempt To Delete -->
-                    <div class="bg-rose-50 rounded-lg p-5 border border-rose-100">
+                    <div class="bg-rose-50 rounded-xl p-4 sm:p-5 border border-rose-100">
                         <h4 class="text-xs font-bold uppercase tracking-wider text-rose-600 mb-4 flex items-center gap-2">
                             <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                             Attempt to Delete
@@ -111,7 +111,7 @@
                 </div>
 
                 <!-- Info Box -->
-                <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                <div class="bg-blue-50 rounded-xl p-4 border border-blue-100">
                     <h4 class="text-xs font-bold uppercase tracking-wider text-blue-700 mb-2">Consequences</h4>
                     <ul class="space-y-2 text-sm text-blue-800">
                         <li class="flex gap-2">
@@ -127,18 +127,18 @@
             </div>
 
             <!-- Footer -->
-            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
-                <a href="{% url 'teacher_view_attempt' attempt.pk %}" class="inline-flex justify-center items-center px-4 py-2 border border-slate-300 shadow-sm text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors">
+            <div class="px-4 sm:px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+                <a href="{% url 'teacher_view_attempt' attempt.pk %}" class="inline-flex justify-center items-center px-4 py-2.5 border border-slate-300 shadow-sm text-sm font-semibold rounded-xl text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors">
                     Cancel
                 </a>
                 
                 <form method="post" class="inline-block w-full sm:w-auto">
                     {% csrf_token %}
-                    <button type="submit" onclick="return confirm('Are you sure you want to delete this attempt?');" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button type="submit" onclick="return confirm('Are you sure you want to delete this attempt?');" class="w-full inline-flex justify-center items-center px-4 py-2.5 border border-transparent shadow-sm text-sm font-semibold rounded-xl text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                        <svg class="w-4 h-4 mr-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
-                        Delete Attempt & Authorize Retest
+                        Delete Attempt &amp; Authorize Retest
                     </button>
                 </form>
             </div>
