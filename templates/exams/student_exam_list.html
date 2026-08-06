@@ -51,14 +51,14 @@
                                    name="search" 
                                    value="{{ search_query|default:'' }}"
                                    placeholder="Search exams by title, description, or subject..." 
-                                   class="w-full px-5 py-3 pl-12 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-transparent transition-all"
+                                   class="w-full px-5 py-2.5 pl-11 bg-white/10 backdrop-blur-md border border-white/15 rounded-xl text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/50 focus:border-indigo-400/50 transition-all hover:bg-white/15 shadow-sm"
                                    autocomplete="off">
-                            <svg class="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
                             {% if search_query %}
-                            <a href="?{% if date_filter %}date={{ date_filter }}{% endif %}{% if date_start %}&date_start={{ date_start }}{% endif %}{% if date_end %}&date_end={{ date_end }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}" class="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-lg transition-colors">
-                                <svg class="w-5 h-5 text-slate-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <a href="?{% if date_filter %}date={{ date_filter }}{% endif %}{% if date_start %}&date_start={{ date_start }}{% endif %}{% if date_end %}&date_end={{ date_end }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}" class="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-white/20 rounded-lg transition-colors group">
+                                <svg class="w-4 h-4 text-slate-400 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                 </svg>
                             </a>
@@ -66,7 +66,7 @@
                         </div>
                         
                         <div class="w-full sm:w-48 relative shrink-0">
-                            <select name="date" onchange="handleDateChange(this)" class="w-full appearance-none px-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all [&>option]:text-slate-900 cursor-pointer">
+                            <select name="date" onchange="handleDateChange(this)" class="w-full appearance-none px-4 py-2.5 bg-white/10 backdrop-blur-md border border-white/15 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/50 focus:border-indigo-400/50 transition-all hover:bg-white/15 shadow-sm [&>option]:text-slate-900 cursor-pointer">
                                 <option value="" {% if not date_filter %}selected{% endif %}>Any Time</option>
                                 <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Assigned Today</option>
                                 <option value="7days" {% if date_filter == '7days' %}selected{% endif %}>Last 7 Days</option>
@@ -80,16 +80,46 @@
                     </div>
                     
                     <!-- Custom Date Container -->
-                    <div id="customDateContainer" class="flex flex-col sm:flex-row items-center gap-3 {% if date_filter != 'custom' %}hidden{% endif %}">
-                        <div class="flex items-center gap-2 w-full sm:w-auto">
-                            <span class="text-slate-300 text-sm font-medium whitespace-nowrap">From:</span>
-                            <input type="date" name="date_start" value="{{ date_start|default:'' }}" class="w-full sm:w-auto px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert cursor-pointer">
+                    <div id="customDateContainer" class="{% if date_filter != 'custom' %}hidden{% endif %}">
+                        <div class="mt-1 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4 space-y-4">
+                            <!-- Header -->
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                <span class="text-xs font-bold text-indigo-300 uppercase tracking-widest">Custom Date Range</span>
+                            </div>
+
+                            <!-- Date Inputs -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <!-- From -->
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">From</label>
+                                    <div class="relative">
+                                        <input type="date" name="date_start" value="{{ date_start|default:'' }}" 
+                                               class="w-full px-4 py-2.5 bg-white/10 backdrop-blur-md border border-white/15 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/50 focus:border-indigo-400/50 transition-all [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert cursor-pointer">
+                                    </div>
+                                </div>
+                                <!-- To -->
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">To</label>
+                                    <div class="relative">
+                                        <input type="date" name="date_end" value="{{ date_end|default:'' }}" 
+                                               class="w-full px-4 py-2.5 bg-white/10 backdrop-blur-md border border-white/15 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/50 focus:border-indigo-400/50 transition-all [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert cursor-pointer">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Apply Button -->
+                            <div class="flex justify-end pt-1">
+                                <button type="submit" class="inline-flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/25 focus:outline-none focus:ring-2 focus:ring-indigo-400/60 focus:ring-offset-1 focus:ring-offset-transparent">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/>
+                                    </svg>
+                                    Apply Range
+                                </button>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2 w-full sm:w-auto">
-                            <span class="text-slate-300 text-sm font-medium whitespace-nowrap">To:</span>
-                            <input type="date" name="date_end" value="{{ date_end|default:'' }}" class="w-full sm:w-auto px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/30 transition-all [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:invert cursor-pointer">
-                        </div>
-                        <button type="submit" class="w-full sm:w-auto px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-md shadow-indigo-500/20">Apply Range</button>
                     </div>
                 </form>
                 {% if search_query %}
