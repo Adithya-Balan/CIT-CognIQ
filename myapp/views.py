@@ -1554,7 +1554,7 @@ def exam_results(request, attempt_pk):
         questions = [questions_dict[qid] for qid in attempt.question_order if qid in questions_dict]
     else:
         # Fallback to original order if question_order wasn't saved (old attempts)
-        questions = attempt.exam.questions.prefetch_related('choices').order_by('order')
+        questions = attempt.exam.questions.prefetch_related('choices').order_by('examquestion__order')
     
     # Build results data
     results = []
