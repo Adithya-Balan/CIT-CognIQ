@@ -206,6 +206,15 @@ class User(AbstractUser):
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, verbose_name='User Role')
     phone_number = models.CharField(max_length=15, blank=True, null=True, verbose_name='Phone Number')
     
+    # Batch — admission/academic year range for students (e.g., '2024–2028')
+    batch = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name='Batch',
+        help_text='Admission year range, e.g. 2024–2028'
+    )
+    
     # School FK — every non-superuser must belong to exactly one school
     school = models.ForeignKey(
         'School',

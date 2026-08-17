@@ -4203,6 +4203,10 @@ def school_admin_manage_students(request):
     if dept_filter:
         students = students.filter(student_classes__department=dept_filter).distinct()
 
+    batch_filter = request.GET.get('batch', '').strip()
+    if batch_filter:
+        students = students.filter(batch=batch_filter)
+
     status_filter = request.GET.get('status', 'all')
     if status_filter == 'active':
         students = students.filter(is_active=True)
@@ -4218,6 +4222,15 @@ def school_admin_manage_students(request):
     # Generate department choices for the filter dropdown
     from .models import StudentClass as SC
     departments = [d[0] for d in SC.DEPARTMENT_CHOICES]
+    
+    # Get distinct batch values for filter dropdown
+    batches = list(
+        User.objects.filter(school=school, role='student', batch__isnull=False)
+        .exclude(batch='')
+        .values_list('batch', flat=True)
+        .distinct()
+        .order_by('batch')
+    )
 
     context = {
         'school': school,
@@ -4227,6 +4240,8 @@ def school_admin_manage_students(request):
         'status_filter': status_filter,
         'current_department': dept_filter,
         'departments': departments,
+        'current_batch': batch_filter,
+        'batches': batches,
         'page_title': 'Manage Students',
     }
     return render(request, 'school_admin/manage_students.html', context)
@@ -4333,6 +4348,7 @@ def school_admin_bulk_create_students(request):
                         identifier = row.get('identifier', '').strip()
                         password = row.get('password', '').strip() or 'changeme123'
                         email = row.get('email', '').strip() or None
+                        batch = row.get('batch', '').strip() or None
 
                         if not first_name or not last_name or not identifier:
                             error_rows.append(f'Row {i}: missing first_name, last_name or identifier')
@@ -4354,6 +4370,7 @@ def school_admin_bulk_create_students(request):
                             email=email,
                             role='student',
                             school=school,
+                            batch=batch,
                         )
                         user.set_password(password)
                         user.save()

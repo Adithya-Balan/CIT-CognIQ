@@ -53,14 +53,14 @@ class SchoolAdmin(admin.ModelAdmin):
 class UserAdmin(BaseUserAdmin):
     """Custom User Admin — school-scoped display"""
 
-    list_display = ('email', 'username', 'first_name', 'last_name', 'role', 'school', 'is_active', 'date_joined')
-    list_filter = ('role', 'is_active', 'is_staff', 'school', 'date_joined')
+    list_display = ('email', 'username', 'first_name', 'last_name', 'role', 'batch', 'school', 'is_active', 'date_joined')
+    list_filter = ('role', 'is_active', 'is_staff', 'school', 'batch', 'date_joined')
     search_fields = ('email', 'username', 'first_name', 'last_name')
     ordering = ('-date_joined',)
 
     fieldsets = (
         (None, {'fields': ('email', 'username', 'password')}),
-        ('Personal Info', {'fields': ('first_name', 'last_name', 'phone_number')}),
+        ('Personal Info', {'fields': ('first_name', 'last_name', 'phone_number', 'batch')}),
         ('Role & School', {'fields': ('role', 'school', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important Dates', {'fields': ('last_login', 'date_joined')}),
     )

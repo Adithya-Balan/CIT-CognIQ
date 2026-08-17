@@ -107,7 +107,7 @@ class StudentCreationForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'phone_number']
+        fields = ['first_name', 'last_name', 'email', 'phone_number', 'batch']
         widgets = {
             'first_name': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500',
@@ -124,6 +124,10 @@ class StudentCreationForm(forms.ModelForm):
             'phone_number': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500',
                 'placeholder': 'Phone Number (optional)',
+            }),
+            'batch': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500',
+                'placeholder': 'e.g., 2024–2028',
             }),
         }
 
@@ -248,7 +252,7 @@ class BulkStudentUploadForm(forms.Form):
             'class': 'block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100',
             'accept': '.csv,.xlsx,.xls',
         }),
-        help_text='CSV or Excel file. Columns: first_name, last_name, identifier, password (optional), email (optional)'
+        help_text='CSV or Excel file. Columns: first_name, last_name, identifier, password (optional), batch (optional), email (optional)'
     )
 
 

@@ -52,6 +52,17 @@
           {% if form.identifier.errors %}<p class="text-red-500 text-xs mt-1">{{ form.identifier.errors.0 }}</p>{% endif %}
         </div>
 
+        <!-- Batch -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+            Batch <span class="text-red-500">*</span>
+            <span class="text-gray-400 font-normal ml-1 text-xs">Admission year range</span>
+          </label>
+          {{ form.batch }}
+          <p class="text-xs text-gray-400 mt-1">e.g., 2024–2028 or 2025–2029</p>
+          {% if form.batch.errors %}<p class="text-red-500 text-xs mt-1">{{ form.batch.errors.0 }}</p>{% endif %}
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1.5">Email <span class="text-gray-400 font-normal">(optional)</span></label>
