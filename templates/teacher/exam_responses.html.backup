@@ -60,7 +60,7 @@
                                 <option value="">All Classes</option>
                                 {% for class in teacher_classes %}
                                 <option value="{{ class.id }}" {% if selected_class and selected_class.id == class.id %}selected{% endif %}>
-                                    {{ class.name }} ({{ class.year }})
+                                    {{ class.name }} ({{ class.batch }})
                                 </option>
                                 {% endfor %}
                             </select>

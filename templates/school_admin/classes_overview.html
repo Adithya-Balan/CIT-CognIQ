@@ -26,7 +26,7 @@
         <div class="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
           <div>
             <h3 class="font-bold text-gray-900">{{ class.name }}</h3>
-            <p class="text-xs text-gray-400 mt-0.5">Year {{ class.year }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">Batch {{ class.batch }}</p>
           </div>
           <span class="text-xs font-semibold px-2.5 py-1 rounded-full border
             {% if class.is_active %}bg-green-50 text-green-700 border-green-200{% else %}bg-gray-50 text-gray-600 border-gray-200{% endif %} shadow-sm">
@@ -45,8 +45,8 @@
             <p class="text-xs text-gray-400">Exams</p>
           </div>
           <div class="px-4 py-3 text-center">
-            <p class="text-xl font-extrabold text-indigo-600">{{ class.year }}</p>
-            <p class="text-xs text-gray-400">Year</p>
+            <p class="text-xl font-extrabold text-indigo-600">{{ class.batch }}</p>
+            <p class="text-xs text-gray-400">Batch</p>
           </div>
         </div>
 

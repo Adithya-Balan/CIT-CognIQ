@@ -2593,11 +2593,11 @@ def class_create(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         description = request.POST.get('description', '')
-        year = request.POST.get('year')
+        batch = request.POST.get('batch')
         department = request.POST.get('department')
         
-        if not name or not year or not department:
-            messages.error(request, 'Class name, year, and department are required.')
+        if not name or not batch or not department:
+            messages.error(request, 'Class name, batch, and department are required.')
             return redirect('class_create')
             
         # Validate department against choices
@@ -2610,7 +2610,7 @@ def class_create(request):
             student_class = StudentClass.objects.create(
                 name=name,
                 description=description,
-                year=int(year),
+                batch=batch,
                 department=department,
                 created_by=request.user,
                 school=request.user.school   # SCHOOL-SCOPED
@@ -2621,11 +2621,7 @@ def class_create(request):
             messages.error(request, f'Error creating class: {str(e)}')
             return redirect('class_create')
     
-    from datetime import datetime
-    current_year = datetime.now().year
-    
     context = {
-        'current_year': current_year,
         'departments': StudentClass.DEPARTMENT_CHOICES,
         'page_title': 'Create Class'
     }
@@ -2645,9 +2641,9 @@ def class_detail(request, class_pk):
         created_by=request.user
     )
     
-    # Get students in this class with search & pagination
+    # Get students in this class with search & pagination, enforcing strict batch isolation
     student_search = request.GET.get('sq', '').strip()
-    students_query = student_class.students.all()
+    students_query = student_class.students.filter(batch=student_class.batch)
     if student_search:
         students_query = students_query.filter(
             Q(first_name__icontains=student_search) |
@@ -2835,7 +2831,7 @@ def class_update(request, class_pk):
     if request.method == 'POST':
         student_class.name = request.POST.get('name', student_class.name)
         student_class.description = request.POST.get('description', '')
-        student_class.year = int(request.POST.get('year', student_class.year))
+        student_class.batch = request.POST.get('batch', student_class.batch)
         
         department = request.POST.get('department')
         if department:
@@ -3386,7 +3382,7 @@ def calculate_leaderboard_data(student_class):
     assigned_exams_list = list(assigned_exams.select_related())
     
     students_qs = student_class.students.filter(
-        role='student', is_active=True
+        role='student', is_active=True, batch=student_class.batch
     ).only('id', 'first_name', 'last_name', 'username')
     students_list = list(students_qs)
     student_ids = [s.id for s in students_list]
@@ -4203,7 +4199,20 @@ def school_admin_manage_students(request):
     if dept_filter:
         students = students.filter(student_classes__department=dept_filter).distinct()
 
+    # Get distinct batch values for filter dropdown
+    batches = list(
+        User.objects.filter(school=school, role='student', batch__isnull=False)
+        .exclude(batch='')
+        .values_list('batch', flat=True)
+        .distinct()
+        .order_by('batch')
+    )
+    
     batch_filter = request.GET.get('batch', '').strip()
+    if not batch_filter and batches:
+        # Default to the most recent batch or first batch
+        batch_filter = batches[-1]
+        
     if batch_filter:
         students = students.filter(batch=batch_filter)
 
@@ -4222,15 +4231,6 @@ def school_admin_manage_students(request):
     # Generate department choices for the filter dropdown
     from .models import StudentClass as SC
     departments = [d[0] for d in SC.DEPARTMENT_CHOICES]
-    
-    # Get distinct batch values for filter dropdown
-    batches = list(
-        User.objects.filter(school=school, role='student', batch__isnull=False)
-        .exclude(batch='')
-        .values_list('batch', flat=True)
-        .distinct()
-        .order_by('batch')
-    )
 
     context = {
         'school': school,
@@ -4411,7 +4411,7 @@ def school_admin_classes_overview(request):
     school = request.user.school
     classes_qs = StudentClass.objects.filter(
         school=school
-    ).select_related('created_by').prefetch_related('students', 'assigned_exams').order_by('-year', '-created_at')
+    ).select_related('created_by').prefetch_related('students', 'assigned_exams').order_by('-batch', '-created_at')
 
     total_classes = classes_qs.count()
     active_classes = classes_qs.filter(is_active=True).count()

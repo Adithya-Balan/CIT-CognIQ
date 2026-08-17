@@ -45,7 +45,6 @@
           
           <!-- Batch Filter -->
           <select name="batch" onchange="this.form.submit()" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm cursor-pointer text-gray-700 font-medium">
-            <option value="">All Batches</option>
             {% for b in batches %}
               <option value="{{ b }}" {% if current_batch == b %}selected{% endif %}>{{ b }}</option>
             {% endfor %}

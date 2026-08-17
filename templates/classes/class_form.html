@@ -44,11 +44,11 @@
                             placeholder="Optional details about this class...">{% if student_class %}{{ student_class.description }}{% endif %}</textarea>
                     </div>
 
-                    <!-- Academic Year & Active Status -->
+                    <!-- Batch & Active Status -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="year" class="block text-sm font-bold text-gray-700 mb-2">Academic Year <span class="text-red-500">*</span></label>
-                            <input type="number" id="year" name="year" value="{% if student_class %}{{ student_class.year }}{% else %}{{ current_year }}{% endif %}" required min="2020" max="2030"
+                            <label for="batch" class="block text-sm font-bold text-gray-700 mb-2">Batch <span class="text-red-500">*</span></label>
+                            <input type="text" id="batch" name="batch" value="{% if student_class %}{{ student_class.batch }}{% else %}2024-2028{% endif %}" required placeholder="e.g., 2024-2028"
                                 class="block w-full rounded-xl border border-gray-300 bg-white shadow-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 sm:text-sm py-3 px-4 transition-colors">
                         </div>
 
@@ -92,7 +92,7 @@
                         <div>
                             <h3 class="text-sm font-bold text-indigo-900">Quick Tips</h3>
                             <div class="mt-1 text-xs text-indigo-700 space-y-1">
-                                <p>• Use the Year field to organize batches (e.g., 2025, 2026).</p>
+                                <p>• Use the Batch field to organize batches (e.g., 2025, 2026).</p>
                                 <p>• You can add students and assignments immediately after creating the class.</p>
                             </div>
                         </div>

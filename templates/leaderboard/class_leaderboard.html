@@ -27,7 +27,7 @@
                         <h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">Class Leaderboard</h1>
                     </div>
                     <p class="text-sm sm:text-lg text-slate-400 font-medium ml-1">
-                        {{ student_class.name }} <span class="text-slate-600 px-2">•</span> {{ student_class.year }}
+                        {{ student_class.name }} <span class="text-slate-600 px-2">•</span> {{ student_class.batch }}
                     </p>
                 </div>
 
@@ -39,7 +39,7 @@
                         <select id="class-switcher" onchange="window.location.href=this.value" class="appearance-none bg-white/10 backdrop-blur-md border border-white/20 text-white pl-4 pr-10 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all cursor-pointer hover:bg-white/20 w-full md:w-64">
                             {% for cls in teacher_classes %}
                             <option value="{% url 'class_leaderboard' cls.id %}" class="text-slate-900 bg-white" {% if cls.id == student_class.id %}selected{% endif %}>
-                                {{ cls.name }} ({{ cls.year }})
+                                {{ cls.name }} ({{ cls.batch }})
                             </option>
                             {% endfor %}
                         </select>

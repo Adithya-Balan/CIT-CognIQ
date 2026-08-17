@@ -304,10 +304,11 @@ class StudentClass(models.Model):
         verbose_name='Description',
         help_text='Additional details about this class'
     )
-    
-    year = models.IntegerField(
-        verbose_name='Academic Year',
-        help_text='Year this class is active (e.g., 2025)'
+    batch = models.CharField(
+        max_length=20,
+        default='2024-2028',
+        verbose_name='Batch',
+        help_text='Admission year range (e.g., 2024–2028)'
     )
     
     DEPARTMENT_CHOICES = [
@@ -388,11 +389,11 @@ class StudentClass(models.Model):
     class Meta:
         verbose_name = 'Student Class'
         verbose_name_plural = 'Student Classes'
-        ordering = ['-year', '-created_at']
-        unique_together = ['name', 'year', 'created_by', 'school']
+        ordering = ['-batch', '-created_at']
+        unique_together = ['name', 'batch', 'created_by', 'school']
     
     def __str__(self):
-        return f"{self.name} ({self.year})"
+        return f"{self.name} ({self.batch})"
     
     @property
     def student_count(self):

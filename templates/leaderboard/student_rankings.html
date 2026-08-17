@@ -28,7 +28,7 @@
                     </div>
                     {% if selected_class %}
                     <p class="text-sm sm:text-lg text-slate-400 font-medium ml-1">
-                        {{ selected_class.name }} <span class="text-slate-600 px-2">•</span> {{ selected_class.year|default:"" }}
+                        {{ selected_class.name }} <span class="text-slate-600 px-2">•</span> {{ selected_class.batch|default:"" }}
                     </p>
                     {% else %}
                     <p class="text-sm sm:text-lg text-slate-400 font-medium ml-1">
@@ -45,7 +45,7 @@
                         <select id="class-switcher" onchange="window.location.href='{% url 'student_rankings' %}?class_id=' + this.value" class="appearance-none bg-white/10 backdrop-blur-md border border-white/20 text-white pl-4 pr-10 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all cursor-pointer hover:bg-white/20 w-full md:w-64">
                             {% for class in enrolled_classes %}
                             <option value="{{ class.id }}" class="text-slate-900 bg-white" {% if selected_class and class.id == selected_class.id %}selected{% endif %}>
-                                {{ class.name }}{% if class.year %} ({{ class.year }}){% endif %}
+                                {{ class.name }}{% if class.batch %} ({{ class.batch }}){% endif %}
                             </option>
                             {% endfor %}
                         </select>
