@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Create Student — {{ school.name }} | Evalora{% endblock %}
+{% block title %}Create Student — {{ school.name }} | CognIQ{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50">
@@ -7,7 +7,7 @@
     <div class="max-w-3xl mx-auto">
       <a href="{% url 'school_admin_manage_students' %}" class="text-indigo-400 hover:text-indigo-300 text-sm font-medium inline-flex items-center gap-1 mb-2">← Back to Students</a>
       <h1 class="text-2xl font-extrabold">Create Student Account</h1>
-      <p class="text-slate-400 text-sm mt-1">Username is auto-generated for {{ school.name }} · <span class="font-mono text-indigo-300">{{ school.code }}</span></p>
+      <p class="text-slate-400 text-sm mt-1">Username is auto-generated for {{ school.name }}</p>
     </div>
   </div>
 
@@ -21,7 +21,7 @@
         </svg>
         <div>
           <p class="text-sm font-semibold text-emerald-800">Username Format</p>
-          <p class="text-xs text-emerald-700 mt-0.5">Username is built as <span class="font-mono bg-emerald-100 px-1 rounded">{{ school.code|lower }}_stu_&lt;identifier&gt;</span>. Use a roll number or class+number (e.g., <span class="font-mono">10A-042</span>) as the identifier.</p>
+          <p class="text-xs text-emerald-700 mt-0.5">Username is built as <span class="font-mono bg-emerald-100 px-1 rounded">stu_&lt;identifier&gt;</span>. Use a roll number or class+number (e.g., <span class="font-mono">10A-042</span>) as the identifier.</p>
         </div>
       </div>
 

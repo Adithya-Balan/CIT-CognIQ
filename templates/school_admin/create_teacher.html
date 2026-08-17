@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Create Teacher — {{ school.name }} | Evalora{% endblock %}
+{% block title %}Create Teacher — {{ school.name }} | CognIQ{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50">
@@ -7,7 +7,7 @@
     <div class="max-w-3xl mx-auto">
       <a href="{% url 'school_admin_manage_teachers' %}" class="text-indigo-400 hover:text-indigo-300 text-sm font-medium inline-flex items-center gap-1 mb-2">← Back to Teachers</a>
       <h1 class="text-2xl font-extrabold">Create Teacher Account</h1>
-      <p class="text-slate-400 text-sm mt-1">Username will be auto-generated for {{ school.name }} · <span class="font-mono text-indigo-300">{{ school.code }}</span></p>
+      <p class="text-slate-400 text-sm mt-1">Username will be auto-generated for {{ school.name }}</p>
     </div>
   </div>
 
@@ -21,7 +21,7 @@
         </svg>
         <div>
           <p class="text-sm font-semibold text-indigo-800">Auto-Generated Username</p>
-          <p class="text-xs text-indigo-600 mt-0.5">The teacher's login username will be auto-generated using the format <span class="font-mono bg-indigo-100 px-1 rounded">{{ school.code|lower }}_tch_001</span>. Share the username and password with the teacher after creation.</p>
+          <p class="text-xs text-indigo-600 mt-0.5">The teacher's login username will be auto-generated using the format <span class="font-mono bg-indigo-100 px-1 rounded">tch_001</span>. Share the username and password with the teacher after creation.</p>
         </div>
       </div>
 

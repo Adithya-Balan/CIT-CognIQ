@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}My Exams - Evalora{% endblock %}
+{% block title %}My Exams - CognIQ{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-slate-50">
@@ -41,14 +41,14 @@
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 relative z-20 space-y-8 pb-20">
 
-        <!-- Grade Navigation -->
-        {% if grades %}
+        <!-- Department Navigation -->
+        {% if departments %}
         <div class="mb-6 overflow-x-auto hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
             <div class="flex items-center gap-2 w-max pb-2">
-                {% for gr in grades %}
-                <a href="?grade={{ gr|urlencode }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_chapter %}&chapter={{ current_chapter }}{% endif %}" 
-                   class="px-4 py-2 text-sm font-bold transition-all duration-200 rounded-lg border {% if current_grade == gr %}bg-slate-800 text-white border-slate-800 shadow-md{% else %}bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300 hover:text-slate-900 shadow-sm{% endif %}">
-                    Grade {{ gr }}
+                {% for dept in departments %}
+                <a href="?department={{ gr|urlencode }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_chapter %}&chapter={{ current_chapter }}{% endif %}" 
+                   class="px-4 py-2 text-sm font-bold transition-all duration-200 rounded-lg border {% if current_department == gr %}bg-slate-800 text-white border-slate-800 shadow-md{% else %}bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300 hover:text-slate-900 shadow-sm{% endif %}">
+                    {{ dept }}
                 </a>
                 {% endfor %}
             </div>
@@ -59,21 +59,18 @@
         <div class="mb-8 overflow-x-auto hide-scrollbar pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
             <div class="flex items-stretch gap-3 w-max">
                 <!-- All Subjects Tile -->
-                <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if current_grade %}grade={{ current_grade }}&{% endif %}{% if current_chapter %}chapter={{ current_chapter }}{% endif %}" 
+                <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if current_department %}department={{ current_department }}&{% endif %}{% if current_chapter %}chapter={{ current_chapter }}{% endif %}" 
                    class="flex flex-col items-center justify-center min-w-[100px] p-3 rounded-2xl border-2 transition-all duration-200 {% if not current_subject %}border-indigo-600 bg-indigo-50 shadow-md shadow-indigo-500/10{% else %}border-slate-200 bg-white hover:border-indigo-300 hover:bg-slate-50 shadow-sm{% endif %}">
                     <span class="text-xl mb-1">📚</span>
                     <span class="text-xs font-black tracking-tight {% if not current_subject %}text-indigo-700{% else %}text-slate-600{% endif %}">ALL</span>
                 </a>
                 
                 {% for subj in subjects %}
-                <a href="?subject={{ subj|urlencode }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_grade %}&grade={{ current_grade }}{% endif %}{% if current_chapter %}&chapter={{ current_chapter }}{% endif %}" 
+                <a href="?subject={{ subj|urlencode }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_department %}&department={{ current_department }}{% endif %}{% if current_chapter %}&chapter={{ current_chapter }}{% endif %}" 
                    class="flex flex-col items-center justify-center min-w-[100px] p-3 rounded-2xl border-2 transition-all duration-200 {% if current_subject == subj %}border-indigo-600 bg-indigo-50 shadow-md shadow-indigo-500/10{% else %}border-slate-200 bg-white hover:border-indigo-300 hover:bg-slate-50 shadow-sm{% endif %}">
                     <!-- Icon logic based on subject (simplified for tiles) -->
-                    {% if subj == "Mathematics" %}<span class="text-xl mb-1">∑</span>
-                    {% elif subj == "Science" %}<span class="text-xl mb-1">🔬</span>
-                    {% elif subj == "English" %}<span class="text-xl mb-1">📖</span>
-                    {% elif subj == "Social Science" %}<span class="text-xl mb-1">🌍</span>
-                    {% elif subj == "தமிழ்" %}<span class="text-xl font-bold mb-1">த</span>
+                    {% if subj == "Aptitude" %}<span class="text-xl mb-1">🧠</span>
+                    {% elif subj == "GATE" %}<span class="text-xl mb-1">⚙️</span>
                     {% else %}<span class="text-xl mb-1">📝</span>
                     {% endif %}
                     <span class="text-xs font-black tracking-tight truncate w-full text-center {% if current_subject == subj %}text-indigo-700{% else %}text-slate-600{% endif %}">{{ subj|truncatechars:15 }}</span>
@@ -165,14 +162,14 @@
                 </div>
                 <div class="flex items-center gap-2">
                     {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if current_grade %}&grade={{ current_grade }}{% endif %}{% if current_chapter %}&chapter={{ current_chapter }}{% endif %}" 
+                        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if current_department %}&department={{ current_department }}{% endif %}{% if current_chapter %}&chapter={{ current_chapter }}{% endif %}" 
                            class="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-indigo-300 transition-all shadow-sm">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                             Prev
                         </a>
                     {% endif %}
                     {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if current_grade %}&grade={{ current_grade }}{% endif %}{% if current_chapter %}&chapter={{ current_chapter }}{% endif %}" 
+                        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_subject %}&subject={{ current_subject }}{% endif %}{% if current_department %}&department={{ current_department }}{% endif %}{% if current_chapter %}&chapter={{ current_chapter }}{% endif %}" 
                            class="inline-flex items-center gap-1 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 border border-indigo-600 rounded-xl hover:bg-indigo-700 transition-all shadow-sm">
                             Next
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>

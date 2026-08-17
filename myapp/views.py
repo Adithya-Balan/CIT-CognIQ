@@ -225,31 +225,22 @@ def register_school(request):
         if form.is_valid():
             school_name = form.cleaned_data['school_name']
             
-            # Generate a strict 6-character unique alphanumeric school code
-            import random
-            import string
-            
-            def get_random_code():
-                while True:
-                    # Generate 6 char uppercase alphanumeric
-                    chars = random.choices(string.ascii_uppercase + string.digits, k=6)
-                    code = ''.join(chars)
-                    # Enforce that it contains at least one letter and at least one digit
-                    if any(c.isdigit() for c in code) and any(c.isalpha() for c in code):
-                        if not School.objects.filter(code=code).exists():
-                            return code
-
-            code = get_random_code()
-            
             # Create School
             school = School.objects.create(
-                name=school_name,
-                code=code
+                name=school_name
             )
             
             # Create Admin User
-            # username format: <school_code>_ADMIN
-            username = f"{code}_ADMIN"
+            # username format: admin
+            username = "admin"
+            
+            # Ensure uniqueness if 'admin' already exists
+            counter = 1
+            original_username = username
+            while User.objects.filter(username=username).exists():
+                username = f"{original_username}{counter}"
+                counter += 1
+                
             admin_user = User.objects.create_user(
                 username=username,
                 email=form.cleaned_data['admin_email'],
@@ -291,7 +282,7 @@ class TeacherRequiredMixin(UserPassesTestMixin):
 class ExamListView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
     """
     List all exams created by the logged-in teacher (school-scoped)
-    with filtering by subject, grade, chapter and text search,
+    with filtering by subject, department, chapter and text search,
     plus server-side pagination for scalability.
     """
     model = Exam
@@ -307,22 +298,22 @@ class ExamListView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
         )
 
         import re
-        def extract_grade_num(g):
-            match = re.search(r'\d+', str(g))
-            return int(match.group()) if match else 0
+        def extract_dept_sort(g):
+            return g  # departments are strings, sort lexicographically
+            
 
-        # Calculate all available grades before filtering
-        self.available_grades = sorted(set(
-            qs.exclude(grade='').values_list('grade', flat=True)
-        ), key=extract_grade_num)
+        # Calculate all available departments before filtering
+        self.available_departments = sorted(set(
+            qs.exclude(department='').values_list('department', flat=True)
+        ))
 
-        # Default to first grade if none selected
-        self.current_grade = self.request.GET.get('grade', '').strip()
-        if not self.current_grade and self.available_grades:
-            self.current_grade = self.available_grades[0]
+        # Default to first department if none selected
+        self.current_department = self.request.GET.get('department', '').strip()
+        if not self.current_department and self.available_departments:
+            self.current_department = self.available_departments[0]
 
-        if self.current_grade:
-            qs = qs.filter(grade=self.current_grade)
+        if self.current_department:
+            qs = qs.filter(department=self.current_department)
 
         # Text search
         search = self.request.GET.get('search', '').strip()
@@ -357,14 +348,14 @@ class ExamListView(LoginRequiredMixin, TeacherRequiredMixin, ListView):
         context['total_exams'] = all_exams.count()
         context['assigned_exams'] = all_exams.filter(assigned_classes__isnull=False).distinct().count()
 
-        # Grade navigation state
-        context['grades'] = getattr(self, 'available_grades', [])
-        context['current_grade'] = getattr(self, 'current_grade', '')
+        # Department navigation state
+        context['departments'] = getattr(self, 'available_departments', [])
+        context['current_department'] = getattr(self, 'current_department', '')
 
-        # Filter subjects specifically for the currently selected grade
-        grade_exams = all_exams.filter(grade=context['current_grade']) if context['current_grade'] else all_exams
+        # Filter subjects specifically for the currently selected department
+        dept_exams = all_exams.filter(department=context['current_department']) if context['current_department'] else all_exams
         context['subjects'] = sorted(set(
-            grade_exams.exclude(subject='').values_list('subject', flat=True)
+            dept_exams.exclude(subject='').values_list('subject', flat=True)
         ))
 
         # Current filter values
@@ -2603,16 +2594,16 @@ def class_create(request):
         name = request.POST.get('name')
         description = request.POST.get('description', '')
         year = request.POST.get('year')
-        grade = request.POST.get('grade')
+        department = request.POST.get('department')
         
-        if not name or not year or not grade:
-            messages.error(request, 'Class name, year, and grade are required.')
+        if not name or not year or not department:
+            messages.error(request, 'Class name, year, and department are required.')
             return redirect('class_create')
             
-        # Validate grade against choices
-        valid_grades = [choice[0] for choice in StudentClass.GRADE_CHOICES]
-        if grade not in valid_grades:
-            messages.error(request, 'Invalid grade selected.')
+        # Validate department against choices
+        valid_departments = [choice[0] for choice in StudentClass.DEPARTMENT_CHOICES]
+        if department not in valid_departments:
+            messages.error(request, 'Invalid department selected.')
             return redirect('class_create')
         
         try:
@@ -2620,7 +2611,7 @@ def class_create(request):
                 name=name,
                 description=description,
                 year=int(year),
-                grade=grade,
+                department=department,
                 created_by=request.user,
                 school=request.user.school   # SCHOOL-SCOPED
             )
@@ -2635,7 +2626,7 @@ def class_create(request):
     
     context = {
         'current_year': current_year,
-        'grades': StudentClass.GRADE_CHOICES,
+        'departments': StudentClass.DEPARTMENT_CHOICES,
         'page_title': 'Create Class'
     }
     return render(request, 'classes/class_form.html', context)
@@ -2775,15 +2766,13 @@ def search_exams_for_class(request, class_pk):
     # Get IDs of already-assigned exams
     assigned_ids = student_class.assigned_exams.values_list('id', flat=True)
     
-    # Base queryset: exams from the same school, not yet assigned, matching class grade
+    # Base queryset: exams from the same school, not yet assigned, matching class department
     import re
-    class_grade_str = str(student_class.grade) if student_class.grade else ''
-    match = re.search(r'\d+', class_grade_str)
-    exam_grade_val = match.group() if match else ''
+    class_dept = student_class.department if student_class.department else ''
     
     available = Exam.objects.filter(
         school=student_class.school,
-        grade=exam_grade_val
+        department=class_dept
     ).exclude(
         id__in=assigned_ids
     )
@@ -2819,7 +2808,7 @@ def search_exams_for_class(request, class_pk):
             'subject': exam.subject,
             'question_count': exam.question_count,
             'duration_minutes': exam.duration_minutes,
-            'grade': exam.get_grade_display() if exam.grade else '',
+            'department': exam.get_department_display() if exam.department else '',
             'chapter': exam.chapter or '',
         })
         
@@ -2848,13 +2837,13 @@ def class_update(request, class_pk):
         student_class.description = request.POST.get('description', '')
         student_class.year = int(request.POST.get('year', student_class.year))
         
-        grade = request.POST.get('grade')
-        if grade:
-            valid_grades = [choice[0] for choice in StudentClass.GRADE_CHOICES]
-            if grade in valid_grades:
-                student_class.grade = grade
+        department = request.POST.get('department')
+        if department:
+            valid_departments = [choice[0] for choice in StudentClass.DEPARTMENT_CHOICES]
+            if department in valid_departments:
+                student_class.department = department
             else:
-                messages.error(request, 'Invalid grade selected.')
+                messages.error(request, 'Invalid department selected.')
                 return redirect('class_update', class_pk=student_class.pk)
         
         student_class.is_active = request.POST.get('is_active') == 'on'
@@ -2865,7 +2854,7 @@ def class_update(request, class_pk):
     
     context = {
         'student_class': student_class,
-        'grades': StudentClass.GRADE_CHOICES,
+        'departments': StudentClass.DEPARTMENT_CHOICES,
         'page_title': f'Edit {student_class.name}'
     }
     return render(request, 'classes/class_form.html', context)
@@ -2980,16 +2969,13 @@ def class_assign_exam(request, class_pk):
     if request.method == 'POST':
         exam_ids = request.POST.getlist('exams')
         if exam_ids:
-            # SCHOOL-SCOPED & GRADE-SCOPED: only exams from same school matching class grade
-            import re
-            class_grade_str = str(student_class.grade) if student_class.grade else ''
-            match = re.search(r'\d+', class_grade_str)
-            exam_grade_val = match.group() if match else ''
+            # SCHOOL-SCOPED & DEPARTMENT-SCOPED: only exams from same school matching class department
+            class_dept = student_class.department if student_class.department else ''
             
             exams = Exam.objects.filter(
                 id__in=exam_ids,
                 school=student_class.school,
-                grade=exam_grade_val
+                department=class_dept
             )
             from .models import ExamAssignmentDate
             for exam in exams:
@@ -4147,7 +4133,7 @@ def school_admin_bulk_create_teachers(request):
 
                         # Generate username
                         seq = school.get_next_teacher_number()
-                        candidate = generate_username(school.code, 'tch', seq)
+                        candidate = generate_username('tch', seq)
                         base = candidate
                         counter = 1
                         while User.objects.filter(username=candidate).exists():
@@ -4213,9 +4199,9 @@ def school_admin_manage_students(request):
             Q(username__icontains=search)
         )
 
-    grade_filter = request.GET.get('grade', '').strip()
-    if grade_filter:
-        students = students.filter(student_classes__grade=grade_filter).distinct()
+    dept_filter = request.GET.get('department', '').strip()
+    if dept_filter:
+        students = students.filter(student_classes__department=dept_filter).distinct()
 
     status_filter = request.GET.get('status', 'all')
     if status_filter == 'active':
@@ -4229,8 +4215,9 @@ def school_admin_manage_students(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    # Generate grade choices for the filter dropdown
-    grades = [f'Grade {i}' for i in range(1, 13)]
+    # Generate department choices for the filter dropdown
+    from .models import StudentClass as SC
+    departments = [d[0] for d in SC.DEPARTMENT_CHOICES]
 
     context = {
         'school': school,
@@ -4238,8 +4225,8 @@ def school_admin_manage_students(request):
         'total_students': students.count(),
         'search': search,
         'status_filter': status_filter,
-        'current_grade': grade_filter,
-        'grades': grades,
+        'current_department': dept_filter,
+        'departments': departments,
         'page_title': 'Manage Students',
     }
     return render(request, 'school_admin/manage_students.html', context)
@@ -4353,7 +4340,7 @@ def school_admin_bulk_create_students(request):
 
                         # Generate username
                         clean_id = re.sub(r'[^a-zA-Z0-9\-]', '', identifier)
-                        candidate = generate_username(school.code, 'stu', clean_id)
+                        candidate = generate_username('stu', clean_id)
                         base = candidate
                         counter = 1
                         while User.objects.filter(username=candidate).exists():

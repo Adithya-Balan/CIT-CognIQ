@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}School Settings — {{ school.name }} | Evalora{% endblock %}
+{% block title %}School Settings — {{ school.name }} | CognIQ{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50">
@@ -67,7 +67,7 @@
                 </div>
               {% else %}
                 <div class="relative group mx-auto sm:mx-0 shrink-0">
-                  <img src="{% static 'assets/logo.png' %}" alt="Default Evalora Logo" class="h-16 w-16 object-contain border border-gray-100 rounded-xl shadow-sm bg-white p-1">
+                  <img src="{% static 'assets/logo.png' %}" alt="Default CognIQ Logo" class="h-16 w-16 object-contain border border-gray-100 rounded-xl shadow-sm bg-white p-1">
                   <div class="absolute -bottom-2 -right-2 bg-slate-100 text-slate-500 rounded-full px-1.5 py-0.5 text-[10px] font-bold border border-slate-200">
                     Default
                   </div>
@@ -111,13 +111,7 @@
         System Identifiers (Read-only)
       </h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">School Code</label>
-          <div class="px-4 py-3 bg-white border border-slate-200/60 rounded-xl text-slate-700 font-mono text-sm shadow-sm select-all">
-            {{ school.code }}
-          </div>
-          <p class="text-xs text-gray-400 mt-1">Used to generate unique usernames.</p>
-        </div>
+
         <div>
           <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">URL Slug</label>
           <div class="px-4 py-3 bg-white border border-slate-200/60 rounded-xl text-slate-700 font-mono text-sm shadow-sm select-all">

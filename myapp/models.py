@@ -12,14 +12,14 @@ import re
 # USERNAME GENERATION UTILITY
 # ============================================================================
 
-def generate_username(school_code, role_prefix, identifier):
+def generate_username(role_prefix, identifier):
     """
     Generate a structured, globally-unique username.
-    Format: <school_code>_<role_prefix>_<identifier>
-    Example: SPHS_TCH_001  or  SPHS_STU_10A_042
+    Format: <role_prefix>_<identifier>
+    Example: TCH_001  or  STU_10A_042
     All lowercase, no spaces.
     """
-    raw = f"{school_code}_{role_prefix}_{identifier}"
+    raw = f"{role_prefix}_{identifier}"
     # Remove special characters except underscore, lowercase
     username = re.sub(r'[^a-z0-9_]', '', raw.lower())
     return username
@@ -45,13 +45,6 @@ class School(models.Model):
     )
     
     from django.core.validators import MinLengthValidator
-    
-    code = models.CharField(
-        max_length=20,
-        unique=True,
-        verbose_name='School Code',
-        help_text='Short globally unique 6-character code used in username generation (e.g., SPHS12). Uppercase letters and numbers only.'
-    )
     
     slug = models.SlugField(
         max_length=220,
@@ -99,12 +92,11 @@ class School(models.Model):
         ordering = ['name']
     
     def __str__(self):
-        return f"{self.name} ({self.code})"
+        return f"{self.name}"
     
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = f"{slugify(self.name)}-{self.code.lower()}"
-        self.code = self.code.upper().strip()
+            self.slug = f"{slugify(self.name)}"
         super().save(*args, **kwargs)
     
     @property
@@ -286,7 +278,7 @@ class StudentClass(models.Model):
     Student Class Model - Organize students into cohorts/batches
     
     Philosophy:
-    - Group students by grade, year, section
+    - Group students by department, year, section
     - Enable batch-wise exam assignment
     - Facilitate class-level analytics
     - Support exam reuse across batches
@@ -295,7 +287,7 @@ class StudentClass(models.Model):
     name = models.CharField(
         max_length=100, 
         verbose_name='Class Name',
-        help_text='e.g., Grade 10 - Section A (2025)'
+        help_text='e.g., AI & DS - Section A (2025)'
     )
     
     description = models.TextField(
@@ -309,27 +301,30 @@ class StudentClass(models.Model):
         help_text='Year this class is active (e.g., 2025)'
     )
     
-    GRADE_CHOICES = [
-        ('Grade 1', 'Grade 1'),
-        ('Grade 2', 'Grade 2'),
-        ('Grade 3', 'Grade 3'),
-        ('Grade 4', 'Grade 4'),
-        ('Grade 5', 'Grade 5'),
-        ('Grade 6', 'Grade 6'),
-        ('Grade 7', 'Grade 7'),
-        ('Grade 8', 'Grade 8'),
-        ('Grade 9', 'Grade 9'),
-        ('Grade 10', 'Grade 10'),
-        ('Grade 11', 'Grade 11'),
-        ('Grade 12', 'Grade 12'),
+    DEPARTMENT_CHOICES = [
+        ('Artificial Intelligence & Data Science', 'Artificial Intelligence & Data Science'),
+        ('Computer Science Engineering', 'Computer Science Engineering'),
+        ('CSE (AI and Machine Learning)', 'CSE (AI and Machine Learning)'),
+        ('Electronics & Communication Engineering', 'Electronics & Communication Engineering'),
+        ('EE (VLSI Design & Technology)', 'EE (VLSI Design & Technology)'),
+        ('Electrical & Electronics Engineering', 'Electrical & Electronics Engineering'),
+        ('Mechanical Engineering', 'Mechanical Engineering'),
+        ('Sciences & Humanities', 'Sciences & Humanities'),
+        ('Computer Science & Business Systems', 'Computer Science & Business Systems'),
+        ('CSE (Cyber Security)', 'CSE (Cyber Security)'),
+        ('Information Technology', 'Information Technology'),
+        ('ECE (Advanced Comm. Technology)', 'ECE (Advanced Comm. Technology)'),
+        ('Biomedical Engineering', 'Biomedical Engineering'),
+        ('B.E Mechatronics Engineering', 'B.E Mechatronics Engineering'),
+        ('Civil Engineering', 'Civil Engineering'),
     ]
-    
-    grade = models.CharField(
-        max_length=20,
-        choices=GRADE_CHOICES,
-        verbose_name='Grade',
-        help_text='Select the grade level for this class',
-        default='Grade 10'
+
+    department = models.CharField(
+        max_length=100,
+        choices=DEPARTMENT_CHOICES,
+        verbose_name='Department',
+        help_text='Select the department for this class',
+        default='Computer Science Engineering'
     )
     
     # School FK — classes are strictly scoped to one school
@@ -441,11 +436,8 @@ class Exam(models.Model):
     
     # Subject Choices - Fixed list to avoid typos and ensure consistency
     SUBJECT_CHOICES = (
-        ('English', 'English'),
-        ('Social Science', 'Social Science'),
-        ('Science', 'Science'),
-        ('Mathematics', 'Mathematics'),
-        ('தமிழ்', 'தமிழ்'),
+        ('Aptitude', 'Aptitude'),
+        ('GATE', 'GATE'),
     )
     
     # Exam Type Choices
@@ -464,12 +456,29 @@ class Exam(models.Model):
     )
     description = models.TextField(blank=True, verbose_name='Description/Instructions')
     
-    GRADE_CHOICES = [(str(i), f"Grade {i}") for i in range(1, 13)]
-    
-    grade = models.CharField(
-        max_length=50, 
-        choices=GRADE_CHOICES,
-        verbose_name='Grade/Standard'
+    DEPARTMENT_CHOICES = [
+        ('Artificial Intelligence & Data Science', 'Artificial Intelligence & Data Science'),
+        ('Computer Science Engineering', 'Computer Science Engineering'),
+        ('CSE (AI and Machine Learning)', 'CSE (AI and Machine Learning)'),
+        ('Electronics & Communication Engineering', 'Electronics & Communication Engineering'),
+        ('EE (VLSI Design & Technology)', 'EE (VLSI Design & Technology)'),
+        ('Electrical & Electronics Engineering', 'Electrical & Electronics Engineering'),
+        ('Mechanical Engineering', 'Mechanical Engineering'),
+        ('Sciences & Humanities', 'Sciences & Humanities'),
+        ('Computer Science & Business Systems', 'Computer Science & Business Systems'),
+        ('CSE (Cyber Security)', 'CSE (Cyber Security)'),
+        ('Information Technology', 'Information Technology'),
+        ('ECE (Advanced Comm. Technology)', 'ECE (Advanced Comm. Technology)'),
+        ('Biomedical Engineering', 'Biomedical Engineering'),
+        ('B.E Mechatronics Engineering', 'B.E Mechatronics Engineering'),
+        ('Civil Engineering', 'Civil Engineering'),
+    ]
+
+    department = models.CharField(
+        max_length=100,
+        choices=DEPARTMENT_CHOICES,
+        verbose_name='Department',
+        blank=True
     )
     chapter = models.CharField(max_length=200, verbose_name='Chapter/Topic/Category')
     
@@ -604,7 +613,7 @@ class Question(models.Model):
         choices=Exam.SUBJECT_CHOICES,
         verbose_name='Subject'
     )
-    grade = models.CharField(max_length=50, blank=True, verbose_name='Grade/Standard')
+    department = models.CharField(max_length=100, blank=True, verbose_name='Department')
     chapter = models.CharField(max_length=200, blank=True, verbose_name='Chapter/Topic')
     
     # Question Content

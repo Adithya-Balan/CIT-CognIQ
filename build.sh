@@ -4,7 +4,7 @@
 set -o errexit
 
 # Install Python dependencies
-pip install -r requirements.txt
+uv sync
 
 # Install Node.js dependencies for Tailwind CSS
 npm install
@@ -13,7 +13,7 @@ npm install
 npx @tailwindcss/cli -i ./static/styles/input.css -o ./static/styles/output.css
 
 # Collect static files 
-python manage.py collectstatic --noinput
+uv run python manage.py collectstatic --noinput
 
 # Run database migrations (for PostgreSQL)
-python manage.py migrate
+uv run python manage.py migrate

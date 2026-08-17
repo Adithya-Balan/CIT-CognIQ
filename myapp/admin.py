@@ -13,16 +13,16 @@ class SchoolAdmin(admin.ModelAdmin):
     School management — platform superadmin only.
     Schools are created here; each school gets its own admin user.
     """
-    list_display = ('name', 'code', 'is_active', 'teacher_count', 'student_count', 'created_at')
+    list_display = ('name', 'is_active', 'teacher_count', 'student_count', 'created_at')
     list_filter = ('is_active', 'created_at')
-    search_fields = ('name', 'code', 'email')
+    search_fields = ('name', 'email')
     ordering = ('name',)
     prepopulated_fields = {'slug': ('name',)}
     readonly_fields = ('created_at', 'updated_at')
 
     fieldsets = (
         ('School Identity', {
-            'fields': ('name', 'code', 'slug', 'logo')
+            'fields': ('name', 'slug', 'logo')
         }),
         ('Contact Information', {
             'fields': ('address', 'phone', 'email')
@@ -133,14 +133,14 @@ class ExamAdmin(admin.ModelAdmin):
 class QuestionAdmin(admin.ModelAdmin):
     """Question Admin"""
 
-    list_display = ('school', 'subject', 'grade', 'chapter', 'question_text_short', 'marks', 'created_by', 'has_explanation')
-    list_filter = ('school', 'subject', 'grade', 'created_by')
+    list_display = ('school', 'subject', 'department', 'chapter', 'question_text_short', 'marks', 'created_by', 'has_explanation')
+    list_filter = ('school', 'subject', 'department', 'created_by')
     search_fields = ('question_text', 'explanation', 'chapter')
     ordering = ('-created_at',)
 
     fieldsets = (
         ('Categorization', {
-            'fields': ('school', 'created_by', 'subject', 'grade', 'chapter')
+            'fields': ('school', 'created_by', 'subject', 'department', 'chapter')
         }),
         ('Question Content', {
             'fields': ('question_text', 'marks')

@@ -15,19 +15,16 @@ def exam_bank(request):
     exams = Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(created_by=request.user).select_related('created_by').prefetch_related('questions')
     
     import re
-    def extract_grade_num(g):
-        match = re.search(r'\d+', str(g))
-        return int(match.group()) if match else 0
-
-    grades = sorted(set(Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(created_by=request.user).exclude(grade='').values_list('grade', flat=True)), key=extract_grade_num)
+    
+    departments = sorted(set(Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(created_by=request.user).exclude(department='').values_list('department', flat=True)))
 
     # Filtering
-    grade = request.GET.get('grade', '').strip()
-    if not grade and grades:
-        grade = grades[0]
+    department = request.GET.get('department', '').strip()
+    if not department and departments:
+        department = departments[0]
 
-    if grade:
-        exams = exams.filter(grade=grade)
+    if department:
+        exams = exams.filter(department=department)
 
     subject = request.GET.get('subject')
     chapter = request.GET.get('chapter')
@@ -46,20 +43,20 @@ def exam_bank(request):
     page_obj = paginator.get_page(page_number)
     
     # Get unique values for filters using set() for absolute deduplication
-    grade_all_exams = Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(created_by=request.user)
-    if grade:
-        grade_all_exams = grade_all_exams.filter(grade=grade)
+    dept_all_exams = Exam.objects.filter(school=request.user.school, is_cloned=False).exclude(created_by=request.user)
+    if department:
+        dept_all_exams = dept_all_exams.filter(department=department)
 
-    subjects = sorted(set(grade_all_exams.exclude(subject='').values_list('subject', flat=True)))
-    chapters = sorted(set(grade_all_exams.exclude(chapter='').values_list('chapter', flat=True)))
+    subjects = sorted(set(dept_all_exams.exclude(subject='').values_list('subject', flat=True)))
+    chapters = sorted(set(dept_all_exams.exclude(chapter='').values_list('chapter', flat=True)))
     
     context = {
         'page_obj': page_obj,
         'subjects': subjects,
-        'grades': grades,
+        'departments': departments,
         'chapters': chapters,
         'current_subject': subject,
-        'current_grade': grade,
+        'current_department': department,
         'current_chapter': chapter,
         'search_query': search,
         'page_title': 'Shared Exam Bank'
@@ -83,10 +80,9 @@ def assign_exam_from_bank(request, exam_pk):
             
         classes = StudentClass.objects.filter(id__in=class_ids, created_by=request.user)
         
-        exam_grade = exam.grade.strip() if exam.grade else ""
-        if exam_grade:
-            class_grade_val = exam_grade if exam_grade.startswith("Grade") else f"Grade {exam_grade}"
-            classes = classes.filter(grade=class_grade_val)
+        exam_dept = exam.department.strip() if exam.department else ""
+        if exam_dept:
+            classes = classes.filter(department=exam_dept)
         assigned_count = 0
         from myapp.models import ExamAssignmentDate
         for student_class in classes:
@@ -105,10 +101,9 @@ def assign_exam_from_bank(request, exam_pk):
     # GET request - show form to pick classes
     teacher_classes = StudentClass.objects.filter(created_by=request.user).order_by('name')
     
-    exam_grade = exam.grade.strip() if exam.grade else ""
-    if exam_grade:
-        class_grade_val = exam_grade if exam_grade.startswith("Grade") else f"Grade {exam_grade}"
-        teacher_classes = teacher_classes.filter(grade=class_grade_val)
+    exam_dept = exam.department.strip() if exam.department else ""
+    if exam_dept:
+        teacher_classes = teacher_classes.filter(department=exam_dept)
     already_assigned = exam.assigned_classes.filter(created_by=request.user).values_list('id', flat=True)
     
     context = {
@@ -140,7 +135,7 @@ def clone_exam(request, exam_pk):
                     title=f"Copy of {original_exam.title}",
                     subject=original_exam.subject,
                     description=original_exam.description,
-                    grade=original_exam.grade,
+                    department=original_exam.department,
                     chapter=original_exam.chapter,
                     exam_type=original_exam.exam_type,
                     school=request.user.school,

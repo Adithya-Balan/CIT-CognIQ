@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Manage Students — {{ school.name }} | Evalora{% endblock %}
+{% block title %}Manage Students — {{ school.name }} | CognIQ{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50">
@@ -34,12 +34,12 @@
         <input type="text" name="q" value="{{ search }}" placeholder="Search by name or username…"
           class="w-full lg:flex-1 min-w-[200px] px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm">
           
-        <div class="grid grid-cols-2 {% if search or current_grade or status_filter != 'all' %}sm:grid-cols-3{% else %}sm:grid-cols-2{% endif %} gap-3 w-full lg:w-auto">
-          <!-- Grade Filter -->
-          <select name="grade" onchange="this.form.submit()" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm cursor-pointer text-gray-700 font-medium">
-            <option value="">All Grades</option>
-            {% for grade in grades %}
-              <option value="{{ grade }}" {% if current_grade == grade %}selected{% endif %}>{{ grade }}</option>
+        <div class="grid grid-cols-2 {% if search or current_department or status_filter != 'all' %}sm:grid-cols-3{% else %}sm:grid-cols-2{% endif %} gap-3 w-full lg:w-auto">
+          <!-- Department Filter -->
+          <select name="department" onchange="this.form.submit()" class="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white shadow-sm cursor-pointer text-gray-700 font-medium">
+            <option value="">All Departments</option>
+            {% for department in departments %}
+              <option value="{{ department }}" {% if current_department == department %}selected{% endif %}>{{ department }}</option>
             {% endfor %}
           </select>
           
@@ -50,7 +50,7 @@
             <option value="deactivated" {% if status_filter == 'deactivated' %}selected{% endif %}>Deactivated Only</option>
           </select>
 
-          {% if search or current_grade or status_filter != 'all' %}
+          {% if search or current_department or status_filter != 'all' %}
             <a href="{% url 'school_admin_manage_students' %}" class="col-span-2 sm:col-span-1 px-5 py-3 bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-300 transition-all text-center flex items-center justify-center whitespace-nowrap">Clear</a>
           {% endif %}
         </div>
@@ -143,7 +143,7 @@
         </div>
         <div class="flex flex-wrap items-center justify-center gap-2">
           {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if current_grade %}&grade={{ current_grade|urlencode }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-emerald-600 transition-colors shadow-sm">
+            <a href="?page={{ page_obj.previous_page_number }}{% if search %}&q={{ search }}{% endif %}{% if current_department %}&department={{ current_department|urlencode }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-emerald-600 transition-colors shadow-sm">
               Previous
             </a>
           {% else %}
@@ -155,7 +155,7 @@
           </span>
           
           {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}{% if current_grade %}&grade={{ current_grade|urlencode }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-emerald-600 transition-colors shadow-sm">
+            <a href="?page={{ page_obj.next_page_number }}{% if search %}&q={{ search }}{% endif %}{% if current_department %}&department={{ current_department|urlencode }}{% endif %}{% if status_filter != 'all' %}&status={{ status_filter }}{% endif %}" class="px-3 py-1.5 text-sm font-medium border border-gray-200 bg-white rounded-lg text-gray-600 hover:bg-gray-50 hover:text-emerald-600 transition-colors shadow-sm">
               Next
             </a>
           {% else %}

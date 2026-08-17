@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Manage Teachers — {{ school.name }} | Evalora{% endblock %}
+{% block title %}Manage Teachers — {{ school.name }} | CognIQ{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50">
@@ -12,7 +12,7 @@
           ← Back to Dashboard
         </a>
         <h1 class="text-2xl font-extrabold">Manage Teachers</h1>
-        <p class="text-slate-400 text-sm mt-1">{{ school.name }} &mdash; <span class="font-mono text-indigo-300">{{ school.code }}</span></p>
+        <p class="text-slate-400 text-sm mt-1">{{ school.name }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-2 sm:gap-3">
         <a href="{% url 'school_admin_bulk_create_teachers' %}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-bold rounded-xl transition-all shadow-sm flex-1 sm:flex-none whitespace-nowrap">

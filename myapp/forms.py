@@ -14,7 +14,7 @@ import re
 class TeacherCreationForm(forms.ModelForm):
     """
     Used by school admins to create teacher accounts within their school.
-    Username is auto-generated as: <school_code>_tch_<seq_number>
+    Username is auto-generated as: tch_<seq_number>
     Password is set explicitly.
     """
     password = forms.CharField(
@@ -64,7 +64,7 @@ class TeacherCreationForm(forms.ModelForm):
         user.school = school
         # Auto-generate username: e.g., default_tch_004
         seq = school.get_next_teacher_number()
-        candidate = generate_username(school.code, 'tch', seq)
+        candidate = generate_username('tch', seq)
         # Ensure global uniqueness (edge case: increment if taken)
         base = candidate
         counter = 1
@@ -81,7 +81,7 @@ class TeacherCreationForm(forms.ModelForm):
 class StudentCreationForm(forms.ModelForm):
     """
     Used by school admins and teachers to create student accounts.
-    Username is auto-generated as: <school_code>_stu_<class_prefix>_<seq>
+    Username is auto-generated as: stu_<class_prefix>_<seq>
     A custom username suffix can be provided (roll number, etc.).
     """
     identifier = forms.CharField(
@@ -146,7 +146,7 @@ class StudentCreationForm(forms.ModelForm):
         user.role = 'student'
         user.school = school
         identifier = self.cleaned_data['identifier']
-        candidate = generate_username(school.code, 'stu', identifier)
+        candidate = generate_username('stu', identifier)
         base = candidate
         counter = 1
         while User.objects.filter(username=candidate).exists():
@@ -279,7 +279,7 @@ class ExamForm(forms.ModelForm):
     class Meta:
         model = Exam
         fields = [
-            'title', 'subject', 'grade', 'chapter', 'description',
+            'title', 'subject', 'department', 'chapter', 'description',
             'exam_type',
             'duration_minutes',
             'pass_percentage'
@@ -287,12 +287,12 @@ class ExamForm(forms.ModelForm):
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
-                'placeholder': 'e.g., Mathematics Mid-Term Exam'
+                'placeholder': 'e.g., Aptitude Mock Test'
             }),
             'subject': forms.Select(attrs={
                 'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500'
             }),
-            'grade': forms.Select(attrs={
+            'department': forms.Select(attrs={
                 'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500'
             }),
             'chapter': forms.TextInput(attrs={
@@ -324,7 +324,7 @@ class ExamForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['description'].required = False
         self.fields['subject'].required = True
-        self.fields['grade'].required = True
+        self.fields['department'].required = True
         self.fields['chapter'].required = True
         self.fields['pass_percentage'].help_text = 'Minimum percentage required to pass (default: 40%)'
 
@@ -338,7 +338,7 @@ class QuestionForm(forms.ModelForm):
 
     class Meta:
         model = Question
-        fields = ['question_text', 'marks', 'explanation', 'subject', 'grade', 'chapter']
+        fields = ['question_text', 'marks', 'explanation', 'subject', 'department', 'chapter']
         widgets = {
             'question_text': forms.Textarea(attrs={
                 'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
@@ -358,9 +358,8 @@ class QuestionForm(forms.ModelForm):
             'subject': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
             }),
-            'grade': forms.TextInput(attrs={
+            'department': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
-                'placeholder': 'e.g., Grade 10'
             }),
             'chapter': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500',
