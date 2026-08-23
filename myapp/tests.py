@@ -381,4 +381,217 @@ class CoreExamEngineTests(TestCase):
         attempt2 = ExamAttempt.objects.get(student=self.student, exam=self.exam)
         self.assertEqual(attempt1.pk, attempt2.pk)
 
+    # =========================================================================
+    # PROCTORING & EVENT DETECTION TESTS (TESTS 1 to 12)
+    # =========================================================================
+
+    def test_01_practice_attempt_loads_without_proctoring(self):
+        """TEST 1 & 2: Practice attempt loads and refreshes with is_proctored=False."""
+        # Create practice_test exam
+        practice_exam = Exam.objects.create(
+            title='Practice & Test Exam',
+            subject='Aptitude',
+            department='Computer Science & Business Systems',
+            chapter='General Aptitude',
+            exam_type='practice_test',
+            duration_minutes=30,
+            pass_percentage=40,
+            created_by=self.teacher,
+            school=self.school
+        )
+        practice_exam.assigned_classes.add(self.student_class)
+        for i, q in enumerate(self.questions[:5], start=1):
+            ExamQuestion.objects.create(exam=practice_exam, question=q, order=i)
+
+        self.client.login(username='student1', password='Student@12345')
+        res = self.client.get(reverse('exam_take', kwargs={'exam_pk': practice_exam.pk}) + '?mode=practice')
+        self.assertEqual(res.status_code, 200)
+        self.assertFalse(res.context['is_proctored'])
+        self.assertEqual(res.context['attempt'].attempt_mode, 'practice')
+
+        # Refresh practice attempt
+        res_refresh = self.client.get(reverse('exam_take', kwargs={'exam_pk': practice_exam.pk}) + '?mode=practice')
+        self.assertEqual(res_refresh.status_code, 200)
+        self.assertFalse(res_refresh.context['is_proctored'])
+
+    def test_03_actual_take_test_attempt_has_proctoring_enabled(self):
+        """TEST 3 & 9: Actual Take Test attempt enables is_proctored=True and persists on refresh."""
+        self.client.login(username='student1', password='Student@12345')
+        res = self.client.get(reverse('exam_take', kwargs={'exam_pk': self.exam.pk}) + '?mode=test')
+        self.assertEqual(res.status_code, 200)
+        self.assertTrue(res.context['is_proctored'])
+        self.assertEqual(res.context['attempt'].attempt_mode, 'test')
+
+        # Refresh
+        res_refresh = self.client.get(reverse('exam_take', kwargs={'exam_pk': self.exam.pk}))
+        self.assertEqual(res_refresh.status_code, 200)
+        self.assertTrue(res_refresh.context['is_proctored'])
+
+    def test_04_test_first_violation_records_warning(self):
+        """TEST 4: First violation returns warning and does not terminate exam."""
+        self.client.login(username='student1', password='Student@12345')
+        self.client.get(reverse('exam_take', kwargs={'exam_pk': self.exam.pk}) + '?mode=test')
+        attempt = ExamAttempt.objects.get(student=self.student, exam=self.exam)
+
+        event_url = reverse('api_record_event', kwargs={'attempt_pk': attempt.pk})
+        res = self.client.post(
+            event_url,
+            data=json.dumps({'event_type': 'Tab switch', 'violation_count': 1}),
+            content_type='application/json'
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data['success'])
+        self.assertEqual(data['action'], 'warning')
+
+        attempt.refresh_from_db()
+        self.assertFalse(attempt.has_violation)
+        self.assertFalse(attempt.is_completed)
+        self.assertEqual(attempt.status, 'in_progress')
+
+    def test_05_five_violation_lifecycle_and_termination(self):
+        """TEST 5 & L: Violations 1 to 4 issue warnings, 5th violation terminates attempt."""
+        self.client.login(username='student1', password='Student@12345')
+        self.client.get(reverse('exam_take', kwargs={'exam_pk': self.exam.pk}) + '?mode=test')
+        attempt = ExamAttempt.objects.get(student=self.student, exam=self.exam)
+
+        event_url = reverse('api_record_event', kwargs={'attempt_pk': attempt.pk})
+        
+        # Violations 1 through 4 should only issue warnings
+        for v in range(1, 5):
+            res = self.client.post(
+                event_url,
+                data=json.dumps({'event_type': 'TAB_SWITCH', 'reason': f'Tab switch #{v}', 'violation_count': v}),
+                content_type='application/json'
+            )
+            self.assertEqual(res.status_code, 200)
+            data = res.json()
+            self.assertEqual(data['action'], 'warning')
+            self.assertEqual(data['violation_count'], v)
+            self.assertEqual(data['max_violations'], 5)
+
+            attempt.refresh_from_db()
+            self.assertFalse(attempt.has_violation)
+            self.assertFalse(attempt.is_completed)
+            self.assertEqual(attempt.status, 'in_progress')
+
+        # 5th violation terminates exam
+        res5 = self.client.post(
+            event_url,
+            data=json.dumps({'event_type': 'FULLSCREEN_EXIT', 'reason': 'ESC pressed', 'violation_count': 5}),
+            content_type='application/json'
+        )
+        self.assertEqual(res5.status_code, 200)
+        data5 = res5.json()
+        self.assertTrue(data5['success'])
+        self.assertEqual(data5['action'], 'terminate')
+        self.assertEqual(data5['violation_count'], 5)
+        self.assertEqual(data5['max_violations'], 5)
+
+        attempt.refresh_from_db()
+        self.assertTrue(attempt.has_violation)
+        self.assertTrue(attempt.is_completed)
+        self.assertEqual(attempt.status, 'terminated')
+
+    def test_06_refresh_active_test_preserves_violation_count(self):
+        """TEST Q: Refreshing active test keeps proctoring enabled and preserves server violation count."""
+        self.client.login(username='student1', password='Student@12345')
+        self.client.get(reverse('exam_take', kwargs={'exam_pk': self.exam.pk}) + '?mode=test')
+        attempt = ExamAttempt.objects.get(student=self.student, exam=self.exam)
+
+        event_url = reverse('api_record_event', kwargs={'attempt_pk': attempt.pk})
+        self.client.post(
+            event_url,
+            data=json.dumps({'event_type': 'WINDOW_FOCUS_LOSS', 'reason': 'Window lost focus', 'violation_count': 1}),
+            content_type='application/json'
+        )
+
+        # Refresh page
+        res_refresh = self.client.get(reverse('exam_take', kwargs={'exam_pk': self.exam.pk}))
+        self.assertEqual(res_refresh.status_code, 200)
+        self.assertTrue(res_refresh.context['is_proctored'])
+        self.assertEqual(res_refresh.context['initial_violation_count'], 1)
+
+    def test_10_practice_attempt_ignores_violation_endpoint(self):
+        """TEST 10 & O: Attempting to call violation endpoint on a practice attempt is rejected/ignored."""
+        practice_exam = Exam.objects.create(
+            title='Practice Exam',
+            subject='Aptitude',
+            department='Computer Science & Business Systems',
+            chapter='General Aptitude',
+            exam_type='practice_test',
+            duration_minutes=30,
+            pass_percentage=40,
+            created_by=self.teacher,
+            school=self.school
+        )
+        practice_exam.assigned_classes.add(self.student_class)
+
+        self.client.login(username='student1', password='Student@12345')
+        self.client.get(reverse('exam_take', kwargs={'exam_pk': practice_exam.pk}) + '?mode=practice')
+        attempt = ExamAttempt.objects.get(student=self.student, exam=practice_exam)
+        self.assertEqual(attempt.attempt_mode, 'practice')
+
+        event_url = reverse('api_record_event', kwargs={'attempt_pk': attempt.pk})
+        res = self.client.post(
+            event_url,
+            data=json.dumps({'event_type': 'TAB_SWITCH', 'reason': 'Tab switched', 'violation_count': 2}),
+            content_type='application/json'
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data.get('ignored'))
+
+        attempt.refresh_from_db()
+        self.assertFalse(attempt.has_violation)
+        self.assertFalse(attempt.is_completed)
+        self.assertEqual(attempt.status, 'in_progress')
+
+    def test_11_other_student_cannot_send_event(self):
+        """TEST 11 & P: Attempt to send event for another student's attempt returns 404."""
+        student2 = User.objects.create_user(
+            username='student2',
+            first_name='Student',
+            last_name='Two',
+            role='student',
+            password='Student@12345',
+            school=self.school
+        )
+        self.student_class.students.add(student2)
+
+        # Create attempt for student 1
+        self.client.login(username='student1', password='Student@12345')
+        self.client.get(reverse('exam_take', kwargs={'exam_pk': self.exam.pk}))
+        attempt = ExamAttempt.objects.get(student=self.student, exam=self.exam)
+
+        # Login as student 2 and attempt to send violation for student 1's attempt
+        self.client.login(username='student2', password='Student@12345')
+        event_url = reverse('api_record_event', kwargs={'attempt_pk': attempt.pk})
+        res = self.client.post(
+            event_url,
+            data=json.dumps({'event_type': 'FULLSCREEN_EXIT', 'reason': 'ESC pressed', 'violation_count': 1}),
+            content_type='application/json'
+        )
+        self.assertEqual(res.status_code, 404)
+
+    def test_12_completed_attempt_event_rejected(self):
+        """TEST 12: Inactive/completed attempt rejects new events with 400."""
+        self.client.login(username='student1', password='Student@12345')
+        self.client.get(reverse('exam_take', kwargs={'exam_pk': self.exam.pk}))
+        attempt = ExamAttempt.objects.get(student=self.student, exam=self.exam)
+
+        # Submit attempt
+        submit_url = reverse('exam_submit', kwargs={'attempt_pk': attempt.pk})
+        self.client.post(submit_url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+        # Send event on submitted attempt
+        event_url = reverse('api_record_event', kwargs={'attempt_pk': attempt.pk})
+        res = self.client.post(
+            event_url,
+            data=json.dumps({'event_type': 'TAB_SWITCH', 'reason': 'Tab switched', 'violation_count': 1}),
+            content_type='application/json'
+        )
+        self.assertEqual(res.status_code, 400)
+
+
 

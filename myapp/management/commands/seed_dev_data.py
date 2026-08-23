@@ -8,7 +8,7 @@ from myapp.models import (
 
 
 class Command(BaseCommand):
-    help = 'Idempotently seed small development dataset for CIT-CognIQ application'
+    help = 'Idempotently seed development dataset with 5 mock exams and questions for CIT-CognIQ application'
 
     def handle(self, *args, **options):
         self.stdout.write(self.style.SUCCESS('--- Seeding Development Data ---'))
@@ -232,12 +232,14 @@ class Command(BaseCommand):
                 'choices': [('in', False), ('at', True), ('with', False), ('on', False)],
                 'explanation': 'The adjective "good" takes the preposition "at" when referring to ability or skill.',
             },
+            # 14. CS
             {
                 'chapter': 'Computer Science',
                 'text': 'Which computer component is commonly referred to as the brain of the computer?',
                 'choices': [('RAM', False), ('Hard Drive', False), ('CPU', True), ('GPU', False)],
                 'explanation': 'The CPU (Central Processing Unit) performs instructions and calculations.',
             },
+            # 15. Web
             {
                 'chapter': 'Web Technologies',
                 'text': 'What does HTML stand for?',
@@ -249,6 +251,86 @@ class Command(BaseCommand):
                 ],
                 'explanation': 'HTML stands for HyperText Markup Language.',
             },
+            # 16. Quant
+            {
+                'chapter': 'Time and Work',
+                'text': 'If A can finish a job in 6 days and B in 12 days, how many days will they take working together?',
+                'choices': [('4 days', True), ('3 days', False), ('5 days', False), ('2 days', False)],
+                'explanation': '1/6 + 1/12 = 3/12 = 1/4. Together they take 4 days.',
+            },
+            # 17. Quant
+            {
+                'chapter': 'Speed and Distance',
+                'text': 'A car travels at 60 km/h. How far does it travel in 2.5 hours?',
+                'choices': [('120 km', False), ('150 km', True), ('180 km', False), ('140 km', False)],
+                'explanation': 'Distance = Speed * Time = 60 * 2.5 = 150 km.',
+            },
+            # 18. Logical
+            {
+                'chapter': 'Blood Relations',
+                'text': 'Pointing to a man, a woman said, "His mother is the only daughter of my mother." How is the woman related to the man?',
+                'choices': [('Mother', True), ('Sister', False), ('Aunt', False), ('Grandmother', False)],
+                'explanation': 'Only daughter of woman\'s mother is the woman herself. So the woman is his mother.',
+            },
+            # 19. Logical
+            {
+                'chapter': 'Direction Sense',
+                'text': 'A person walks 3 km North, then 4 km East. How far is he from the starting point?',
+                'choices': [('7 km', False), ('5 km', True), ('6 km', False), ('4 km', False)],
+                'explanation': 'Pythagoras theorem: sqrt(3^2 + 4^2) = sqrt(9 + 16) = sqrt(25) = 5 km.',
+            },
+            # 20. Verbal
+            {
+                'chapter': 'Idioms',
+                'text': 'What does the idiom "Break the ice" mean?',
+                'choices': [
+                    ('To start a social conversation', True),
+                    ('To cause an accident', False),
+                    ('To cool down a drink', False),
+                    ('To end a friendship', False)
+                ],
+                'explanation': '"Break the ice" means to make people feel more comfortable in a social setting.',
+            },
+            # 21. Verbal
+            {
+                'chapter': 'Grammar',
+                'text': 'Choose the sentence with correct subject-verb agreement.',
+                'choices': [
+                    ('Neither of the boys were present.', False),
+                    ('Neither of the boys was present.', True),
+                    ('Neither of the boys are present.', False),
+                    ('Neither of the boys have been present.', False)
+                ],
+                'explanation': '"Neither" is singular and takes a singular verb "was".',
+            },
+            # 22. Quant
+            {
+                'chapter': 'Ratio and Proportion',
+                'text': 'The ratio of boys to girls in a class of 40 students is 3:2. How many girls are there?',
+                'choices': [('16', True), ('24', False), ('20', False), ('18', False)],
+                'explanation': 'Total parts = 3 + 2 = 5. Girls = (2/5) * 40 = 16.',
+            },
+            # 23. Quant
+            {
+                'chapter': 'Averages',
+                'text': 'What is the average of 10, 20, 30, 40, and 50?',
+                'choices': [('25', False), ('30', True), ('35', False), ('40', False)],
+                'explanation': 'Sum = 150. Count = 5. Average = 150 / 5 = 30.',
+            },
+            # 24. Logical
+            {
+                'chapter': 'Coding-Decoding',
+                'text': 'If CAT is coded as 3120, how is DOG coded?',
+                'choices': [('4157', True), ('4147', False), ('4156', False), ('4167', False)],
+                'explanation': 'D=4, O=15, G=7 -> 4157.',
+            },
+            # 25. CS
+            {
+                'chapter': 'Data Structures',
+                'text': 'Which data structure follows the LIFO (Last In First Out) principle?',
+                'choices': [('Queue', False), ('Stack', True), ('Linked List', False), ('Array', False)],
+                'explanation': 'A Stack operates on the Last In First Out (LIFO) principle.',
+            }
         ]
 
         created_questions = []
@@ -280,11 +362,7 @@ class Command(BaseCommand):
         return created_questions
 
     def seed_exams(self, school, teacher_user, questions, csbs_class):
-        # Exam 1: Aptitude Mock Test 01 (10 questions)
-        exam1_questions = questions[0:10]
-
-        # Exam 2: Aptitude Practice Test 02 (5 questions)
-        exam2_questions = questions[10:15]
+        q_count = len(questions)
 
         exams_config = [
             {
@@ -293,22 +371,58 @@ class Command(BaseCommand):
                 'department': 'Computer Science & Business Systems',
                 'chapter': 'General Aptitude',
                 'exam_type': 'practice_test',
-                'duration_minutes': 30,
+                'duration_minutes': 5,
                 'pass_percentage': 40,
                 'created_by': teacher_user,
-                'questions': exam1_questions,
+                'questions': questions[0:10],
                 'assigned_classes': [csbs_class],
             },
             {
-                'title': 'Aptitude Practice Test 02',
+                'title': 'Aptitude Mock Test 02',
                 'subject': 'Aptitude',
                 'department': 'Computer Science & Business Systems',
-                'chapter': 'Quantitative & Verbal',
-                'exam_type': 'test',
-                'duration_minutes': 15,
+                'chapter': 'Quantitative Aptitude',
+                'exam_type': 'practice_test',
+                'duration_minutes': 5,
                 'pass_percentage': 40,
                 'created_by': teacher_user,
-                'questions': exam2_questions,
+                'questions': questions[5:15],
+                'assigned_classes': [csbs_class],
+            },
+            {
+                'title': 'Aptitude Mock Test 03',
+                'subject': 'Aptitude',
+                'department': 'Computer Science & Business Systems',
+                'chapter': 'Logical Reasoning & Verbal',
+                'exam_type': 'practice_test',
+                'duration_minutes': 10,
+                'pass_percentage': 40,
+                'created_by': teacher_user,
+                'questions': questions[0:15],
+                'assigned_classes': [csbs_class],
+            },
+            {
+                'title': 'Aptitude Mock Test 04',
+                'subject': 'Aptitude',
+                'department': 'Computer Science & Business Systems',
+                'chapter': 'Comprehensive Aptitude',
+                'exam_type': 'practice_test',
+                'duration_minutes': 10,
+                'pass_percentage': 40,
+                'created_by': teacher_user,
+                'questions': questions[0:20] if q_count >= 20 else questions,
+                'assigned_classes': [csbs_class],
+            },
+            {
+                'title': 'Aptitude Mock Test 05',
+                'subject': 'Aptitude',
+                'department': 'Computer Science & Business Systems',
+                'chapter': 'Speed Assessment',
+                'exam_type': 'practice_test',
+                'duration_minutes': 3,
+                'pass_percentage': 40,
+                'created_by': teacher_user,
+                'questions': questions[10:20] if q_count >= 20 else questions[0:10],
                 'assigned_classes': [csbs_class],
             },
         ]
@@ -326,7 +440,7 @@ class Command(BaseCommand):
                     'duration_minutes': e_info['duration_minutes'],
                     'pass_percentage': e_info['pass_percentage'],
                     'created_by': e_info['created_by'],
-                    'description': f"Official test: {e_info['title']}",
+                    'description': f"Official mock assessment: {e_info['title']}",
                 }
             )
 
@@ -392,10 +506,10 @@ class Command(BaseCommand):
         self.stdout.write("\nClass:")
         self.stdout.write(f"  {csbs_class.name} ({csbs_class.students.count()} students assigned)")
 
-        self.stdout.write("\nTests:")
+        self.stdout.write("\nMock Tests Created:")
         for e in exams:
-            self.stdout.write(f"  {e.title} ({e.questions.count()} questions, duration {e.duration_minutes} mins)")
+            self.stdout.write(f"  {e.title} ({e.questions.count()} Qs, {e.duration_minutes} mins, {e.exam_type})")
 
-        self.stdout.write(f"\nQuestions:")
+        self.stdout.write(f"\nQuestions Bank:")
         self.stdout.write(f"  {len(questions)} MCQ questions loaded into bank")
         self.stdout.write(f"  ({Choice.objects.count()} choices created)")

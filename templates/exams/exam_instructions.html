@@ -240,13 +240,36 @@ function handleAckChange(checkbox) {
     }
 }
 
-function validateStartExam(e) {
+async function validateStartExam(e) {
+    e.preventDefault();
     const checkbox = document.getElementById('ackCheckbox');
     if (!checkbox || !checkbox.checked) {
-        e.preventDefault();
-        alert('Please acknowledge the instructions by checking the box before starting the exam.');
+        if (checkbox) {
+            checkbox.classList.add('ring-2', 'ring-rose-500', 'animate-pulse');
+            setTimeout(() => checkbox.classList.remove('ring-2', 'ring-rose-500', 'animate-pulse'), 2000);
+        }
         return false;
     }
+
+    const btn = document.getElementById('startExamBtn');
+    const targetUrl = btn.getAttribute('href');
+    const isTestMode = "{{ attempt_mode }}" === "test";
+
+    if (isTestMode) {
+        try {
+            if (document.documentElement.requestFullscreen) {
+                await document.documentElement.requestFullscreen();
+            } else if (document.documentElement.webkitRequestFullscreen) {
+                await document.documentElement.webkitRequestFullscreen();
+            } else if (document.documentElement.msRequestFullscreen) {
+                await document.documentElement.msRequestFullscreen();
+            }
+        } catch (err) {
+            console.warn('Fullscreen request bypassed or rejected:', err);
+        }
+    }
+
+    window.location.href = targetUrl;
     return true;
 }
 </script>

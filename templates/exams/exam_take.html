@@ -183,10 +183,57 @@
         justify-content: center !important;
         border: 1px solid transparent !important;
     }
+
+    /* Dedicated Top-Center Proctoring Warning Styles */
+    #proctor-overlay-layer {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100vw !important;
+        pointer-events: none !important;
+        z-index: 999999 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        padding-top: 1.25rem !important;
+        box-sizing: border-box !important;
+    }
+
+    .proctor-warning-card {
+        pointer-events: auto !important;
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+        border: 2px solid #f43f5e !important;
+        border-radius: 1rem !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+        padding: 1rem 1.5rem !important;
+        width: calc(100% - 2rem) !important;
+        max-width: 28rem !important;
+        text-align: center !important;
+        margin: 0 auto !important;
+        animation: proctorSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        transition: opacity 0.3s ease, transform 0.3s ease !important;
+        box-sizing: border-box !important;
+    }
+
+    @keyframes proctorSlideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- Dedicated Proctoring Overlay Layer (Guarantees top-center viewport alignment) -->
+<div id="proctor-overlay-layer"></div>
+
 <div class="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800 antialiased selection:bg-indigo-500 selection:text-white">
     
     <!-- EXAM HEADER BAR: Exam Details, Instructions, Autosave & Timer -->
@@ -229,7 +276,7 @@
 
             <!-- Right: Instructions & Submit Button -->
             <div class="flex items-center gap-3">
-                <button type="button" onclick="alert('Exam Instructions:\n1. Answer questions by selecting an option.\n2. Use Mark for Review to flag questions for later review.\n3. Timer counts down automatically from server deadline.\n4. Click Submit Exam when finished.')" class="hidden md:flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold transition">
+                <button type="button" onclick="openInstructionsModal()" class="hidden md:flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold transition">
                     <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span>Instructions</span>
                 </button>
@@ -445,7 +492,7 @@
                     <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                     <span>Quit Exam</span>
                 </a>
-                <button type="button" onclick="alert('Issue report submitted to administrator.')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition border border-slate-200 flex items-center gap-1.5 shadow-2xs">
+                <button type="button" onclick="showIssueReportedToast()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition border border-slate-200 flex items-center gap-1.5 shadow-2xs">
                     <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                     <span>Report an Issue</span>
                 </button>
@@ -513,6 +560,50 @@
     </div>
 </div>
 
+<!-- IN-PAGE EXAM INSTRUCTIONS MODAL -->
+<div id="instructions-modal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 transform transition-all space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-lg font-black text-slate-900 flex items-center gap-2">
+                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Exam Instructions & Guidelines
+            </h3>
+            <button type="button" onclick="closeInstructionsModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <div class="space-y-3 text-xs sm:text-sm text-slate-600 leading-relaxed max-h-[60vh] overflow-y-auto pr-2">
+            <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">1</span>
+                <p><strong class="text-slate-800">Navigation:</strong> Click any question number on the right palette or use "Previous" / "Next" buttons to navigate.</p>
+            </div>
+            <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">2</span>
+                <p><strong class="text-slate-800">Saving:</strong> Selecting an option automatically autosaves your answer in real time.</p>
+            </div>
+            <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">3</span>
+                <p><strong class="text-slate-800">Mark for Review:</strong> Flag questions for later review using the "Mark for Review" button.</p>
+            </div>
+            <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">4</span>
+                <p><strong class="text-slate-800">Timer:</strong> The authoritative server countdown is displayed at the top. The exam submits automatically when time expires.</p>
+            </div>
+            <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">5</span>
+                <p><strong class="text-slate-800">Integrity:</strong> In test mode, exiting fullscreen, switching tabs, or losing window focus triggers proctoring integrity warnings.</p>
+            </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex justify-end">
+            <button type="button" onclick="closeInstructionsModal()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition">
+                Understood & Close
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- CORE EXAM ENGINE CLIENT SCRIPT -->
 <script>
 // Exam Engine State Data
@@ -567,6 +658,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const initialIndex = getInitialQuestionIndex();
     showQuestion(initialIndex);
     startTimer();
+    initializeExamProctoring();
 });
 
 // Sync initial UI state from server pre-populated data
@@ -879,8 +971,8 @@ function startTimer() {
             timerDisplay.textContent = "00:00:00";
             timerDisplay.classList.add('animate-pulse');
             if (!isSubmitting) {
+                systemDialogActive = true;
                 isSubmitting = true;
-                alert('Time is up! Your exam is submitting automatically.');
                 confirmSubmitExam(true);
             }
             return;
@@ -907,17 +999,64 @@ function startTimer() {
 
 // Modal Handlers
 function openSubmitModal() {
+    systemDialogActive = true;
     updateSummaryStats();
     document.getElementById('submit-modal').classList.remove('hidden');
 }
 
 function closeSubmitModal() {
     document.getElementById('submit-modal').classList.add('hidden');
+    setTimeout(() => {
+        systemDialogActive = false;
+    }, 150);
+}
+
+function openInstructionsModal() {
+    systemDialogActive = true;
+    document.getElementById('instructions-modal').classList.remove('hidden');
+}
+
+function closeInstructionsModal() {
+    document.getElementById('instructions-modal').classList.add('hidden');
+    setTimeout(() => {
+        systemDialogActive = false;
+    }, 150);
+}
+
+function showIssueReportedToast() {
+    let layer = document.getElementById('proctor-overlay-layer');
+    if (!layer) {
+        layer = document.createElement('div');
+        layer.id = 'proctor-overlay-layer';
+        document.body.prepend(layer);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'proctor-warning-card';
+    toast.style.borderColor = '#6366f1';
+    toast.innerHTML = `
+        <div style="color: #a5b4fc; font-weight: 800; font-size: 0.8125rem; margin-bottom: 0.25rem;">
+            ✓ ISSUE REPORTED
+        </div>
+        <div style="font-size: 0.8125rem; color: #e2e8f0;">
+            Your report has been logged and sent to the examination administrator.
+        </div>
+    `;
+    layer.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-15px)';
+        setTimeout(() => toast.remove(), 350);
+    }, 3500);
 }
 
 function confirmSubmitExam(isAutoSubmit = false) {
     if (isSubmitting && !isAutoSubmit) return;
+    systemDialogActive = true;
     isSubmitting = true;
+
+    if (window.__proctoringController) {
+        window.__proctoringController.cleanup();
+    }
 
     fetch(SUBMIT_EXAM_URL, {
         method: 'POST',
@@ -938,6 +1077,203 @@ function confirmSubmitExam(isAutoSubmit = false) {
     .catch(() => {
         window.location.href = "{% url 'exam_results' attempt.pk %}";
     });
+}
+
+// ============================================================================
+// CENTRALIZED PROCTORING & INTEGRITY CONTROLLER (TEST ATTEMPTS ONLY)
+// ============================================================================
+const IS_PROCTORED = {{ is_proctored|yesno:"true,false" }};
+const RECORD_EVENT_URL = "{% url 'api_record_event' attempt.pk %}";
+const MAX_VIOLATIONS = {{ max_proctoring_violations|default:5 }};
+
+let violationCount = {{ initial_violation_count|default:0 }};
+let lastViolationAt = 0;
+const VIOLATION_DEBOUNCE_MS = 1500; // 1.5s debounce ensures one user gesture = one violation
+let systemDialogActive = false;
+let examTerminated = false;
+
+function recordProctoringViolation(type, humanReason) {
+    if (!IS_PROCTORED) return;
+    if (isSubmitting || examTerminated || systemDialogActive) return;
+
+    const now = Date.now();
+    if (now - lastViolationAt < VIOLATION_DEBOUNCE_MS) {
+        return; // Suppress duplicate triggers for the same loss-of-focus interaction
+    }
+    lastViolationAt = now;
+    violationCount++;
+
+    fetch(RECORD_EVENT_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+            event_type: type,
+            reason: humanReason,
+            violation_count: violationCount
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success && data.ignored) {
+            return;
+        }
+
+        if (data.action === 'terminate') {
+            examTerminated = true;
+            isSubmitting = true;
+            systemDialogActive = true;
+            
+            // Clean up proctoring listeners
+            if (window.__proctoringController) {
+                window.__proctoringController.cleanup();
+            }
+
+            // Exit fullscreen if active
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            }
+
+            showProctoringTerminationModal(data.message, data.violation_count || MAX_VIOLATIONS, data.max_violations || MAX_VIOLATIONS, data.redirect_url || "{% url 'exam_results' attempt.pk %}");
+        } else if (data.action === 'warning') {
+            showProctoringWarningToast(type, humanReason, data.violation_count || violationCount, data.max_violations || MAX_VIOLATIONS);
+        }
+    })
+    .catch(err => {
+        console.error('Error logging proctoring event:', err);
+    });
+}
+
+const ExamProctoringController = {
+    initialized: false,
+    init() {
+        if (!IS_PROCTORED || this.initialized) return;
+        this.initialized = true;
+
+        // 1. Fullscreen Exit Detection (ESC / browser exit)
+        this.onFullscreenChange = () => {
+            if (systemDialogActive || isSubmitting || examTerminated) return;
+            if (!document.fullscreenElement) {
+                recordProctoringViolation('FULLSCREEN_EXIT', 'Fullscreen mode was exited (e.g. ESC pressed).');
+            }
+        };
+
+        // 2. Tab Switch / Page Visibility Loss
+        this.onVisibilityChange = () => {
+            if (systemDialogActive || isSubmitting || examTerminated) return;
+            if (document.visibilityState === 'hidden') {
+                recordProctoringViolation('TAB_SWITCH', 'Switched away from exam tab or minimized browser.');
+            }
+        };
+
+        // 3. Window Switch / Focus Loss
+        this.onBlur = () => {
+            if (systemDialogActive || isSubmitting || examTerminated) return;
+            setTimeout(() => {
+                if (systemDialogActive || isSubmitting || examTerminated) return;
+                if (!document.hasFocus() && document.visibilityState !== 'hidden') {
+                    recordProctoringViolation('WINDOW_FOCUS_LOSS', 'Exam window lost focus to another application.');
+                }
+            }, 150);
+        };
+
+        document.addEventListener('fullscreenchange', this.onFullscreenChange);
+        document.addEventListener('visibilitychange', this.onVisibilityChange);
+        window.addEventListener('blur', this.onBlur);
+    },
+    cleanup() {
+        if (this.onFullscreenChange) document.removeEventListener('fullscreenchange', this.onFullscreenChange);
+        if (this.onVisibilityChange) document.removeEventListener('visibilitychange', this.onVisibilityChange);
+        if (this.onBlur) window.removeEventListener('blur', this.onBlur);
+        this.initialized = false;
+    }
+};
+
+window.__proctoringController = ExamProctoringController;
+
+function initializeExamProctoring() {
+    ExamProctoringController.init();
+}
+
+function showProctoringWarningToast(type, reasonText, currentViolationNumber, maxCount = MAX_VIOLATIONS) {
+    let layer = document.getElementById('proctor-overlay-layer');
+    if (!layer) {
+        layer = document.createElement('div');
+        layer.id = 'proctor-overlay-layer';
+        document.body.prepend(layer);
+    }
+
+    const existing = document.getElementById('proctoring-warning-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'proctoring-warning-toast';
+    toast.className = 'proctor-warning-card';
+    toast.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; color: #fb7185; font-weight: 900; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.375rem;">
+            <svg style="width: 1.25rem; height: 1.25rem; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <span>⚠️ SECURITY / INTEGRITY WARNING</span>
+        </div>
+        <div style="font-size: 0.875rem; font-weight: 600; color: #f1f5f9; margin-bottom: 0.5rem; line-height: 1.35;">
+            ${reasonText}
+        </div>
+        <div style="display: inline-block; background-color: rgba(244, 63, 94, 0.15); color: #fda4af; border: 1px solid rgba(244, 63, 94, 0.35); font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.75rem; border-radius: 0.5rem;">
+            Warning ${currentViolationNumber} of ${maxCount}
+        </div>
+    `;
+
+    layer.appendChild(toast);
+
+    setTimeout(() => {
+        if (toast && toast.parentElement) {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-15px)';
+            setTimeout(() => {
+                if (toast && toast.parentElement) toast.remove();
+            }, 350);
+        }
+    }, 4500);
+}
+
+function showProctoringTerminationModal(message, count, maxCount, redirectUrl) {
+    const existing = document.getElementById('proctoring-termination-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'proctoring-termination-modal';
+    modal.style.cssText = 'position: fixed; inset: 0; background-color: rgba(2, 6, 23, 0.9); backdrop-filter: blur(8px); z-index: 1000000; display: flex; align-items: center; justify-content: center; padding: 1rem;';
+    modal.innerHTML = `
+        <div style="background-color: #ffffff; border-radius: 1.5rem; max-width: 30rem; width: 100%; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid #e2e8f0; text-align: center;">
+            <div style="width: 4rem; height: 4rem; background-color: #ffe4e6; color: #e11d48; border-radius: 1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem auto;">
+                <svg style="width: 2.25rem; height: 2.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            
+            <div style="margin-bottom: 1.25rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 900; color: #0f172a; letter-spacing: -0.025em; margin: 0 0 0.5rem 0;">EXAM TERMINATED</h2>
+                <p style="font-size: 0.875rem; font-weight: 500; color: #475569; line-height: 1.5; margin: 0;">
+                    ${message || 'The exam has been terminated because the maximum number of proctoring violations was reached.'}
+                </p>
+            </div>
+
+            <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 1rem; padding: 1rem; margin-bottom: 1.5rem;">
+                <div style="font-size: 0.75rem; font-weight: 700; color: #e11d48; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Violations Recorded</div>
+                <div style="font-size: 1.5rem; font-weight: 900; color: #be123c;">${count} / ${maxCount}</div>
+            </div>
+
+            <div>
+                <a href="${redirectUrl}" style="display: inline-flex; align-items: center; justify-content: center; width: 100%; padding: 0.875rem 1.5rem; background-color: #e11d48; color: #ffffff; font-weight: 700; font-size: 0.875rem; border-radius: 0.75rem; box-shadow: 0 10px 15px -3px rgba(225, 29, 72, 0.3); text-decoration: none; transition: background-color 0.15s ease;">
+                    Return to Exams / View Results →
+                </a>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
 }
 </script>
 {% endblock %}

@@ -1359,6 +1359,25 @@ def exam_instructions(request, exam_pk):
     return render(request, 'exams/exam_instructions.html', context)
 
 
+MAX_PROCTORING_VIOLATIONS = 5
+
+
+def _get_current_violation_count(attempt):
+    """Extract current violation count from ExamAttempt state."""
+    if attempt.has_violation:
+        return MAX_PROCTORING_VIOLATIONS
+    if not attempt.violation_reason:
+        return 0
+    import re
+    match = re.search(r'Warning\s*\((\d+)/', attempt.violation_reason)
+    if match:
+        try:
+            return int(match.group(1))
+        except (ValueError, TypeError):
+            return 0
+    return 0
+
+
 @login_required
 def exam_take(request, exam_pk):
     """
@@ -1500,6 +1519,8 @@ def exam_take(request, exam_pk):
     end_time = attempt.started_at + timedelta(minutes=exam.duration_minutes)
     remaining_seconds = max(0, int((end_time - timezone.now()).total_seconds()))
 
+    initial_violation_count = _get_current_violation_count(attempt)
+
     context = {
         'exam': exam,
         'attempt': attempt,
@@ -1512,6 +1533,10 @@ def exam_take(request, exam_pk):
         'unanswered_count': unanswered_count,
         'marked_count': marked_count,
         'student_class': student_class,
+        'is_proctored': attempt.attempt_mode == 'test',
+        'attempt_mode': attempt.attempt_mode,
+        'initial_violation_count': initial_violation_count,
+        'max_proctoring_violations': MAX_PROCTORING_VIOLATIONS,
         'page_title': f'Exam: {exam.title}',
     }
     return render(request, 'exams/exam_take.html', context)
@@ -1620,11 +1645,94 @@ def api_save_answer(request, attempt_pk):
 
 
 @login_required
+def api_record_event(request, attempt_pk):
+    """
+    Centralized AJAX endpoint for recording proctoring events and enforcing 5-warning attempt termination.
+    Proctoring is ONLY enforced when attempt.attempt_mode == 'test'.
+    """
+    from django.http import JsonResponse
+    import json
+
+    if not request.user.is_student:
+        return JsonResponse({'success': False, 'error': 'Access denied. Students only.'}, status=403)
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST method required.'}, status=405)
+
+    attempt = get_object_or_404(ExamAttempt, pk=attempt_pk, student=request.user)
+
+    if attempt.is_completed or attempt.status != 'in_progress':
+        return JsonResponse({
+            'success': False, 
+            'error': 'Exam attempt is completed or inactive.', 
+            'is_completed': True
+        }, status=400)
+
+    # CRITICAL INVARIANT: Proctoring is completely disabled in practice mode
+    if attempt.attempt_mode != 'test':
+        return JsonResponse({
+            'success': False,
+            'ignored': True,
+            'reason': 'Proctoring is disabled in practice mode.'
+        })
+
+    try:
+        if request.content_type == 'application/json':
+            data = json.loads(request.body.decode('utf-8'))
+        else:
+            data = request.POST
+    except Exception:
+        data = {}
+
+    event_type = data.get('event_type', 'PROCTORING_EVENT')
+    reason = data.get('reason', 'Integrity violation detected')
+    try:
+        client_count = int(data.get('violation_count', 1))
+    except (ValueError, TypeError):
+        client_count = 1
+
+    current_count = _get_current_violation_count(attempt)
+    new_count = max(current_count + 1, client_count)
+
+    with transaction.atomic():
+        if new_count >= MAX_PROCTORING_VIOLATIONS:
+            # 5th violation -> Terminate exam
+            attempt.has_violation = True
+            attempt.violation_reason = f"Proctoring violation ({event_type}): {reason} (Terminated on violation {new_count}/{MAX_PROCTORING_VIOLATIONS})"
+            attempt.status = 'terminated'
+            attempt.submitted_at = timezone.now()
+            attempt.is_completed = True
+            attempt.calculate_score()
+
+            return JsonResponse({
+                'success': True,
+                'action': 'terminate',
+                'violation_count': new_count,
+                'max_violations': MAX_PROCTORING_VIOLATIONS,
+                'message': f'The exam has been terminated because the maximum number of proctoring violations ({new_count}/{MAX_PROCTORING_VIOLATIONS}) was reached.',
+                'redirect_url': reverse('exam_results', kwargs={'attempt_pk': attempt.pk})
+            })
+        else:
+            # Warnings 1 to 4 -> Warning
+            attempt.violation_reason = f"Warning ({new_count}/{MAX_PROCTORING_VIOLATIONS}): {event_type} - {reason}"
+            attempt.save(update_fields=['violation_reason'])
+
+            return JsonResponse({
+                'success': True,
+                'action': 'warning',
+                'violation_count': new_count,
+                'max_violations': MAX_PROCTORING_VIOLATIONS,
+                'message': f'{reason}'
+            })
+
+
+@login_required
 def exam_submit(request, attempt_pk):
     """
     Submit exam session, calculate score, and transition attempt state.
     """
     from django.http import JsonResponse
+    import json
     
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json'
 
@@ -1652,8 +1760,14 @@ def exam_submit(request, attempt_pk):
     
     with transaction.atomic():
         if request.method == 'POST':
-            has_violation = request.POST.get('has_violation') == 'true'
-            violation_reason = request.POST.get('violation_reason', '')
+            data = {}
+            if request.content_type == 'application/json' and request.body:
+                try:
+                    data = json.loads(request.body.decode('utf-8'))
+                except Exception:
+                    data = {}
+            has_violation = (request.POST.get('has_violation') == 'true') or (data.get('has_violation') is True)
+            violation_reason = request.POST.get('violation_reason') or data.get('violation_reason', '')
             
             if has_violation:
                 attempt.has_violation = True
