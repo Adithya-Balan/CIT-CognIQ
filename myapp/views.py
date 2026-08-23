@@ -1291,6 +1291,75 @@ def student_exam_list(request):
 
 
 @login_required
+def exam_instructions(request, exam_pk):
+    """
+    Pre-exam instructions page for students before starting/resuming an attempt.
+    This view DOES NOT create an ExamAttempt.
+    """
+    if not request.user.is_student:
+        messages.error(request, 'Access denied. Students only.')
+        return redirect('dashboard')
+
+    student_classes = request.user.student_classes.all()
+    exam = get_object_or_404(Exam, pk=exam_pk, assigned_classes__in=student_classes)
+
+    class_id = request.GET.get('class_id')
+    if class_id:
+        student_class = get_object_or_404(
+            StudentClass,
+            pk=class_id,
+            students=request.user,
+            is_active=True
+        )
+    else:
+        student_classes = request.user.student_classes.filter(
+            is_active=True,
+            assigned_exams=exam
+        )
+        if student_classes.count() == 1:
+            student_class = student_classes.first()
+        elif student_classes.count() == 0:
+            if exam.assigned_classes.count() == 0:
+                student_class = request.user.student_classes.filter(is_active=True).first()
+                if not student_class:
+                    messages.error(request, 'You must be enrolled in at least one class to take exams.')
+                    return redirect('student_exam_list')
+            else:
+                messages.error(request, 'You do not have access to this exam.')
+                return redirect('student_exam_list')
+        else:
+            student_class = student_classes.first()
+
+    attempt_mode = request.GET.get('mode', 'test')
+    if exam.exam_type == 'test':
+        attempt_mode = 'test'
+
+    # Check if an active in-progress attempt already exists for this student & exam
+    active_attempt = ExamAttempt.objects.filter(
+        student=request.user,
+        exam=exam,
+        student_class=student_class,
+        is_completed=False,
+        status='in_progress'
+    ).order_by('-started_at').first()
+
+    questions_count = exam.questions.count()
+    total_marks = exam.total_marks
+
+    context = {
+        'page_title': f'Instructions - {exam.title}',
+        'exam': exam,
+        'student_class': student_class,
+        'attempt_mode': attempt_mode,
+        'questions_count': questions_count,
+        'total_marks': total_marks,
+        'has_active_attempt': active_attempt is not None,
+        'active_attempt': active_attempt,
+    }
+    return render(request, 'exams/exam_instructions.html', context)
+
+
+@login_required
 def exam_take(request, exam_pk):
     """
     Take or resume an exam (single-question pagination with real-time autosave & question palette).

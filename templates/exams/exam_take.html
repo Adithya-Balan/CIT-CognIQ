@@ -539,10 +539,33 @@ const questionsList = [
 let currentIndex = 0;
 let isSubmitting = false;
 
+// Parse initial question index from URL 'question' query parameter
+function getInitialQuestionIndex() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const qParam = urlParams.get('question');
+    if (qParam !== null) {
+        const qNum = parseInt(qParam, 10);
+        if (!isNaN(qNum) && qNum >= 1 && qNum <= TOTAL_QUESTIONS) {
+            return qNum - 1; // Convert to 0-based index
+        }
+    }
+    return 0; // Default to Question 1 (index 0)
+}
+
+// Update URL 'question' query parameter without page reload
+function updateURLQuestionParameter(questionNumber) {
+    if (window.history && window.history.replaceState) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('question', questionNumber);
+        window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+    }
+}
+
 // Initialize Engine on Page Load
 document.addEventListener('DOMContentLoaded', function() {
     initSavedStateUI();
-    showQuestion(0);
+    const initialIndex = getInitialQuestionIndex();
+    showQuestion(initialIndex);
     startTimer();
 });
 
@@ -574,6 +597,11 @@ function showQuestion(index) {
 
     currentIndex = index;
     const currentQ = questionsList[currentIndex];
+
+    // Update URL query parameter 'question' (1-based) without page reload
+    if (currentQ) {
+        updateURLQuestionParameter(currentQ.number);
+    }
 
     // If question was not visited, update state to visited_unanswered if no choice selected
     if (currentQ.state === 'not_visited') {

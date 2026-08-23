@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto space-y-6">
+        
+        <!-- Breadcrumb / Header Navigation -->
+        <nav class="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-500">
+            <a href="{% url 'student_exam_list' %}" class="hover:text-indigo-600 transition-colors">Available Exams</a>
+            <span class="text-slate-400">/</span>
+            <span class="text-slate-900 truncate">Instructions</span>
+        </nav>
+
+        <!-- Exam Title & Header Banner Card -->
+        <div class="bg-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none"></div>
+            
+            <div class="relative z-10 space-y-3">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="bg-indigo-600 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md">
+                        {{ exam.subject }}
+                    </span>
+                    <span class="bg-white/10 backdrop-blur-md text-slate-200 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md">
+                        {{ exam.get_exam_type_display|default:exam.exam_type|title }}
+                    </span>
+                    {% if has_active_attempt %}
+                    <span class="bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md animate-pulse">
+                        Attempt In Progress
+                    </span>
+                    {% endif %}
+                </div>
+
+                <h1 class="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
+                    {{ exam.title }}
+                </h1>
+                
+                {% if exam.description %}
+                <p class="text-sm text-slate-300 font-medium leading-relaxed max-w-2xl">
+                    {{ exam.description }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Exam Key Metrics Overview Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm text-center">
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Duration</div>
+                <div class="text-lg sm:text-xl font-black text-slate-900">{{ exam.duration_minutes }} Mins</div>
+            </div>
+            
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm text-center">
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Questions</div>
+                <div class="text-lg sm:text-xl font-black text-slate-900">{{ questions_count }}</div>
+            </div>
+
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm text-center">
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Marks</div>
+                <div class="text-lg sm:text-xl font-black text-slate-900">{{ total_marks }}</div>
+            </div>
+
+            <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm text-center">
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Pass Criteria</div>
+                <div class="text-lg sm:text-xl font-black text-slate-900">{{ exam.pass_percentage }}%</div>
+            </div>
+        </div>
+
+        <!-- Detailed Instructions Content Card -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-md divide-y divide-slate-100 overflow-hidden">
+            
+            <!-- Section 1: General Instructions -->
+            <div class="p-6 sm:p-8 space-y-3">
+                <h3 class="text-base font-black text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-md bg-indigo-100 text-indigo-700 text-xs flex items-center justify-center font-bold">1</span>
+                    General Instructions
+                </h3>
+                <ul class="space-y-2 text-xs sm:text-sm text-slate-600 font-medium leading-relaxed list-disc list-inside pl-1">
+                    <li>Please read all instructions carefully before starting the examination.</li>
+                    <li>The countdown timer starts as soon as you click <strong>Start Exam</strong>.</li>
+                    <li>Ensure you have a stable internet connection throughout the test.</li>
+                    <li>Your selected answers are automatically saved in real-time as you navigate.</li>
+                    <li>If you close or refresh the page, your progress and time remaining will be preserved when you resume.</li>
+                </ul>
+            </div>
+
+            <!-- Section 2: Marking Scheme -->
+            <div class="p-6 sm:p-8 space-y-3">
+                <h3 class="text-base font-black text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-md bg-indigo-100 text-indigo-700 text-xs flex items-center justify-center font-bold">2</span>
+                    Marking Scheme
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 text-emerald-900">
+                        <div class="font-bold text-sm">Correct Answer</div>
+                        <div class="text-xs font-semibold text-emerald-700 mt-0.5">+1.00 Mark</div>
+                    </div>
+                    <div class="bg-rose-50 border border-rose-200 rounded-xl p-3.5 text-rose-900">
+                        <div class="font-bold text-sm">Incorrect Answer</div>
+                        <div class="text-xs font-semibold text-rose-700 mt-0.5">0.00 Marks</div>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-900">
+                        <div class="font-bold text-sm">Unanswered</div>
+                        <div class="text-xs font-semibold text-slate-600 mt-0.5">0.00 Marks</div>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500 font-medium pt-1">
+                    * Questions flagged as <strong>Marked for Review</strong> will still be evaluated if an option is selected.
+                </p>
+            </div>
+
+            <!-- Section 3: Question Palette Status Legend -->
+            <div class="p-6 sm:p-8 space-y-3">
+                <h3 class="text-base font-black text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-md bg-indigo-100 text-indigo-700 text-xs flex items-center justify-center font-bold">3</span>
+                    Question Palette Status Legend
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs font-medium text-slate-700">
+                    <div class="flex items-center gap-3 bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
+                        <span class="w-7 h-7 rounded-lg bg-slate-100 border border-slate-300 font-bold text-slate-600 flex items-center justify-center text-xs">01</span>
+                        <div>
+                            <div class="font-bold text-slate-900">Not Visited</div>
+                            <div class="text-[11px] text-slate-500">You have not opened or viewed this question yet.</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 bg-rose-50 border border-rose-200 p-2.5 rounded-xl">
+                        <span class="w-7 h-7 rounded-lg bg-red-600 text-white font-bold flex items-center justify-center text-xs shadow-2xs">02</span>
+                        <div>
+                            <div class="font-bold text-rose-900">Unanswered</div>
+                            <div class="text-[11px] text-rose-700">You have visited this question but not selected an option.</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl">
+                        <span class="w-7 h-7 rounded-lg bg-emerald-600 text-white font-bold flex items-center justify-center text-xs shadow-2xs">03</span>
+                        <div>
+                            <div class="font-bold text-emerald-900">Answered</div>
+                            <div class="text-[11px] text-emerald-700">You have selected and saved an answer choice.</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 bg-purple-50 border border-purple-200 p-2.5 rounded-xl">
+                        <span class="w-7 h-7 rounded-lg bg-purple-600 text-white font-bold flex items-center justify-center text-xs shadow-2xs">04</span>
+                        <div>
+                            <div class="font-bold text-purple-900">Marked for Review</div>
+                            <div class="text-[11px] text-purple-700">You have flagged this question for review without an answer.</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 bg-purple-50 border border-purple-300 p-2.5 rounded-xl sm:col-span-2">
+                        <span class="w-7 h-7 rounded-lg bg-purple-600 text-white font-bold flex items-center justify-center text-xs shadow-2xs relative">
+                            05
+                            <span class="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-white"></span>
+                        </span>
+                        <div>
+                            <div class="font-bold text-purple-900">Answered & Marked for Review</div>
+                            <div class="text-[11px] text-purple-700">You have answered the question AND flagged it for review.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Navigation & Controls -->
+            <div class="p-6 sm:p-8 space-y-3">
+                <h3 class="text-base font-black text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-md bg-indigo-100 text-indigo-700 text-xs flex items-center justify-center font-bold">4</span>
+                    Exam Controls & Navigation
+                </h3>
+                <ul class="space-y-2 text-xs sm:text-sm text-slate-600 font-medium leading-relaxed list-disc list-inside pl-1">
+                    <li><strong>Question Palette:</strong> Click any cell in the right sidebar matrix to jump directly to that question.</li>
+                    <li><strong>Save & Next:</strong> Saves your response and advances to the next question.</li>
+                    <li><strong>Previous:</strong> Navigates back to the preceding question.</li>
+                    <li><strong>Clear Response:</strong> Deselects your choice for the current question.</li>
+                    <li><strong>Mark for Review:</strong> Flags the question for later review.</li>
+                </ul>
+            </div>
+
+            <!-- Section 5: Autosave, Timer & Submission -->
+            <div class="p-6 sm:p-8 space-y-3">
+                <h3 class="text-base font-black text-slate-900 uppercase tracking-wide flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-md bg-indigo-100 text-indigo-700 text-xs flex items-center justify-center font-bold">5</span>
+                    Autosave, Timer & Submission
+                </h3>
+                <p class="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+                    The exam timer is server-authoritative. Once time expires, your exam will automatically submit.
+                    Before final submission, a pre-submission modal summary displays your total answered, unanswered, and review counts.
+                </p>
+            </div>
+        </div>
+
+        <!-- Acknowledgement & Start Exam Action Card -->
+        <div class="bg-white rounded-2xl border border-indigo-200 p-6 sm:p-8 shadow-lg space-y-6">
+            
+            <!-- Checkbox Form -->
+            <div class="flex items-start gap-3">
+                <input type="checkbox" 
+                       id="ackCheckbox" 
+                       onchange="handleAckChange(this)"
+                       class="mt-1 w-5 h-5 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 cursor-pointer">
+                <label for="ackCheckbox" class="text-xs sm:text-sm font-bold text-slate-800 cursor-pointer select-none leading-relaxed">
+                    I have read, understood, and agree to abide by all the examination instructions.
+                </label>
+            </div>
+
+            <!-- Action Button Row -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-slate-100">
+                <a href="{% url 'student_exam_list' %}" class="w-full sm:w-auto text-center px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm rounded-xl transition">
+                    Cancel & Return
+                </a>
+
+                <a id="startExamBtn" 
+                   href="{% url 'exam_take' exam.pk %}?mode={{ attempt_mode }}{% if student_class %}&class_id={{ student_class.id }}{% endif %}" 
+                   onclick="return validateStartExam(event)"
+                   class="w-full sm:w-auto text-center px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-md transition opacity-50 cursor-not-allowed pointer-events-none flex items-center justify-center gap-2">
+                    {% if has_active_attempt %}
+                        <span>Resume Exam →</span>
+                    {% else %}
+                        <span>Start Exam →</span>
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function handleAckChange(checkbox) {
+    const btn = document.getElementById('startExamBtn');
+    if (!btn) return;
+
+    if (checkbox.checked) {
+        btn.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+        btn.classList.add('hover:shadow-lg');
+    } else {
+        btn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+        btn.classList.remove('hover:shadow-lg');
+    }
+}
+
+function validateStartExam(e) {
+    const checkbox = document.getElementById('ackCheckbox');
+    if (!checkbox || !checkbox.checked) {
+        e.preventDefault();
+        alert('Please acknowledge the instructions by checking the box before starting the exam.');
+        return false;
+    }
+    return true;
+}
+</script>
+{% endblock %}

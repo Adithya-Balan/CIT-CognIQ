@@ -125,7 +125,7 @@
                         <a href="{% url 'exam_results' exam.test_attempts.0.pk %}" class="flex items-center justify-center px-3 py-2 bg-white border border-slate-200 text-slate-700 font-bold text-xs rounded-lg hover:bg-slate-50 hover:text-violet-600 hover:border-violet-200 transition-all shadow-sm">
                             Test Results
                         </a>
-                        <a href="{% url 'exam_take' exam.pk %}?mode=practice" class="flex items-center justify-center px-3 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-200 hover:shadow-indigo-300 hover:-translate-y-0.5 transition-all">
+                        <a href="{% url 'exam_instructions' exam.pk %}?mode=practice" class="flex items-center justify-center px-3 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-200 hover:shadow-indigo-300 hover:-translate-y-0.5 transition-all">
                             Practice
                         </a>
                     </div>
@@ -136,10 +136,10 @@
                             Last Results
                         </a>
                         <div class="grid grid-cols-2 gap-2">
-                            <a href="{% url 'exam_take' exam.pk %}?mode=practice" class="flex items-center justify-center px-3 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-200 hover:shadow-indigo-300 hover:-translate-y-0.5 transition-all">
+                            <a href="{% url 'exam_instructions' exam.pk %}?mode=practice" class="flex items-center justify-center px-3 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-200 hover:shadow-indigo-300 hover:-translate-y-0.5 transition-all">
                                 Practice
                             </a>
-                            <a href="{% url 'exam_take' exam.pk %}?mode=test" class="flex items-center justify-center px-3 py-2 bg-violet-600 text-white font-bold text-xs rounded-lg hover:bg-violet-700 shadow-md shadow-violet-200 hover:shadow-violet-300 hover:-translate-y-0.5 transition-all">
+                            <a href="{% url 'exam_instructions' exam.pk %}?mode=test" class="flex items-center justify-center px-3 py-2 bg-violet-600 text-white font-bold text-xs rounded-lg hover:bg-violet-700 shadow-md shadow-violet-200 hover:shadow-violet-300 hover:-translate-y-0.5 transition-all">
                                 Take Test
                             </a>
                         </div>
@@ -150,13 +150,13 @@
             {% if exam.exam_type == 'practice_test' %}
                 <!-- Practice & Test - offer both options -->
                 <div class="grid grid-cols-2 gap-2">
-                    <a href="{% url 'exam_take' exam.pk %}?mode=practice" class="flex items-center justify-center px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-200 hover:shadow-indigo-300 hover:-translate-y-0.5 transition-all">
+                    <a href="{% url 'exam_instructions' exam.pk %}?mode=practice" class="flex items-center justify-center px-4 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-200 hover:shadow-indigo-300 hover:-translate-y-0.5 transition-all">
                         Practice
                         <svg class="w-3.5 h-3.5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
                     </a>
-                    <a href="{% url 'exam_take' exam.pk %}?mode=test" class="flex items-center justify-center px-4 py-2 bg-violet-600 text-white font-bold text-xs rounded-lg hover:bg-violet-700 shadow-md shadow-violet-200 hover:shadow-violet-300 hover:-translate-y-0.5 transition-all">
+                    <a href="{% url 'exam_instructions' exam.pk %}?mode=test" class="flex items-center justify-center px-4 py-2 bg-violet-600 text-white font-bold text-xs rounded-lg hover:bg-violet-700 shadow-md shadow-violet-200 hover:shadow-violet-300 hover:-translate-y-0.5 transition-all">
                         Take Test
                         <svg class="w-3.5 h-3.5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -165,7 +165,7 @@
                 </div>
             {% else %}
                 <!-- Test only - single button -->
-                <a href="{% url 'exam_take' exam.pk %}" class="flex items-center justify-center w-full px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-lg hover:bg-emerald-700 shadow-md shadow-emerald-200 hover:shadow-emerald-300 hover:-translate-y-0.5 transition-all group-hover:scale-[1.02]">
+                <a href="{% url 'exam_instructions' exam.pk %}" class="flex items-center justify-center w-full px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-lg hover:bg-emerald-700 shadow-md shadow-emerald-200 hover:shadow-emerald-300 hover:-translate-y-0.5 transition-all group-hover:scale-[1.02]">
                     Start Test
                     <svg class="w-3.5 h-3.5 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />

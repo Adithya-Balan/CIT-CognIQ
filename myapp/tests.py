@@ -336,3 +336,49 @@ class CoreExamEngineTests(TestCase):
         questions_in_ctx = {q.id: q for q in res_refresh.context['questions']}
         self.assertEqual(questions_in_ctx[q1.id].state, 'visited_unanswered')
         self.assertIsNone(questions_in_ctx[q1.id].selected_choice_id)
+
+    def test_E_question_url_parameter_support(self):
+        """Test E: Requesting exam take with ?question=5 loads successfully and includes URL param logic."""
+        self.client.login(username='student1', password='Student@12345')
+        res = self.client.get(reverse('exam_take', kwargs={'exam_pk': self.exam.pk}) + '?question=5')
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, 'getInitialQuestionIndex')
+
+    def test_instructions_page_loads_and_does_not_create_attempt(self):
+        """Test instructions page loads for student and DOES NOT create an ExamAttempt."""
+        self.client.login(username='student1', password='Student@12345')
+        instructions_url = reverse('exam_instructions', kwargs={'exam_pk': self.exam.pk})
+        
+        # Verify no attempt before loading instructions
+        self.assertEqual(ExamAttempt.objects.filter(student=self.student, exam=self.exam).count(), 0)
+
+        res = self.client.get(instructions_url)
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, 'General Instructions')
+        self.assertContains(res, 'Marking Scheme')
+        self.assertContains(res, 'ackCheckbox')
+
+        # Verify STILL no attempt after loading instructions
+        self.assertEqual(ExamAttempt.objects.filter(student=self.student, exam=self.exam).count(), 0)
+
+    def test_start_exam_creates_attempt_and_resumes_without_duplicates(self):
+        """Test clicking Start Exam creates an attempt, and starting twice resumes existing attempt."""
+        self.client.login(username='student1', password='Student@12345')
+        take_url = reverse('exam_take', kwargs={'exam_pk': self.exam.pk})
+
+        # First visit to exam_take (Simulating clicking "Start Exam ->")
+        res1 = self.client.get(take_url)
+        self.assertEqual(res1.status_code, 200)
+        self.assertEqual(ExamAttempt.objects.filter(student=self.student, exam=self.exam).count(), 1)
+        attempt1 = ExamAttempt.objects.get(student=self.student, exam=self.exam)
+
+        # Second visit to exam_take (Simulating clicking "Start Exam ->" or "Resume Exam ->" again)
+        res2 = self.client.get(take_url)
+        self.assertEqual(res2.status_code, 200)
+
+        # Verify NO duplicate attempt was created
+        self.assertEqual(ExamAttempt.objects.filter(student=self.student, exam=self.exam).count(), 1)
+        attempt2 = ExamAttempt.objects.get(student=self.student, exam=self.exam)
+        self.assertEqual(attempt1.pk, attempt2.pk)
+
+
