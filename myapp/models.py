@@ -774,6 +774,19 @@ class ExamAttempt(models.Model):
     
     total_marks = models.PositiveIntegerField(default=0, verbose_name='Total Marks')
     
+    STATUS_CHOICES = (
+        ('in_progress', 'In Progress'),
+        ('submitted', 'Submitted'),
+        ('timed_out', 'Timed Out'),
+        ('terminated', 'Terminated'),
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='in_progress',
+        verbose_name='Attempt Status'
+    )
+    
     # Completion Status
     is_completed = models.BooleanField(default=False, verbose_name='Completed')
     
@@ -841,7 +854,7 @@ class ExamAttempt(models.Model):
         """Calculate total score based on correct answers"""
         total = 0
         for answer in self.answers.all():
-            if answer.is_correct:
+            if answer.is_correct and answer.selected_choice:
                 total += answer.question.marks
         self.score = total
         self.save()
@@ -876,11 +889,33 @@ class StudentAnswer(models.Model):
         Choice,
         on_delete=models.CASCADE,
         related_name='selected_by',
-        verbose_name='Selected Choice'
+        verbose_name='Selected Choice',
+        null=True,
+        blank=True
+    )
+    
+    STATE_CHOICES = (
+        ('not_visited', 'Not Visited'),
+        ('visited_unanswered', 'Visited & Unanswered'),
+        ('answered', 'Answered'),
+        ('marked_for_review', 'Marked for Review'),
+        ('answered_marked_for_review', 'Answered & Marked for Review'),
+    )
+    
+    state = models.CharField(
+        max_length=35,
+        choices=STATE_CHOICES,
+        default='visited_unanswered',
+        verbose_name='Answer State'
+    )
+    
+    is_marked_for_review = models.BooleanField(
+        default=False,
+        verbose_name='Marked for Review'
     )
     
     is_correct = models.BooleanField(default=False, verbose_name='Is Correct')
-    answered_at = models.DateTimeField(auto_now_add=True, verbose_name='Answered At')
+    answered_at = models.DateTimeField(auto_now=True, verbose_name='Answered At')
     
     class Meta:
         verbose_name = 'Student Answer'
@@ -893,8 +928,12 @@ class StudentAnswer(models.Model):
     
     def save(self, *args, **kwargs):
         """Auto-set is_correct based on selected choice"""
-        self.is_correct = self.selected_choice.is_correct
+        if self.selected_choice:
+            self.is_correct = self.selected_choice.is_correct
+        else:
+            self.is_correct = False
         super().save(*args, **kwargs)
+
 
 class ExamAssignmentDate(models.Model):
     """

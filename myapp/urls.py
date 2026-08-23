@@ -62,9 +62,11 @@ urlpatterns = [
     # =====================================================
     path('student/exams/', views.student_exam_list, name='student_exam_list'),
     path('student/exams/<int:exam_pk>/take/', views.exam_take, name='exam_take'),
+    path('student/attempts/<int:attempt_pk>/save-answer/', views.api_save_answer, name='api_save_answer'),
     path('student/attempts/<int:attempt_pk>/submit/', views.exam_submit, name='exam_submit'),
     path('student/attempts/<int:attempt_pk>/results/', views.exam_results, name='exam_results'),
     path('student/history/', views.attempt_history, name='attempt_history'),
+
 
     # =====================================================
     # TEACHER ANALYTICS

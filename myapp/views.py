@@ -1293,29 +1293,16 @@ def student_exam_list(request):
 @login_required
 def exam_take(request, exam_pk):
     """
-    Take an exam (displays questions with timer)
-    
-    Philosophy: Time-bound assessment with clear UX. Students can retake for practice.
-    Class-scoped: Each attempt is linked to a specific class context.
-    
-    Question Randomization (Per-Attempt):
-    - Questions are shuffled uniquely for each exam attempt
-    - Question order randomization enhances assessment integrity
-    - Only presentation order changes; question IDs remain unchanged
-    - Form submission uses question.id (order-independent)
-    - Score calculation uses question.id (order-independent)
-    - Results display in original exam order (by 'order' field)
-    - Teacher views display in original exam order
+    Take or resume an exam (single-question pagination with real-time autosave & question palette).
     """
     if not request.user.is_student:
         messages.error(request, 'Access denied. Students only.')
         return redirect('dashboard')
     
-    # Verify exam exists and student has access via their class
     student_classes = request.user.student_classes.all()
     exam = get_object_or_404(Exam, pk=exam_pk, assigned_classes__in=student_classes)
     
-    # Get class context from query parameter or determine from student's classes
+    # Get class context
     class_id = request.GET.get('class_id')
     if class_id:
         student_class = get_object_or_404(
@@ -1325,7 +1312,6 @@ def exam_take(request, exam_pk):
             is_active=True
         )
     else:
-        # Auto-select first available class if student is in only one class with this exam
         student_classes = request.user.student_classes.filter(
             is_active=True,
             assigned_exams=exam
@@ -1333,9 +1319,7 @@ def exam_take(request, exam_pk):
         if student_classes.count() == 1:
             student_class = student_classes.first()
         elif student_classes.count() == 0:
-            # Check if exam is not assigned to any class (legacy)
             if exam.assigned_classes.count() == 0:
-                # Use any of student's active classes
                 student_class = request.user.student_classes.filter(is_active=True).first()
                 if not student_class:
                     messages.error(request, 'You must be enrolled in at least one class to take exams.')
@@ -1344,178 +1328,305 @@ def exam_take(request, exam_pk):
                 messages.error(request, 'You do not have access to this exam.')
                 return redirect('student_exam_list')
         else:
-            # Multiple classes - need to select
             messages.info(request, 'Please select a class to take this exam in.')
             return redirect('student_exam_list')
     
-    # Check previous attempts (class-scoped)
-    previous_attempts = ExamAttempt.objects.filter(
+    attempt_mode = request.GET.get('mode', 'test')
+    if exam.exam_type == 'test':
+        attempt_mode = 'test'
+
+    from datetime import timedelta
+    
+    # 1. Check for active in-progress attempt to resume
+    attempt = ExamAttempt.objects.filter(
         student=request.user,
         exam=exam,
         student_class=student_class,
-        is_completed=True
-    ).order_by('-submitted_at')
-    
-    # Get attempt mode from query parameter (for practice_test type)
-    attempt_mode = request.GET.get('mode', 'test')  # Default to 'test' mode
-    
-    # Validate attempt mode based on exam type
-    if exam.exam_type == 'test':
-        # For pure 'test' exams, always use test mode
-        attempt_mode = 'test'
-        # Enforce single-attempt restriction
-        if previous_attempts.exists():
+        is_completed=False,
+        status='in_progress'
+    ).order_by('-started_at').first()
+
+    if attempt:
+        end_time = attempt.started_at + timedelta(minutes=exam.duration_minutes)
+        if timezone.now() >= end_time + timedelta(seconds=5):
+            attempt.status = 'timed_out'
+            attempt.is_completed = True
+            attempt.submitted_at = end_time
+            attempt.calculate_score()
+            messages.info(request, 'Your time for this exam expired and your attempt was automatically submitted.')
+            return redirect('exam_results', attempt_pk=attempt.pk)
+    else:
+        # Check previous completed attempts
+        previous_attempts = ExamAttempt.objects.filter(
+            student=request.user,
+            exam=exam,
+            student_class=student_class,
+            is_completed=True
+        ).order_by('-submitted_at')
+
+        if exam.exam_type == 'test' and previous_attempts.exists():
             messages.error(
                 request, 
-                f'You have already completed this test exam. Test exams allow only one attempt. '
-                f'Your score: {previous_attempts.first().score}/{previous_attempts.first().total_marks}'
+                f'You have already completed this test exam. Test exams allow only one attempt.'
             )
             return redirect('exam_results', attempt_pk=previous_attempts.first().pk)
-    elif exam.exam_type == 'practice_test':
-        # For practice_test exams, check mode-specific restrictions
-        if attempt_mode == 'test':
-            # Check if student has already taken a test attempt
+        elif exam.exam_type == 'practice_test' and attempt_mode == 'test':
             test_attempts = previous_attempts.filter(attempt_mode='test')
             if test_attempts.exists():
                 messages.error(
                     request, 
-                    f'You have already completed the Test attempt for this exam. You can only take one Test attempt. '
-                    f'Your Test score: {test_attempts.first().score}/{test_attempts.first().total_marks}. '
-                    f'You may continue taking Practice attempts for learning.'
+                    f'You have already completed the Test attempt for this exam.'
                 )
                 return redirect('exam_results', attempt_pk=test_attempts.first().pk)
-        # Practice mode has no restrictions - unlimited attempts allowed
-    
-    # Create new attempt with specified mode
-    attempt = ExamAttempt.objects.create(
-        student=request.user,
-        exam=exam,
-        student_class=student_class,
-        total_marks=exam.total_marks,
-        attempt_mode=attempt_mode
-    )
-    
-    # Get questions with choices
-    questions = list(exam.questions.prefetch_related('choices').order_by('examquestion__order'))
-    
-    # Randomize question order for each attempt (per-attempt randomization)
-    import random
-    random.shuffle(questions)
-    
-    # Save the randomized question order to the attempt
-    attempt.question_order = [q.id for q in questions]
-    attempt.save(update_fields=['question_order'])
-    
-    # Randomize choice order for each question (per-attempt randomization)
-    questions_with_shuffled_choices = []
+
+        # Create new attempt
+        attempt = ExamAttempt.objects.create(
+            student=request.user,
+            exam=exam,
+            student_class=student_class,
+            total_marks=exam.total_marks,
+            attempt_mode=attempt_mode,
+            status='in_progress'
+        )
+
+        questions = list(exam.questions.prefetch_related('choices').order_by('examquestion__order'))
+        import random
+        random.shuffle(questions)
+        attempt.question_order = [q.id for q in questions]
+        attempt.save(update_fields=['question_order'])
+
+    # Retrieve questions in randomized order
+    if attempt.question_order:
+        questions_dict = {
+            q.id: q for q in exam.questions.prefetch_related('choices').all()
+        }
+        questions = [questions_dict[qid] for qid in attempt.question_order if qid in questions_dict]
+    else:
+        questions = list(exam.questions.prefetch_related('choices').order_by('examquestion__order'))
+
+    # Build student answer state map
+    saved_answers_list = attempt.answers.all()
+    saved_answers_map = {sa.question_id: sa for sa in saved_answers_list}
+
+    # Attach explicit answer state attributes to EVERY question object
     for question in questions:
-        # Convert to list and shuffle
-        choices_list = list(question.choices.all())
-        random.shuffle(choices_list)
-        # Attach shuffled choices back to question object
-        question.shuffled_choices = choices_list
-        questions_with_shuffled_choices.append(question)
-    
+        question.shuffled_choices = list(question.choices.all())
+        sa = saved_answers_map.get(question.id)
+        if sa:
+            question.selected_choice_id = sa.selected_choice_id
+            question.is_marked_for_review = sa.is_marked_for_review
+            question.state = sa.state
+        else:
+            question.selected_choice_id = None
+            question.is_marked_for_review = False
+            question.state = 'not_visited'
+
+    # Summary counts
+    answered_count = attempt.answers.filter(selected_choice__isnull=False).count()
+    marked_count = attempt.answers.filter(is_marked_for_review=True).count()
+    total_questions = len(questions)
+    unanswered_count = total_questions - answered_count
+
+    # Calculate remaining time
+    end_time = attempt.started_at + timedelta(minutes=exam.duration_minutes)
+    remaining_seconds = max(0, int((end_time - timezone.now()).total_seconds()))
+
     context = {
         'exam': exam,
         'attempt': attempt,
-        'questions': questions_with_shuffled_choices,
-        'questions_count': len(questions_with_shuffled_choices),
+        'questions': questions,
+        'questions_count': total_questions,
+        'saved_answers_map': saved_answers_map,
+        'remaining_seconds': remaining_seconds,
+        'end_time_iso': end_time.isoformat(),
+        'answered_count': answered_count,
+        'unanswered_count': unanswered_count,
+        'marked_count': marked_count,
         'student_class': student_class,
-        'previous_attempts': previous_attempts,
-        'attempt_number': previous_attempts.count() + 1,
-        'page_title': f'Taking: {exam.title}'
+        'page_title': f'Exam: {exam.title}',
     }
     return render(request, 'exams/exam_take.html', context)
+
+
+
+@login_required
+def api_save_answer(request, attempt_pk):
+    """
+    AJAX endpoint for real-time answer persistence, state updates, and review flags.
+    """
+    from django.http import JsonResponse
+    import json
+
+    if not request.user.is_student:
+        return JsonResponse({'success': False, 'error': 'Access denied. Students only.'}, status=403)
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST method required.'}, status=405)
+
+    attempt = get_object_or_404(ExamAttempt, pk=attempt_pk, student=request.user)
+
+    if attempt.is_completed or attempt.status != 'in_progress':
+        return JsonResponse({'success': False, 'error': 'Exam attempt is completed or inactive.', 'is_completed': True}, status=400)
+
+    from datetime import timedelta
+    end_time = attempt.started_at + timedelta(minutes=attempt.exam.duration_minutes)
+    if timezone.now() > end_time + timedelta(seconds=10):
+        attempt.status = 'timed_out'
+        attempt.is_completed = True
+        attempt.submitted_at = end_time
+        attempt.calculate_score()
+        return JsonResponse({'success': False, 'error': 'Exam time has expired.', 'timed_out': True}, status=400)
+
+    try:
+        if request.content_type == 'application/json':
+            data = json.loads(request.body.decode('utf-8'))
+        else:
+            data = request.POST
+    except Exception:
+        return JsonResponse({'success': False, 'error': 'Invalid request body format.'}, status=400)
+
+    question_id = data.get('question_id')
+    choice_id = data.get('choice_id')
+    action = data.get('action', 'save')  # 'save', 'clear', 'toggle_review', 'visit'
+    mark_review = data.get('is_marked_for_review')
+
+    if not question_id:
+        return JsonResponse({'success': False, 'error': 'Missing question_id.'}, status=400)
+
+    question = get_object_or_404(Question, pk=question_id)
+    if not attempt.exam.questions.filter(id=question.id).exists():
+        return JsonResponse({'success': False, 'error': 'Question does not belong to this exam.'}, status=400)
+
+    selected_choice = None
+    if choice_id and str(choice_id).strip() != '':
+        selected_choice = get_object_or_404(Choice, pk=choice_id, question=question)
+
+    with transaction.atomic():
+        sa, created = StudentAnswer.objects.get_or_create(
+            attempt=attempt,
+            question=question
+        )
+
+        if action == 'clear':
+            sa.selected_choice = None
+        elif action == 'save':
+            if selected_choice:
+                sa.selected_choice = selected_choice
+        elif action == 'toggle_review':
+            if mark_review is not None:
+                sa.is_marked_for_review = (str(mark_review).lower() in ['true', '1'])
+            else:
+                sa.is_marked_for_review = not sa.is_marked_for_review
+
+        if mark_review is not None and action != 'toggle_review':
+            sa.is_marked_for_review = (str(mark_review).lower() in ['true', '1'])
+
+        # Update state property
+        if sa.selected_choice and sa.is_marked_for_review:
+            sa.state = 'answered_marked_for_review'
+        elif sa.selected_choice:
+            sa.state = 'answered'
+        elif sa.is_marked_for_review:
+            sa.state = 'marked_for_review'
+        else:
+            sa.state = 'visited_unanswered'
+
+        sa.save()
+
+    answered_count = attempt.answers.filter(selected_choice__isnull=False).count()
+    marked_count = attempt.answers.filter(is_marked_for_review=True).count()
+    total_questions = attempt.exam.questions.count()
+    unanswered_count = total_questions - answered_count
+
+    return JsonResponse({
+        'success': True,
+        'question_id': question.id,
+        'selected_choice_id': sa.selected_choice_id,
+        'state': sa.state,
+        'is_marked_for_review': sa.is_marked_for_review,
+        'answered_count': answered_count,
+        'unanswered_count': unanswered_count,
+        'marked_count': marked_count,
+    })
 
 
 @login_required
 def exam_submit(request, attempt_pk):
     """
-    Submit exam and calculate score
-    
-    Philosophy: Process answers and provide immediate learning feedback
+    Submit exam session, calculate score, and transition attempt state.
     """
+    from django.http import JsonResponse
+    
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.content_type == 'application/json'
+
     if not request.user.is_student:
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': 'Access denied. Students only.'}, status=403)
         messages.error(request, 'Access denied. Students only.')
         return redirect('dashboard')
     
     attempt = get_object_or_404(ExamAttempt, pk=attempt_pk, student=request.user)
     
     if attempt.is_completed:
+        if is_ajax:
+            return JsonResponse({
+                'success': True,
+                'already_completed': True,
+                'redirect_url': reverse('exam_results', kwargs={'attempt_pk': attempt.pk})
+            })
         messages.info(request, 'This exam has already been submitted.')
         return redirect('exam_results', attempt_pk=attempt.pk)
     
-    # Check if exam time has ended
     from datetime import timedelta
     end_time = attempt.started_at + timedelta(minutes=attempt.exam.duration_minutes)
-    if timezone.now() > end_time:
-        messages.error(request, 'Time is up! The exam has ended and cannot be submitted.')
-        # Auto-submit with current answers
-        with transaction.atomic():
-            questions = attempt.exam.questions.all()
-            for question in questions:
-                choice_id = request.POST.get(f'question_{question.id}') if request.method == 'POST' else None
-                if choice_id:
-                    try:
-                        selected_choice = Choice.objects.get(id=choice_id, question=question)
-                        StudentAnswer.objects.create(
-                            attempt=attempt,
-                            question=question,
-                            selected_choice=selected_choice
-                        )
-                    except Choice.DoesNotExist:
-                        pass
-            attempt.submitted_at = timezone.now()
-            attempt.is_completed = True
-            attempt.calculate_score()
-            attempt.save()
-        return redirect('exam_results', attempt_pk=attempt.pk)
+    is_timed_out = timezone.now() > end_time + timedelta(seconds=10)
     
-    if request.method == 'POST':
-        with transaction.atomic():
-            # Check for violation data from auto-submit
+    with transaction.atomic():
+        if request.method == 'POST':
             has_violation = request.POST.get('has_violation') == 'true'
             violation_reason = request.POST.get('violation_reason', '')
             
-            # Process each answer
-            questions = attempt.exam.questions.all()
-            
-            for question in questions:
-                choice_id = request.POST.get(f'question_{question.id}')
-                
-                if choice_id:
-                    try:
-                        selected_choice = Choice.objects.get(
-                            id=choice_id,
-                            question=question
-                        )
-                        
-                        # Create student answer
-                        StudentAnswer.objects.create(
-                            attempt=attempt,
-                            question=question,
-                            selected_choice=selected_choice
-                        )
-                    except Choice.DoesNotExist:
-                        pass
-            
-            # Mark as completed and calculate score
-            attempt.submitted_at = timezone.now()
-            attempt.is_completed = True
-            
-            # Record violation if detected
             if has_violation:
                 attempt.has_violation = True
                 attempt.violation_reason = violation_reason
+                attempt.status = 'terminated'
+            elif is_timed_out:
+                attempt.status = 'timed_out'
+            else:
+                attempt.status = 'submitted'
             
-            attempt.calculate_score()
-            attempt.save()
-            
-            messages.success(request, f'Exam submitted successfully! You scored {attempt.score}/{attempt.total_marks} ({attempt.percentage}%)')
-            return redirect('exam_results', attempt_pk=attempt.pk)
+            # Process fallback POST parameters if sent via classic HTML form
+            questions = attempt.exam.questions.all()
+            for question in questions:
+                choice_id = request.POST.get(f'question_{question.id}')
+                if choice_id:
+                    try:
+                        selected_choice = Choice.objects.get(id=choice_id, question=question)
+                        sa, _ = StudentAnswer.objects.get_or_create(attempt=attempt, question=question)
+                        sa.selected_choice = selected_choice
+                        sa.state = 'answered_marked_for_review' if sa.is_marked_for_review else 'answered'
+                        sa.save()
+                    except Choice.DoesNotExist:
+                        pass
+        else:
+            attempt.status = 'timed_out' if is_timed_out else 'submitted'
+
+        attempt.submitted_at = timezone.now()
+        attempt.is_completed = True
+        attempt.calculate_score()
     
-    return redirect('exam_take', exam_pk=attempt.exam.pk)
+    if is_ajax:
+        return JsonResponse({
+            'success': True,
+            'redirect_url': reverse('exam_results', kwargs={'attempt_pk': attempt.pk}),
+            'score': float(attempt.score),
+            'total_marks': attempt.total_marks,
+            'percentage': attempt.percentage
+        })
+    
+    messages.success(request, f'Exam submitted successfully! You scored {attempt.score}/{attempt.total_marks} ({attempt.percentage}%)')
+    return redirect('exam_results', attempt_pk=attempt.pk)
+
 
 
 @login_required

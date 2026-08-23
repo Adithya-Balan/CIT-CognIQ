@@ -22,3 +22,19 @@ def to_ist(value):
     
     # Convert to IST
     return value.astimezone(ist)
+
+
+@register.filter
+def get_item(dictionary, key):
+    """
+    Look up key in dictionary safely from template.
+    Usage: {{ dict|get_item:key }}
+    """
+    if not isinstance(dictionary, dict):
+        return None
+    try:
+        return dictionary.get(key)
+    except Exception:
+        return None
+
+
