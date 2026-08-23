@@ -10,3 +10,5 @@ db.sqlite3
 media
 .venv
 .env
+.DS_Store
+**/.DS_Store

@@ -1,103 +1,324 @@
 {% extends 'base.html' %}
 {% load timezone_filters %}
 
-{% block title %}{{ page_title }}{% endblock %}
+{% block title %}{{ exam.title }} - CognIQ Examination{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ==========================================================================
+       Authoritative Exam Interface Styles
+       ========================================================================== */
+    
+    /* Layout Containers */
+    .exam-workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.5rem;
+        align-items: start;
+    }
+    @media (min-width: 1024px) {
+        .exam-workspace {
+            grid-template-columns: minmax(0, 2.3fr) minmax(290px, 0.9fr);
+        }
+    }
+
+    /* Option Cards */
+    .exam-choice-card {
+        display: flex;
+        align-items: center;
+        padding: 0.875rem 1rem;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 0.75rem;
+        background-color: #ffffff;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .exam-choice-card:hover {
+        border-color: #cbd5e1;
+        background-color: #f8fafc;
+    }
+    .exam-choice-card.is-selected {
+        border-color: #6366f1 !important;
+        background-color: #f5f3ff !important;
+        box-shadow: 0 0 0 1px #6366f1 !important;
+    }
+
+    /* Radio Indicator */
+    .radio-circle {
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 9999px;
+        border: 1.5px solid #cbd5e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #ffffff;
+        flex-shrink: 0;
+        transition: border-color 0.15s ease;
+    }
+    .radio-circle-dot {
+        width: 0.625rem;
+        height: 0.625rem;
+        border-radius: 9999px;
+        background-color: transparent;
+        transition: background-color 0.15s ease;
+    }
+    .is-selected .radio-circle {
+        border-color: #6366f1 !important;
+    }
+    .is-selected .radio-circle-dot {
+        background-color: #6366f1 !important;
+    }
+
+    /* Option Letter Badges */
+    .choice-badge {
+        width: 1.625rem;
+        height: 1.625rem;
+        border-radius: 0.375rem;
+        background-color: #f1f5f9;
+        color: #475569;
+        font-weight: 800;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.15s ease;
+    }
+    .is-selected .choice-badge {
+        background-color: #ede9fe;
+        color: #6d28d9;
+    }
+
+    /* 4-Column Question Palette Grid */
+    .palette-grid-4col {
+        display: grid !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 0.5rem !important;
+        width: 100% !important;
+    }
+
+    .palette-btn-cell {
+        position: relative !important;
+        width: 100% !important;
+        height: 2.5rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 0.5rem !important;
+        font-weight: 800 !important;
+        font-size: 0.8125rem !important;
+        transition: all 0.15s ease !important;
+        cursor: pointer !important;
+        border: 1px solid transparent !important;
+        outline: none !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Palette Button State Classes */
+    .palette-state-not-visited {
+        background-color: #f1f5f9 !important;
+        color: #475569 !important;
+        border-color: #cbd5e1 !important;
+    }
+    .palette-state-not-visited:hover {
+        background-color: #e2e8f0 !important;
+    }
+
+    .palette-state-unanswered {
+        background-color: #dc2626 !important;
+        color: #ffffff !important;
+        border-color: #b91c1c !important;
+    }
+
+    .palette-state-answered {
+        background-color: #059669 !important;
+        color: #ffffff !important;
+        border-color: #047857 !important;
+    }
+
+    .palette-state-marked {
+        background-color: #7c3aed !important;
+        color: #ffffff !important;
+        border-color: #6d28d9 !important;
+    }
+
+    .palette-state-ans-marked {
+        background-color: #7c3aed !important;
+        color: #ffffff !important;
+        border-color: #6d28d9 !important;
+    }
+
+    .palette-active-focus {
+        box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #6366f1 !important;
+        z-index: 10 !important;
+    }
+
+    /* Legend Color Squares */
+    .legend-box {
+        display: inline-block !important;
+        width: 0.875rem !important;
+        height: 0.875rem !important;
+        border-radius: 0.25rem !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* 2x2 Statistics Grid */
+    .stats-2x2-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 0.5rem !important;
+        width: 100% !important;
+    }
+
+    .stat-card-compact {
+        border-radius: 0.625rem !important;
+        padding: 0.5rem 0.625rem !important;
+        text-align: center !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border: 1px solid transparent !important;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-slate-100 pb-16 flex flex-col">
-    <!-- Top Sticky Header -->
-    <header class="sticky top-0 z-40 bg-[#0f172b] text-white border-b border-slate-800 shadow-xl">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
-            <!-- Left Info -->
-            <div class="flex items-center gap-4 min-w-0">
+<div class="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800 antialiased selection:bg-indigo-500 selection:text-white">
+    
+    <!-- EXAM HEADER BAR: Exam Details, Instructions, Autosave & Timer -->
+    <header class="bg-white border-b border-slate-200 sticky top-16 z-30 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-4">
+            
+            <!-- Left: Exam Title & Subject -->
+            <div class="flex items-center gap-3 min-w-0">
                 <div>
-                    <h1 class="text-base sm:text-xl font-black text-white truncate tracking-tight mb-0.5">{{ exam.title }}</h1>
-                    <div class="flex items-center gap-2 text-xs text-slate-300 font-medium">
-                        <span class="bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded font-bold uppercase tracking-wider text-[11px] border border-indigo-500/30">
+                    <h1 class="text-base sm:text-lg font-bold text-slate-900 truncate tracking-tight">{{ exam.title }}</h1>
+                    <div class="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                        <span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
                             {{ exam.subject }}
                         </span>
-                        <span class="text-slate-400">•</span>
-                        <span class="text-slate-300">{{ questions_count }} Questions</span>
+                        <span>•</span>
+                        <span>{{ questions_count }} Questions</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Center Status & Timer -->
+            <!-- Center: Autosave Status & Server Timer -->
             <div class="flex items-center gap-4 sm:gap-6">
-                <!-- Save Status Indicator -->
-                <div id="save-status-container" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-xs font-semibold">
-                    <span id="save-status-indicator" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span id="save-status-text" class="text-slate-300">All changes saved</span>
+                <!-- Real-Time Autosave Status -->
+                <div id="save-status-container" class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-md bg-slate-50 border border-slate-200 text-xs">
+                    <span id="save-status-indicator" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span id="save-status-text" class="text-slate-600 text-[11px] font-semibold">All changes saved</span>
                 </div>
 
-                <!-- Server-Authoritative Timer -->
-                <div class="bg-slate-900 border border-rose-500/30 px-4 py-2 rounded-xl text-center shadow-inner">
-                    <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Time Remaining</p>
-                    <div id="timer-display" class="text-xl sm:text-2xl font-black text-rose-500 font-mono leading-none tracking-wider drop-shadow">
-                        00:00:00
+                <!-- Prominent Server Timer -->
+                <div class="flex items-center gap-2.5">
+                    <span class="uppercase tracking-wider text-[11px] font-black text-slate-600">TIME LEFT</span>
+                    <div class="flex items-center gap-2 bg-white border border-rose-200 shadow-2xs px-3 py-1 rounded-lg">
+                        <svg class="w-4 h-4 text-rose-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span id="timer-display" class="text-base sm:text-lg font-black text-rose-500 font-mono tracking-wider leading-none">
+                            00:00:00
+                        </span>
                     </div>
                 </div>
             </div>
 
-            <!-- Submit Header Button -->
-            <div>
-                <button type="button" onclick="openSubmitModal()" class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-indigo-900/30 transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2">
+            <!-- Right: Instructions & Submit Button -->
+            <div class="flex items-center gap-3">
+                <button type="button" onclick="alert('Exam Instructions:\n1. Answer questions by selecting an option.\n2. Use Mark for Review to flag questions for later review.\n3. Timer counts down automatically from server deadline.\n4. Click Submit Exam when finished.')" class="hidden md:flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold transition">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>Instructions</span>
+                </button>
+
+                <button type="button" onclick="openSubmitModal()" class="px-4 sm:px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm rounded-lg shadow-sm transition flex items-center gap-2">
                     <span>Submit Exam</span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Workspace (2-Column Grid) -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- EXAM INFORMATION BAR: Section & Marks Breakdown -->
+    <div class="bg-slate-100/80 border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center justify-between text-xs gap-3 font-semibold text-slate-700">
+            <div class="flex items-center gap-2">
+                <span>Section:</span>
+                <span class="inline-flex items-center gap-1 bg-white text-indigo-700 border border-slate-200 px-2.5 py-0.5 rounded font-bold text-xs shadow-2xs">
+                    Section-1
+                </span>
+            </div>
+
+            <div class="hidden sm:block text-slate-600">
+                Question Type: <span class="font-bold text-indigo-700">Multiple Choice Question (Single Correct Answer)</span>
+            </div>
+
+            <div>
+                Marks: Correct <span class="font-black text-emerald-600">+1.00</span> &nbsp;|&nbsp; Negative <span class="font-black text-rose-600">0.00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN EXAM WORKSPACE: 70% Left Question Paper / 30% Right Compact Palette -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-6 flex-1 w-full exam-workspace">
         
-        <!-- LEFT COLUMN: Question Paper & Navigation (8 Cols on Desktop) -->
-        <section class="lg:col-span-8 flex flex-col space-y-6">
+        <!-- LEFT COLUMN: Dominant Question Card Container (~70% Width) -->
+        <section class="flex flex-col space-y-4">
             
-            <!-- Question Container -->
             {% for question in questions %}
-            <div id="question-card-{{ forloop.counter0 }}" class="question-card bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[460px] {% if not forloop.first %}hidden{% endif %}">
+            <div id="question-card-{{ forloop.counter0 }}" class="question-card bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between min-h-[480px] {% if not forloop.first %}hidden{% endif %}">
                 
-                <!-- Question Header Bar -->
-                <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <span class="inline-flex items-center justify-center px-3 py-1 rounded-lg bg-indigo-600 text-white text-xs font-black uppercase tracking-wider shadow-sm">
-                            Question {{ forloop.counter }} of {{ questions_count }}
-                        </span>
-                        <span id="q-status-badge-{{ question.id }}" class="text-xs font-bold px-2.5 py-1 rounded-md border border-slate-200 bg-white text-slate-600">
-                            Unvisited
-                        </span>
-                    </div>
-                    <span class="text-xs font-bold text-slate-500 bg-white border border-slate-200 px-3 py-1 rounded-lg shadow-2xs">
-                        {{ question.marks }} Mark{{ question.marks|pluralize }}
+                <!-- Question Top Header Row -->
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/40">
+                    <span class="text-xs sm:text-sm font-black text-indigo-600 tracking-wider uppercase">
+                        QUESTION NO. {{ forloop.counter }}
                     </span>
+                    
+                    <button type="button" onclick="toggleMarkForReview()" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1.5 transition">
+                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                        <span id="top-mark-review-text">Mark for Review</span>
+                    </button>
                 </div>
 
-                <!-- Question Content Body -->
-                <div class="p-6 sm:p-8 flex-1 flex flex-col justify-between">
+                <!-- Question Text & Answer Options Body -->
+                <div class="p-6 sm:p-8 flex-1 flex flex-col justify-between space-y-6">
                     <div class="space-y-6">
-                        <!-- Question Text -->
-                        <h2 class="text-base sm:text-lg font-bold text-slate-900 leading-relaxed">
-                            {{ question.question_text }}
-                        </h2>
+                        <!-- Question Text & Mark Value -->
+                        <div class="flex justify-between items-start gap-4">
+                            <h2 class="text-base sm:text-lg font-bold text-slate-900 leading-relaxed flex-1">
+                                {{ question.question_text }}
+                            </h2>
+                            <span class="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-md shrink-0">
+                                {{ question.marks }} Mark
+                            </span>
+                        </div>
 
-                        <!-- Choices List -->
+                        <!-- Answer Choice Cards -->
                         <div class="space-y-3 pt-2">
                             {% for choice in question.shuffled_choices %}
                             <label id="choice-label-{{ question.id }}-{{ choice.id }}" 
                                    onclick="selectChoice({{ question.id }}, {{ choice.id }})" 
-                                   class="choice-label group relative flex items-center p-4 border-2 border-slate-200 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-slate-50/80 transition-all duration-150 active:scale-[0.995]">
+                                   class="exam-choice-card">
+                                
                                 <input type="radio" 
                                        name="radio_question_{{ question.id }}" 
                                        id="radio-{{ question.id }}-{{ choice.id }}" 
                                        value="{{ choice.id }}" 
-                                       class="w-5 h-5 text-indigo-600 border-slate-300 focus:ring-indigo-500 focus:ring-offset-0 cursor-pointer">
-                                <div class="ml-3.5 flex items-center gap-3">
-                                    <span class="w-6 h-6 rounded-md bg-slate-100 text-slate-600 font-extrabold text-xs flex items-center justify-center group-hover:bg-indigo-100 group-hover:text-indigo-700 transition-colors">
+                                       class="sr-only">
+                                
+                                <!-- Custom Radio Circle Indicator -->
+                                <div class="radio-circle">
+                                    <div class="radio-circle-dot"></div>
+                                </div>
+
+                                <div class="ml-3.5 flex items-center gap-3.5">
+                                    <span class="choice-badge">
                                         {% if forloop.counter == 1 %}A{% elif forloop.counter == 2 %}B{% elif forloop.counter == 3 %}C{% elif forloop.counter == 4 %}D{% endif %}
                                     </span>
-                                    <span class="text-sm sm:text-base font-semibold text-slate-700 group-hover:text-slate-900">
+                                    <span class="text-sm font-semibold text-slate-800">
                                         {{ choice.choice_text }}
                                     </span>
                                 </div>
@@ -106,134 +327,153 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Bottom Navigation & Action Controls inside Question Card -->
+                <div class="px-6 py-4 bg-slate-50/70 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5">
+                        <button type="button" onclick="clearResponse()" class="px-4 py-2 bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold text-xs rounded-lg transition shadow-2xs flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            <span>Clear Response</span>
+                        </button>
+                        
+                        <button type="button" onclick="toggleMarkForReview()" class="px-4 py-2 bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold text-xs rounded-lg transition shadow-2xs flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                            <span id="card-mark-review-text">Mark for Review</span>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-2.5 ml-auto">
+                        <button type="button" id="btn-prev" onclick="prevQuestion()" class="px-4 sm:px-5 py-2 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-xs rounded-lg transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 shadow-2xs">
+                            <span>← Previous</span>
+                        </button>
+                        
+                        <button type="button" id="btn-next" onclick="nextQuestion()" class="px-5 sm:px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg transition shadow-sm flex items-center gap-1.5">
+                            <span>Save & Next →</span>
+                        </button>
+                    </div>
+                </div>
             </div>
             {% endfor %}
-
-            <!-- Question Action Controls (Footer Bar) -->
-            <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm flex flex-wrap items-center justify-between gap-3">
-                <!-- Left Action Group -->
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <button type="button" 
-                            onclick="clearResponse()" 
-                            class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm rounded-xl transition shadow-2xs border border-slate-200 flex items-center gap-1.5">
-                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        <span>Clear Response</span>
-                    </button>
-
-                    <button type="button" 
-                            id="btn-mark-review"
-                            onclick="toggleMarkForReview()" 
-                            class="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-xs sm:text-sm rounded-xl transition shadow-2xs border border-amber-200 flex items-center gap-1.5">
-                        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
-                        <span id="mark-review-text">Mark for Review</span>
-                    </button>
-                </div>
-
-                <!-- Right Navigation Group -->
-                <div class="flex items-center gap-2 sm:gap-3 ml-auto">
-                    <button type="button" 
-                            id="btn-prev"
-                            onclick="prevQuestion()" 
-                            class="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 font-bold text-xs sm:text-sm rounded-xl hover:bg-slate-50 hover:text-slate-900 transition shadow-2xs disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
-                        <span>Previous</span>
-                    </button>
-
-                    <button type="button" 
-                            id="btn-next"
-                            onclick="nextQuestion()" 
-                            class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm rounded-xl transition shadow-md shadow-indigo-200 flex items-center gap-1.5">
-                        <span>Save & Next</span>
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
-                    </button>
-                </div>
-            </div>
         </section>
 
-        <!-- RIGHT COLUMN: Question Palette & Legend (4 Cols on Desktop) -->
-        <section class="lg:col-span-4 space-y-6">
-            
-            <!-- Question Palette Box -->
-            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-5">
+        <!-- RIGHT COLUMN: Compact Question Palette Sidebar (~30% Width, target 300-340px) -->
+        <section class="space-y-4">
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4 sticky top-36">
+                
+                <!-- Palette Header -->
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Question Palette</h3>
-                    <span class="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-md">
+                    <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider">QUESTION PALETTE</h3>
+                    <span class="text-[11px] font-black text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-100">
                         <span id="stat-answered">0</span> / {{ questions_count }} Answered
                     </span>
                 </div>
 
-                <!-- Number Grid (01 to N) -->
-                <div class="grid grid-cols-5 gap-2.5 sm:gap-3" id="palette-grid">
+                <!-- 4-COLUMN COMPACT QUESTION NUMBER GRID (Strict CSS Grid) -->
+                <div class="palette-grid-4col" id="palette-grid">
                     {% for question in questions %}
                     <button type="button" 
                             id="palette-btn-{{ question.id }}"
                             onclick="jumpToQuestion({{ forloop.counter0 }})" 
-                            class="palette-btn relative h-10 w-full rounded-xl font-extrabold text-xs transition-all duration-150 flex items-center justify-center border shadow-2xs hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 bg-slate-100 text-slate-600 border-slate-300"
+                            class="palette-btn-cell palette-state-not-visited"
                             title="Question {{ forloop.counter }}">
                         <span>{{ forloop.counter|stringformat:"02d" }}</span>
-                        <span id="palette-dot-{{ question.id }}" class="hidden absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400 ring-1 ring-white"></span>
+                        <span id="palette-dot-{{ question.id }}" class="hidden absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400 border border-white"></span>
                     </button>
                     {% endfor %}
                 </div>
 
-                <!-- Palette Summary Cards -->
-                <div class="grid grid-cols-3 gap-2 pt-2 text-center text-xs font-bold">
-                    <div class="bg-emerald-50 text-emerald-800 border border-emerald-200/80 p-2 rounded-lg">
-                        <div id="stat-summary-answered" class="text-base font-black">0</div>
-                        <div class="text-[10px] uppercase">Answered</div>
-                    </div>
-                    <div class="bg-rose-50 text-rose-800 border border-rose-200/80 p-2 rounded-lg">
-                        <div id="stat-summary-unanswered" class="text-base font-black">{{ questions_count }}</div>
-                        <div class="text-[10px] uppercase">Unanswered</div>
-                    </div>
-                    <div class="bg-purple-50 text-purple-800 border border-purple-200/80 p-2 rounded-lg">
-                        <div id="stat-summary-marked" class="text-base font-black">0</div>
-                        <div class="text-[10px] uppercase">Marked</div>
-                    </div>
-                </div>
-
-                <!-- Palette Legend -->
-                <div class="border-t border-slate-100 pt-4 space-y-2 text-xs">
-                    <p class="font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-2">Palette Legend</p>
-                    <div class="grid grid-cols-2 gap-2 text-slate-600 font-semibold">
-                        <div class="flex items-center gap-2">
-                            <span class="w-4 h-4 rounded bg-slate-100 border border-slate-300"></span>
+                <!-- Compact Aligned Legend Section -->
+                <div class="border-t border-slate-100 pt-3 space-y-2 text-xs">
+                    <p class="font-black text-slate-700 uppercase tracking-wider text-[10px]">LEGEND</p>
+                    <div class="space-y-1.5 text-slate-700 font-semibold text-[11px]">
+                        <div class="flex items-center gap-2.5">
+                            <span class="legend-box bg-slate-100 border border-slate-300"></span>
                             <span>Not Visited</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span class="w-4 h-4 rounded bg-rose-500 text-white font-bold text-[9px] flex items-center justify-center">✗</span>
+                        <div class="flex items-center gap-2.5">
+                            <span class="legend-box bg-red-600 border border-red-700"></span>
                             <span>Unanswered</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span class="w-4 h-4 rounded bg-emerald-600 text-white font-bold text-[9px] flex items-center justify-center">✓</span>
+                        <div class="flex items-center gap-2.5">
+                            <span class="legend-box bg-emerald-600 border border-emerald-700"></span>
                             <span>Answered</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span class="w-4 h-4 rounded bg-purple-600 text-white font-bold text-[9px] flex items-center justify-center">★</span>
+                        <div class="flex items-center gap-2.5">
+                            <span class="legend-box bg-purple-600 border border-purple-700"></span>
                             <span>Marked for Review</span>
                         </div>
-                        <div class="col-span-2 flex items-center gap-2">
-                            <span class="w-4 h-4 rounded bg-purple-600 text-white font-bold text-[9px] flex items-center justify-center relative">
-                                ★<span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 border border-white"></span>
+                        <div class="flex items-center gap-2.5">
+                            <span class="legend-box bg-purple-600 border border-purple-700 relative">
+                                <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 border border-white"></span>
                             </span>
                             <span>Answered & Marked for Review</span>
                         </div>
                     </div>
                 </div>
+
+                <!-- 2x2 COMPACT STATISTICS GRID -->
+                <div class="stats-2x2-grid pt-2 border-t border-slate-100 text-xs font-bold">
+                    <div class="stat-card-compact bg-emerald-50 text-emerald-900 border-emerald-200">
+                        <span id="stat-summary-answered" class="text-base font-black">0</span>
+                        <span class="text-[9px] uppercase tracking-wider">Answered</span>
+                    </div>
+
+                    <div class="stat-card-compact bg-rose-50 text-rose-900 border-rose-200">
+                        <span id="stat-summary-unanswered" class="text-base font-black">{{ questions_count }}</span>
+                        <span class="text-[9px] uppercase tracking-wider">Unanswered</span>
+                    </div>
+
+                    <div class="stat-card-compact bg-purple-50 text-purple-900 border-purple-200">
+                        <span id="stat-summary-marked" class="text-base font-black">0</span>
+                        <span class="text-[9px] uppercase tracking-wider">Marked</span>
+                    </div>
+
+                    <div class="stat-card-compact bg-purple-50 text-purple-950 border-purple-300">
+                        <span id="stat-summary-ans-marked" class="text-base font-black">0</span>
+                        <span class="text-[9px] uppercase tracking-wider">Ans+Marked</span>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
+
+    <!-- BOTTOM ACTION AREA -->
+    <footer class="bg-white border-t border-slate-200 py-3 shadow-md mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3 text-xs font-bold">
+            <div class="flex items-center gap-2.5">
+                <a href="{% url 'student_exam_list' %}" onclick="return confirm('Quit exam? Unsaved progress will be lost.')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition border border-slate-200 flex items-center gap-1.5 shadow-2xs">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    <span>Quit Exam</span>
+                </a>
+                <button type="button" onclick="alert('Issue report submitted to administrator.')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition border border-slate-200 flex items-center gap-1.5 shadow-2xs">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <span>Report an Issue</span>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-2.5 ml-auto">
+                <a href="{% url 'student_exam_list' %}" class="px-4 py-2 bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-50 rounded-lg transition shadow-2xs flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                    <span>Save & Exit</span>
+                </a>
+                <button type="button" onclick="openSubmitModal()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition shadow-sm flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                    <span>Submit Exam</span>
+                </button>
+            </div>
+        </div>
+    </footer>
 </div>
 
-<!-- Pre-Submission Confirmation Modal -->
+<!-- PRE-SUBMISSION CONFIRMATION MODAL -->
 <div id="submit-modal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-100 transform transition-all animate-in fade-in zoom-in duration-200">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 transform transition-all">
         <div class="text-center space-y-4">
             <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center shadow-inner">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
             
-            <h3 class="text-xl font-black text-slate-900 tracking-tight">Submit Your Exam?</h3>
+            <h3 class="text-xl font-bold text-slate-900 tracking-tight">Submit Your Exam?</h3>
             <p class="text-xs sm:text-sm text-slate-500 font-medium">Please review your submission summary before finalizing your exam session.</p>
 
             <!-- Summary Table -->
@@ -244,24 +484,28 @@
                 </div>
                 <div class="flex justify-between py-1 border-b border-slate-200 text-emerald-700">
                     <span>Answered:</span>
-                    <span id="modal-stat-answered" class="font-black">0</span>
+                    <span id="modal-stat-answered" class="font-bold">0</span>
                 </div>
                 <div class="flex justify-between py-1 border-b border-slate-200 text-rose-700">
                     <span>Unanswered:</span>
-                    <span id="modal-stat-unanswered" class="font-black">0</span>
+                    <span id="modal-stat-unanswered" class="font-bold">0</span>
                 </div>
-                <div class="flex justify-between py-1 text-purple-700">
+                <div class="flex justify-between py-1 border-b border-slate-200 text-purple-700">
                     <span>Marked for Review:</span>
-                    <span id="modal-stat-marked" class="font-black">0</span>
+                    <span id="modal-stat-marked" class="font-bold">0</span>
+                </div>
+                <div class="flex justify-between py-1 text-purple-900">
+                    <span>Answered & Marked:</span>
+                    <span id="modal-stat-ans-marked" class="font-bold">0</span>
                 </div>
             </div>
 
             <!-- Action Buttons -->
             <div class="flex items-center gap-3 pt-2">
-                <button type="button" onclick="closeSubmitModal()" class="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-xl transition">
+                <button type="button" onclick="closeSubmitModal()" class="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-xl transition">
                     Return to Test
                 </button>
-                <button type="button" onclick="confirmSubmitExam()" class="flex-1 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-indigo-200 transition">
+                <button type="button" onclick="confirmSubmitExam()" class="flex-1 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-sm transition">
                     Confirm Submit
                 </button>
             </div>
@@ -269,7 +513,7 @@
     </div>
 </div>
 
-<!-- Core Exam Engine Client Script -->
+<!-- CORE EXAM ENGINE CLIENT SCRIPT -->
 <script>
 // Exam Engine State Data
 const ATTEMPT_ID = {{ attempt.pk }};
@@ -292,7 +536,6 @@ const questionsList = [
     {% endfor %}
 ];
 
-
 let currentIndex = 0;
 let isSubmitting = false;
 
@@ -306,7 +549,6 @@ document.addEventListener('DOMContentLoaded', function() {
 // Sync initial UI state from server pre-populated data
 function initSavedStateUI() {
     questionsList.forEach(q => {
-        // Set radio buttons if selected
         if (q.selectedChoiceId) {
             const radio = document.getElementById(`radio-${q.id}-${q.selectedChoiceId}`);
             if (radio) {
@@ -323,10 +565,8 @@ function initSavedStateUI() {
 function showQuestion(index) {
     if (index < 0 || index >= TOTAL_QUESTIONS) return;
 
-    // Hide previous question card
     document.querySelectorAll('.question-card').forEach(card => card.classList.add('hidden'));
 
-    // Show current question card
     const card = document.getElementById(`question-card-${index}`);
     if (card) {
         card.classList.remove('hidden');
@@ -335,30 +575,33 @@ function showQuestion(index) {
     currentIndex = index;
     const currentQ = questionsList[currentIndex];
 
-    // If question was not visited, update state to visited_unanswered if no choice
+    // If question was not visited, update state to visited_unanswered if no choice selected
     if (currentQ.state === 'not_visited') {
         currentQ.state = currentQ.isMarked ? 'marked_for_review' : (currentQ.selectedChoiceId ? 'answered' : 'visited_unanswered');
         updatePaletteButtonUI(currentQ);
-        // Persist visited state silently to server
         sendAutosave(currentQ.id, currentQ.selectedChoiceId, 'visit', currentQ.isMarked);
+    } else {
+        updatePaletteButtonUI(currentQ);
     }
 
-    // Update Navigation Buttons State
+    // Update active highlight across palette
+    questionsList.forEach(item => updatePaletteButtonUI(item));
+
+    // Update Navigation Buttons
     document.getElementById('btn-prev').disabled = (currentIndex === 0);
     const nextBtn = document.getElementById('btn-next');
     if (currentIndex === TOTAL_QUESTIONS - 1) {
-        nextBtn.innerHTML = `<span>Save & Finish</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>`;
+        nextBtn.innerHTML = `<span>Save & Finish →</span>`;
     } else {
-        nextBtn.innerHTML = `<span>Save & Next</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>`;
+        nextBtn.innerHTML = `<span>Save & Next →</span>`;
     }
 
-    // Update Mark for Review Button text
-    const markBtnText = document.getElementById('mark-review-text');
-    if (currentQ.isMarked) {
-        markBtnText.textContent = 'Remove Review Mark';
-    } else {
-        markBtnText.textContent = 'Mark for Review';
-    }
+    // Update Mark for Review text
+    const markText = currentQ.isMarked ? 'Remove Review Mark' : 'Mark for Review';
+    const topMark = document.getElementById('top-mark-review-text');
+    const cardMark = document.getElementById('card-mark-review-text');
+    if (topMark) topMark.textContent = markText;
+    if (cardMark) cardMark.textContent = markText;
 }
 
 // Navigation Handlers
@@ -388,7 +631,6 @@ function selectChoice(questionId, choiceId) {
     q.selectedChoiceId = choiceId;
     highlightSelectedChoiceLabel(questionId, choiceId);
 
-    // Compute state
     if (q.isMarked) {
         q.state = 'answered_marked_for_review';
     } else {
@@ -398,7 +640,6 @@ function selectChoice(questionId, choiceId) {
     updatePaletteButtonUI(q);
     updateSummaryStats();
 
-    // Trigger Autosave
     sendAutosave(questionId, choiceId, 'save', q.isMarked);
 }
 
@@ -409,17 +650,15 @@ function clearResponse() {
 
     q.selectedChoiceId = null;
     
-    // Reset radio inputs & labels
     const radios = document.querySelectorAll(`input[name="radio_question_${q.id}"]`);
     radios.forEach(r => r.checked = false);
     
-    const labels = document.querySelectorAll(`#question-card-${currentIndex} .choice-label`);
-    labels.forEach(l => {
-        l.classList.remove('border-indigo-600', 'bg-indigo-50/60', 'ring-1', 'ring-indigo-500');
-        l.classList.add('border-slate-200');
-    });
+    const card = document.getElementById(`question-card-${currentIndex}`);
+    if (card) {
+        const labels = card.querySelectorAll('.exam-choice-card');
+        labels.forEach(l => l.classList.remove('is-selected'));
+    }
 
-    // Compute state
     if (q.isMarked) {
         q.state = 'marked_for_review';
     } else {
@@ -429,7 +668,6 @@ function clearResponse() {
     updatePaletteButtonUI(q);
     updateSummaryStats();
 
-    // Trigger Autosave
     sendAutosave(q.id, null, 'clear', q.isMarked);
 }
 
@@ -450,87 +688,87 @@ function toggleMarkForReview() {
         q.state = 'visited_unanswered';
     }
 
-    // Update button text
-    const markBtnText = document.getElementById('mark-review-text');
-    if (q.isMarked) {
-        markBtnText.textContent = 'Remove Review Mark';
-    } else {
-        markBtnText.textContent = 'Mark for Review';
-    }
+    const markText = q.isMarked ? 'Remove Review Mark' : 'Mark for Review';
+    const topMark = document.getElementById('top-mark-review-text');
+    const cardMark = document.getElementById('card-mark-review-text');
+    if (topMark) topMark.textContent = markText;
+    if (cardMark) cardMark.textContent = markText;
 
     updatePaletteButtonUI(q);
     updateSummaryStats();
 
-    // Trigger Autosave
     sendAutosave(q.id, q.selectedChoiceId, 'toggle_review', q.isMarked);
 }
 
-// Highlight Selected Choice Label styling
+// Highlight Selected Choice Card styling
 function highlightSelectedChoiceLabel(questionId, choiceId) {
-    const labels = document.querySelectorAll(`#question-card-${currentIndex} .choice-label`);
-    labels.forEach(l => {
-        l.classList.remove('border-indigo-600', 'bg-indigo-50/60', 'ring-1', 'ring-indigo-500');
-        l.classList.add('border-slate-200');
-    });
+    const card = document.getElementById(`question-card-${currentIndex}`);
+    if (!card) return;
+
+    const labels = card.querySelectorAll('.exam-choice-card');
+    labels.forEach(l => l.classList.remove('is-selected'));
 
     const activeLabel = document.getElementById(`choice-label-${questionId}-${choiceId}`);
     if (activeLabel) {
-        activeLabel.classList.remove('border-slate-200');
-        activeLabel.classList.add('border-indigo-600', 'bg-indigo-50/60', 'ring-1', 'ring-indigo-500');
+        activeLabel.classList.add('is-selected');
     }
 }
 
-// Update Palette Grid Button Visuals
+// Update Palette Button UI strictly with CSS Classes
 function updatePaletteButtonUI(q) {
     const btn = document.getElementById(`palette-btn-${q.id}`);
     const dot = document.getElementById(`palette-dot-${q.id}`);
-    const badge = document.getElementById(`q-status-badge-${q.id}`);
     if (!btn) return;
 
+    const isCurrent = (questionsList[currentIndex] && questionsList[currentIndex].id === q.id);
+
     // Reset base classes
-    btn.className = "palette-btn relative h-10 w-full rounded-xl font-extrabold text-xs transition-all duration-150 flex items-center justify-center border shadow-2xs hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 ";
+    btn.className = "palette-btn-cell";
+    if (isCurrent) {
+        btn.classList.add('palette-active-focus');
+    }
+
     if (dot) dot.classList.add('hidden');
 
     switch (q.state) {
         case 'answered':
-            btn.className += "bg-emerald-600 text-white border-emerald-700 shadow-sm";
-            if (badge) { badge.textContent = "Answered"; badge.className = "text-xs font-bold px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300"; }
+            btn.classList.add('palette-state-answered');
             break;
         case 'marked_for_review':
-            btn.className += "bg-purple-600 text-white border-purple-700 shadow-sm";
-            if (badge) { badge.textContent = "Marked for Review"; badge.className = "text-xs font-bold px-2.5 py-1 rounded-md bg-purple-100 text-purple-800 border border-purple-300"; }
+            btn.classList.add('palette-state-marked');
             break;
         case 'answered_marked_for_review':
-            btn.className += "bg-purple-600 text-white border-purple-700 shadow-sm";
+            btn.classList.add('palette-state-ans-marked');
             if (dot) dot.classList.remove('hidden');
-            if (badge) { badge.textContent = "Ans & Marked"; badge.className = "text-xs font-bold px-2.5 py-1 rounded-md bg-purple-100 text-purple-800 border border-purple-300"; }
             break;
         case 'visited_unanswered':
-            btn.className += "bg-rose-500 text-white border-rose-600 shadow-sm";
-            if (badge) { badge.textContent = "Unanswered"; badge.className = "text-xs font-bold px-2.5 py-1 rounded-md bg-rose-100 text-rose-800 border border-rose-300"; }
+            btn.classList.add('palette-state-unanswered');
             break;
         case 'not_visited':
         default:
-            btn.className += "bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200";
-            if (badge) { badge.textContent = "Unvisited"; badge.className = "text-xs font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 border border-slate-200"; }
+            btn.classList.add('palette-state-not-visited');
             break;
     }
 }
 
 // Summary Statistics Counter
 function updateSummaryStats() {
-    const answered = questionsList.filter(q => q.selectedChoiceId !== null).length;
-    const marked = questionsList.filter(q => q.isMarked).length;
-    const unanswered = TOTAL_QUESTIONS - answered;
+    const answeredOnly = questionsList.filter(q => q.selectedChoiceId !== null && !q.isMarked).length;
+    const ansAndMarked = questionsList.filter(q => q.selectedChoiceId !== null && q.isMarked).length;
+    const markedOnly = questionsList.filter(q => q.selectedChoiceId === null && q.isMarked).length;
+    const totalAnswered = questionsList.filter(q => q.selectedChoiceId !== null).length;
+    const unanswered = TOTAL_QUESTIONS - totalAnswered;
 
-    document.getElementById('stat-answered').textContent = answered;
-    document.getElementById('stat-summary-answered').textContent = answered;
+    document.getElementById('stat-answered').textContent = totalAnswered;
+    document.getElementById('stat-summary-answered').textContent = answeredOnly;
     document.getElementById('stat-summary-unanswered').textContent = unanswered;
-    document.getElementById('stat-summary-marked').textContent = marked;
+    document.getElementById('stat-summary-marked').textContent = markedOnly;
+    document.getElementById('stat-summary-ans-marked').textContent = ansAndMarked;
 
-    document.getElementById('modal-stat-answered').textContent = answered;
+    document.getElementById('modal-stat-answered').textContent = totalAnswered;
     document.getElementById('modal-stat-unanswered').textContent = unanswered;
-    document.getElementById('modal-stat-marked').textContent = marked;
+    document.getElementById('modal-stat-marked').textContent = markedOnly;
+    document.getElementById('modal-stat-ans-marked').textContent = ansAndMarked;
 }
 
 // Real-Time AJAX Autosave API
@@ -574,12 +812,13 @@ function sendAutosave(questionId, choiceId, action, isMarked) {
 function setSaveStatus(status) {
     const indicator = document.getElementById('save-status-indicator');
     const text = document.getElementById('save-status-text');
+    if (!indicator || !text) return;
 
     if (status === 'saving') {
         indicator.className = "w-2 h-2 rounded-full bg-amber-400 animate-ping";
         text.textContent = "Saving...";
     } else if (status === 'saved') {
-        indicator.className = "w-2 h-2 rounded-full bg-emerald-400";
+        indicator.className = "w-2 h-2 rounded-full bg-emerald-500";
         text.textContent = "All changes saved";
     } else {
         indicator.className = "w-2 h-2 rounded-full bg-rose-500";
@@ -628,7 +867,7 @@ function startTimer() {
 
         if (remainingSeconds <= 300) {
             timerDisplay.classList.remove('text-rose-500');
-            timerDisplay.classList.add('text-rose-600', 'animate-pulse');
+            timerDisplay.classList.add('text-red-600', 'animate-pulse');
         }
 
         remainingSeconds--;
@@ -665,7 +904,6 @@ function confirmSubmitExam(isAutoSubmit = false) {
         if (data.success && data.redirect_url) {
             window.location.href = data.redirect_url;
         } else {
-            // Fallback form submit
             window.location.href = "{% url 'exam_results' attempt.pk %}";
         }
     })
